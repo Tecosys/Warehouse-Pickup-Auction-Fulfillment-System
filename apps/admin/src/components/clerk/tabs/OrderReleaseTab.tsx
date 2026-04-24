@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Printer, AlertTriangle, ChevronLeft, X } from 'lucide-react';
+import { Printer, AlertTriangle, ChevronLeft } from 'lucide-react';
 import ReceiptPreviewModal from '../../fulfillment/components/ReceiptPreviewModal';
 
 const MOCK_LOTS = [
