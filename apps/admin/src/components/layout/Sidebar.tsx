@@ -8,6 +8,7 @@ import {
   Truck, 
   AlertCircle,
   LogOut,
+  User,
   X
 } from 'lucide-react';
 
@@ -53,10 +54,22 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose }: an
 
       <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e2e8f0' }} />
+          <div style={{ 
+            width: '36px', 
+            height: '36px', 
+            borderRadius: '50%', 
+            background: 'var(--accent-color)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: 'var(--status-teal)',
+            border: '2px solid rgba(13, 148, 136, 0.1)'
+          }}>
+            <User size={20} />
+          </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Marcus V.</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Floor Manager</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>Marcus V.</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Floor Manager</div>
           </div>
         </div>
         <button 
