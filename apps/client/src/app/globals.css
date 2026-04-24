@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-primary: #00A87E;
+  --color-secondary: #0B1F2A;
+  --color-accent: #F5F5F0;
+  
+  --font-syne: var(--font-syne), ui-sans-serif, system-ui;
+  --font-dm-sans: var(--font-dm-sans), ui-sans-serif, system-ui;
+  
+  --font-sans: var(--font-dm-sans);
+  --font-heading: var(--font-syne);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-fade-down: fade-down 0.5s ease-out forwards;
+  --animate-fade-up: fade-up 0.5s ease-out forwards;
+  --animate-slide-up: slide-up 0.5s ease-out forwards;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  @keyframes fade-down {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-accent text-secondary font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .glass-nav {
+    @apply sticky top-0 z-50 transition-all duration-300;
+    backdrop-filter: blur(12px);
+    background-color: rgba(245, 245, 240, 0.8);
+  }
+  
+  .glass-nav.scrolled {
+    @apply shadow-md;
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white px-8 py-3 rounded-full font-bold transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-[0_0_0_4px_rgba(0,168,126,0.2)];
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary px-8 py-3 rounded-full font-bold transition-all duration-200 hover:bg-primary/5 hover:scale-105;
+  }
+
+  .btn-dark-outline {
+    @apply border-2 border-secondary text-secondary px-8 py-3 rounded-full font-bold transition-all duration-200 hover:bg-secondary/5 hover:scale-105;
+  }
+
+  .card-hover {
+    @apply transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,168,126,0.12)];
+  }
+}
+
+.hero-grid-pattern {
+  background-image: radial-gradient(circle, #00A87E22 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+[data-animate] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-animate].visible {
+  opacity: 1;
+  transform: translateY(0);
 }
