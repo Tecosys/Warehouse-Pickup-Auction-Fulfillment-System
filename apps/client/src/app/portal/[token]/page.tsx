@@ -39,10 +39,7 @@ export default function CustomerPortal({ params }: { params: { token: string } }
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-[#1e293b] text-white p-1.5 rounded-md">
-              <Box size={20} />
-            </div>
-            <span className="font-bold text-xl tracking-tight">BidBoss</span>
+            <img src="/Logo.png" alt="BidBoss Logo" className="h-8 w-auto" />
           </div>
           <a href="mailto:support@bidbossinc.ca" className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1.5">
             <HelpCircle size={14} />

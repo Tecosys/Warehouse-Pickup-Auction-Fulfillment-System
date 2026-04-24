@@ -27,10 +27,7 @@ const Sidebar = ({ activeModule, onModuleChange }: any) => {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div style={{ background: '#1e293b', color: 'white', padding: '6px', borderRadius: '6px' }}>
-          <Gavel size={24} />
-        </div>
-        <span>BidBoss Admin</span>
+        <img src="/Logo.png" alt="BidBoss Logo" style={{ height: '32px', width: 'auto' }} />
       </div>
       
       <nav className="sidebar-nav">
