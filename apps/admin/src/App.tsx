@@ -23,7 +23,7 @@ const FooterBar = () => (
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>TOTAL VALUE:</span>
         <span style={{ fontWeight: 600 }}>$1,420,950.00</span>
       </div>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', display: 'none' }}>
+      <div style={{ gap: '0.5rem', alignItems: 'center', display: 'none' }}>
         {/* Hide complex stats on small screens or keep them hidden for clean UI */}
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>SETTLED:</span>
         <span style={{ fontWeight: 600, color: 'var(--status-green)' }}>92%</span>
