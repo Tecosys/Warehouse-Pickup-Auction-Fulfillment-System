@@ -9,7 +9,8 @@ import InventoryClerkPage from './components/clerk/InventoryClerkPage';
 import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
 import ShippingPage from './components/shipping/ShippingPage';
 import FulfillmentHubPage from './components/fulfillment/FulfillmentHubPage';
-import { Activity, Users, ShieldCheck } from 'lucide-react';
+import { Activity, Users, ShieldCheck, Menu } from 'lucide-react';
+import LoginPage from './components/auth/LoginPage';
 
 const FooterBar = () => (
   <footer className="footer-bar">
@@ -22,13 +23,10 @@ const FooterBar = () => (
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>TOTAL VALUE:</span>
         <span style={{ fontWeight: 600 }}>$1,420,950.00</span>
       </div>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', display: 'none' }}>
+        {/* Hide complex stats on small screens or keep them hidden for clean UI */}
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>SETTLED:</span>
         <span style={{ fontWeight: 600, color: 'var(--status-green)' }}>92%</span>
-      </div>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <span style={{ color: 'rgba(255,255,255,0.5)' }}>ACTIVE USERS:</span>
-        <span style={{ fontWeight: 600 }}>142</span>
       </div>
     </div>
     
@@ -39,11 +37,11 @@ const FooterBar = () => (
   </footer>
 );
 
-import LoginPage from './components/auth/LoginPage';
-
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Set to true to bypass login for now as requested
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [currentModule, setCurrentModule] = useState('Dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
@@ -81,26 +79,47 @@ function App() {
 
   return (
     <>
+      <div 
+        className={`mobile-overlay ${isSidebarOpen ? 'visible' : ''}`} 
+        onClick={() => setIsSidebarOpen(false)} 
+      />
+      
       <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         activeModule={currentModule} 
-        onModuleChange={setCurrentModule} 
+        onModuleChange={(module: string) => {
+          setCurrentModule(module);
+          setIsSidebarOpen(false); // Close sidebar on mobile after selection
+        }} 
         onLogout={() => setIsAuthenticated(false)}
       />
+      
       <div className="main-layout">
         <header className="header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-              <Activity size={18} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>System Load: 12%</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button 
+              className="btn mobile-only" 
+              style={{ display: 'none', border: 'none', padding: '0.5rem' }} 
+              onClick={() => setIsSidebarOpen(true)}
+              id="hamburger-menu"
+            >
+              <Menu size={24} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+                <Activity size={18} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>System Load: 12%</span>
+              </div>
             </div>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
               <Users size={18} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Workers: 8 Active</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>8 Active</span>
             </div>
-            <div style={{ height: '24px', width: '1px', background: 'var(--border-color)' }} />
+            <div className="desktop-only" style={{ height: '24px', width: '1px', background: 'var(--border-color)' }} />
             <button 
               className="btn" 
               style={{ border: 'none', padding: '0.25rem' }}
@@ -118,6 +137,14 @@ function App() {
 
         <FooterBar />
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .mobile-only { display: flex !important; }
+          .desktop-only { display: none !important; }
+          .header { justify-content: space-between; }
+        }
+      `}</style>
     </>
   );
 }

@@ -7,10 +7,11 @@ import {
   ClipboardList, 
   Truck, 
   AlertCircle,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 
-const Sidebar = ({ activeModule, onModuleChange, onLogout }: any) => {
+const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose }: any) => {
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { icon: <Gavel size={20} />, label: 'Auction Runs' },
@@ -24,9 +25,16 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout }: any) => {
   ];
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-logo">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div className="sidebar-logo" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <img src="/Logo.png" alt="BidBoss Logo" style={{ height: '32px', width: 'auto' }} />
+        <button 
+          className="mobile-only" 
+          onClick={onClose}
+          style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+        >
+          <X size={24} />
+        </button>
       </div>
       
       <nav className="sidebar-nav">
