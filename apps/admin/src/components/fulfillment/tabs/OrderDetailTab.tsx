@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Printer, ScanLine, CheckCircle2, MoreVertical, Flag, X } from 'lucide-react';
 import { NotFoundModal, IssueModal, CompletionModal, CancellationModal } from '../components/FulfillmentModals';
+import ReceiptPreviewModal from '../components/ReceiptPreviewModal';
 
 const MOCK_LOTS = [
   { id: '112', desc: 'Samsung 65" 4K Smart TV', storage: 'A2', location: '', status: 'Pending', type: 'Sort (BIN)' },
@@ -51,12 +52,27 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   };
 
   const handlePrintSlip = () => {
-    window.print();
+    setActiveModal('Receipt');
   };
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-      {/* Hidden Print Slip */}
+      <ReceiptPreviewModal 
+        isOpen={activeModal === 'Receipt'} 
+        onClose={() => setActiveModal(null)}
+        title="Preparation Slip"
+        data={{
+          auction: "Auction 31",
+          bidder: "8821",
+          customer: "Sarah O'Connor",
+          status: prepStatus,
+          bookingCode: "BB31-1221",
+          items: lots.map(l => ({ id: l.id, desc: l.desc, storage: l.storage })),
+          worker: "Marcus V."
+        }}
+      />
+
+      {/* Hidden Print Slip for actual browser printing */}
       <div className="print-slip">
         <h1>BIDBOSS PREPARATION SLIP</h1>
         <div style={{ marginBottom: '10px' }}>

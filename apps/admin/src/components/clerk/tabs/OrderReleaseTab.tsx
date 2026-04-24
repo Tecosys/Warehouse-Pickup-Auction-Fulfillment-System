@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Printer, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { Printer, AlertTriangle, ChevronLeft, X } from 'lucide-react';
+import ReceiptPreviewModal from '../../fulfillment/components/ReceiptPreviewModal';
 
 const MOCK_LOTS = [
   { id: '1', lotNum: '594', description: 'Samsung 65" 4K Smart TV', sourceLoc: 'A-12-3', finalLoc: 'BIN01', status: 'Ready' },
@@ -20,6 +21,7 @@ interface OrderReleaseTabProps {
 const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithheld, onBack, onComplete }) => {
   const [selectedLots, setSelectedLots] = useState<Set<string>>(new Set(MOCK_LOTS.map(l => l.id)));
   const [withheldCount, setWithheldCount] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     setWithheldCount(MOCK_LOTS.length - selectedLots.size);
@@ -39,14 +41,28 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const deselectAll = () => setSelectedLots(new Set());
 
   const handlePrint = () => {
-    window.print();
+    setIsPreviewOpen(true);
   };
 
   if (!order) return <div style={{ padding: '4rem', textAlign: 'center' }}>No order selected. Please go back to search.</div>;
 
   return (
     <div className="animate-fade" style={{ paddingBottom: '100px' }}>
-      {/* Hidden Print Slip */}
+      <ReceiptPreviewModal 
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        title="Release Confirmation"
+        data={{
+          auction: "AUC-31",
+          bidder: order.bidderNum,
+          customer: order.customer,
+          bookingCode: "ABC-123-XYZ",
+          items: MOCK_LOTS.filter(l => selectedLots.has(l.id)).map(l => ({ id: l.lotNum, desc: l.description, loc: l.finalLoc })),
+          worker: "Marcus Chen"
+        }}
+      />
+
+      {/* Hidden Print Slip for actual browser printing */}
       <div className="print-slip">
         <h1>ORDER RELEASE CONFIRMATION</h1>
         <div style={{ marginBottom: '10px' }}>

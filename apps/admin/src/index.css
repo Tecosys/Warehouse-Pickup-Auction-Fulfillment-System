@@ -340,6 +340,7 @@ tr:hover td {
   }
   .print-slip, .print-slip * {
     visibility: visible;
+    display: block !important;
   }
   .print-slip {
     position: absolute;
@@ -351,6 +352,7 @@ tr:hover td {
     line-height: 1.2;
     padding: 2mm;
     color: black;
+    background: white;
   }
   .print-slip h1, .print-slip h2 {
     font-size: 12pt;
@@ -371,4 +373,8 @@ tr:hover td {
     text-align: center;
     font-size: 8pt;
   }
+}
+
+.print-slip {
+  display: none;
 }
