@@ -1,13 +1,10 @@
-import React from 'react';
 import { 
   Download, 
   ChevronDown, 
-  MoreVertical, 
   Clock, 
   MessageSquare, 
   CheckCircle2, 
-  AlertTriangle,
-  History
+  AlertTriangle
 } from 'lucide-react';
 
 const StatCard = ({ label, value, color, icon, trend, flagged }: any) => (
@@ -32,7 +29,7 @@ const StatCard = ({ label, value, color, icon, trend, flagged }: any) => (
   </div>
 );
 
-const ActivityItem = ({ type, title, desc, time, icon, color }: any) => (
+const ActivityItem = ({ title, desc, time, icon, color }: any) => (
   <div style={{ display: 'flex', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid var(--border-color)' }}>
     <div style={{ 
       width: '40px', 

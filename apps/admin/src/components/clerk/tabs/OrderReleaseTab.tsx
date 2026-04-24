@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Printer, AlertTriangle, ChevronLeft, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Printer, AlertTriangle, ChevronLeft } from 'lucide-react';
 
 const MOCK_LOTS = [
   { id: '1', lotNum: '594', description: 'Samsung 65" 4K Smart TV', sourceLoc: 'A-12-3', finalLoc: 'BIN01', status: 'Ready' },
@@ -14,9 +14,10 @@ interface OrderReleaseTabProps {
   order: any;
   onReviewWithheld: () => void;
   onBack: () => void;
+  onComplete: () => void;
 }
 
-const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithheld, onBack }) => {
+const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithheld, onBack, onComplete }) => {
   const [selectedLots, setSelectedLots] = useState<Set<string>>(new Set(MOCK_LOTS.map(l => l.id)));
   const [withheldCount, setWithheldCount] = useState(0);
 
@@ -197,7 +198,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
               Review Withheld Lots <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} />
             </button>
           ) : (
-            <button className="btn btn-primary" style={{ padding: '0.75rem 3rem', borderRadius: '0.5rem' }}>
+            <button onClick={onComplete} className="btn btn-primary" style={{ padding: '0.75rem 3rem', borderRadius: '0.5rem' }}>
               Complete Release
             </button>
           )}

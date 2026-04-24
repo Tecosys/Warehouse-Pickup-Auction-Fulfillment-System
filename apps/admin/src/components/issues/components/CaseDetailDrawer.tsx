@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Plus, Printer, Send, MessageSquare, Clock, User, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, Plus, Send, MessageSquare, Clock, User, CheckCircle2 } from 'lucide-react';
 
 interface CaseDetailDrawerProps {
   isOpen: boolean;

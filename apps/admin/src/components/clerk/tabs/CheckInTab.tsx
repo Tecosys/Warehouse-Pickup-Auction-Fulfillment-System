@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Clock, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Clock } from 'lucide-react';
 
 const MOCK_CHECKED_IN = [
   { id: '1', bidderNum: '#4492', customer: 'Dominic Santoro', items: 14, total: '$1,240.00', slot: '10:15 AM', status: 'LATE', fulfillment: 'Ready', customerStatus: 'Checked In' },

@@ -1,19 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Plus, 
   Search, 
-  ArrowLeft, 
   MoreVertical, 
-  Download, 
   CheckCircle2, 
   XCircle, 
   AlertCircle,
-  FileText,
-  Truck,
-  MessageSquare,
-  Clock,
-  ExternalLink,
-  History
+  ExternalLink
 } from 'lucide-react';
 import AuctionRunDetail from './AuctionRunDetail';
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { CheckCircle2, X, Printer } from 'lucide-react';
+import { CheckCircle2, Printer } from 'lucide-react';
 
 interface ReleaseConfirmationModalProps {
   isOpen: boolean;

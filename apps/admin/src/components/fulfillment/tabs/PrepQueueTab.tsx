@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Package, ChevronRight, Clock, AlertTriangle, CheckCircle2, MoreVertical, LayoutGrid, List } from 'lucide-react';
+import { useState } from 'react';
+import { Package, ChevronRight, Clock, AlertTriangle, LayoutGrid } from 'lucide-react';
 
 const MOCK_ORDERS = [
   { id: 'ORD-8821', bidder: '8821', customer: 'Sarah O\'Connor', status: 'In Progress', customerStatus: 'Checked In', isWalkIn: true, appointment: 'WALK-IN', lots: 12, puCount: 8, binCount: 4, storageRange: 'A2–B06', auction: 'Auction 31' },

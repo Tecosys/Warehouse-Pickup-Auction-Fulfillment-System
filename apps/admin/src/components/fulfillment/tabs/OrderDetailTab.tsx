@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Printer, ScanLine, CheckCircle2, AlertTriangle, MoreVertical, Flag, Edit2, X, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Printer, ScanLine, CheckCircle2, MoreVertical, Flag, X } from 'lucide-react';
 import { NotFoundModal, IssueModal, CompletionModal } from '../components/FulfillmentModals';
 
 const MOCK_LOTS = [

@@ -1,24 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
-  Send, 
-  History, 
-  Settings2, 
   ChevronDown, 
   Search, 
   Filter, 
   Download, 
   CheckCircle2, 
   Clock, 
-  AlertCircle,
-  MoreVertical,
   Mail,
   Smartphone,
   Edit2,
-  ExternalLink,
-  ChevronRight,
-  UserCheck,
-  MessageSquare,
-  Package,
   Gavel,
   X
 } from 'lucide-react';

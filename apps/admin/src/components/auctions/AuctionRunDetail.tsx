@@ -1,13 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   ArrowLeft, 
-  Settings, 
-  ChevronRight, 
   Search, 
   Filter,
   Download,
-  MoreVertical,
-  ExternalLink,
   AlertTriangle
 } from 'lucide-react';
 

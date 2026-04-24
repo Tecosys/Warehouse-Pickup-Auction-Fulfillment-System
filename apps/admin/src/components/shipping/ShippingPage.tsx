@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Package, Truck, CheckCircle2, ChevronDown } from 'lucide-react';
 import InQueueTab from './tabs/InQueueTab';
 import PreparedTab from './tabs/PreparedTab';

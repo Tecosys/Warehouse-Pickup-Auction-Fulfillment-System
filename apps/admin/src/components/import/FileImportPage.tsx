@@ -1,25 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-  FileUp, 
   CheckCircle2, 
-  AlertCircle, 
-  Clock, 
   Search, 
   ArrowRight,
-  Database,
   Users,
   Package,
   Send,
   ExternalLink,
   Loader2,
   X,
-  History,
   FileSpreadsheet,
   FileText,
   AlertTriangle
 } from 'lucide-react';
 
-const FileZone = ({ label, desc, required, file, onUpload, onError }: any) => (
+const FileZone = ({ label, desc, required, file, onUpload }: any) => (
   <div className={`card`} style={{ 
     textAlign: 'center', 
     border: file ? '2px solid var(--status-teal)' : '2px dashed var(--border-color)',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Filter, AlertTriangle, Plus } from 'lucide-react';
 import CasesTable from './components/CasesTable';
 import CaseDetailDrawer from './components/CaseDetailDrawer';

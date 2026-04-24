@@ -1,5 +1,4 @@
-import React from 'react';
-import { AlertTriangle, Flag, X, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;

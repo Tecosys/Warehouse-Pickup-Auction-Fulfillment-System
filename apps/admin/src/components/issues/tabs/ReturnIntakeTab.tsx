@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, ScanLine, Printer, AlertCircle, CheckCircle2, ArrowRight, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Search, ScanLine, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const ReturnIntakeTab = () => {
   const [step, setStep] = useState(1);

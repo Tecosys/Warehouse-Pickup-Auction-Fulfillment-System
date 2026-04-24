@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PrepQueueTab from './tabs/PrepQueueTab';
 import OrderDetailTab from './tabs/OrderDetailTab';
 

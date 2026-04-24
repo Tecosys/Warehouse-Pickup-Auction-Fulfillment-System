@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, ChevronDown, ChevronUp, Clock, CheckCircle2 } from 'lucide-react';
+import { useState, Fragment } from 'react';
+import { Download, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 
 const MOCK_DISPATCHED = [
   { id: '#BB-88190', bidderNum: '102', customer: 'Arthur Dent', items: 3, tracking: 'FEDEX-992182', dispatchedAt: 'Mar 08, 2024 4:30 PM', sentAt: 'Mar 08, 2024 4:35 PM' },
@@ -32,7 +32,7 @@ const DispatchedTab = () => {
           </thead>
           <tbody>
             {MOCK_DISPATCHED.map((order) => (
-              <React.Fragment key={order.id}>
+              <Fragment key={order.id}>
                 <tr 
                   onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
                   style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
@@ -86,7 +86,7 @@ const DispatchedTab = () => {
                     </td>
                   </tr>
                 )}
-              </React.Fragment>
+              </Fragment>
             ))}
           </tbody>
         </table>

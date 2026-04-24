@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Send, ExternalLink } from 'lucide-react';
 
 const MOCK_PREPARED = [
