@@ -107,19 +107,14 @@ function App() {
               <Menu size={24} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                <Activity size={18} />
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>System Load: 12%</span>
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-green)' }}>
+                <div className="status-dot pulse" style={{ background: 'var(--status-green)' }}></div>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: Active</span>
               </div>
             </div>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-              <Users size={18} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>8 Active</span>
-            </div>
-            <div className="desktop-only" style={{ height: '24px', width: '1px', background: 'var(--border-color)' }} />
             <button 
               className="btn" 
               style={{ border: 'none', padding: '0.25rem' }}
