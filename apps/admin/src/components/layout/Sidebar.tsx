@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   LayoutDashboard, 
   Gavel, 
@@ -8,10 +7,11 @@ import {
   Bell, 
   ClipboardList, 
   Truck, 
-  AlertCircle 
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 
-const Sidebar = ({ activeModule, onModuleChange }: any) => {
+const Sidebar = ({ activeModule, onModuleChange, onLogout }: any) => {
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { icon: <Gavel size={20} />, label: 'Auction Runs' },
@@ -44,14 +44,37 @@ const Sidebar = ({ activeModule, onModuleChange }: any) => {
         ))}
       </nav>
 
-      <div className="sidebar-footer">
+      <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e2e8f0' }} />
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Marcus V.</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Floor Manager</div>
           </div>
         </div>
+        <button 
+          onClick={onLogout}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem', 
+            width: '100%', 
+            padding: '0.5rem', 
+            background: 'none', 
+            border: 'none', 
+            color: 'var(--status-red)', 
+            fontSize: '0.875rem', 
+            fontWeight: 600, 
+            cursor: 'pointer',
+            borderRadius: '0.5rem',
+            transition: 'background 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+        >
+          <LogOut size={18} />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

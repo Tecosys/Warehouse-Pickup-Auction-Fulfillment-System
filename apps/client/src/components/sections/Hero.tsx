@@ -29,9 +29,9 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 animate-fade-up opacity-0" style={{ animationDelay: '1000ms', animationFillMode: 'forwards' }}>
-            <button className="btn-primary w-full sm:w-auto">
+            <Link href="https://warehouse-admin-tecosys.vercel.app" className="btn-primary w-full sm:w-auto flex items-center justify-center">
               Bid Now
-            </button>
+            </Link>
             <button className="btn-outline w-full sm:w-auto">
               Sell With Us
             </button>

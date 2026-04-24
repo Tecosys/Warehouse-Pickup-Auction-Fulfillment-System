@@ -61,9 +61,9 @@ export default function Navbar() {
           </div>
           
           <div className="mt-auto pt-12 border-t border-secondary/5">
-            <button className="btn-primary w-full py-5 text-xl shadow-xl">
+            <Link href="https://warehouse-admin-tecosys.vercel.app" className="btn-primary w-full py-5 text-xl shadow-xl flex items-center justify-center">
               Bid Now
-            </button>
+            </Link>
             <div className="mt-8 flex justify-center gap-8 text-secondary/40 font-medium">
               <span>Instagram</span>
               <span>LinkedIn</span>
@@ -106,9 +106,9 @@ export default function Navbar() {
 
           {/* CTA & Mobile Toggle */}
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block btn-primary py-2 px-6">
+            <Link href="https://warehouse-admin-tecosys.vercel.app" className="btn-primary py-2 px-6">
               Bid Now
-            </button>
+            </Link>
             
             <button 
               className="md:hidden p-2 text-secondary relative z-[10000]"

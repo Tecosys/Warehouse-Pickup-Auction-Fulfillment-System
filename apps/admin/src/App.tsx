@@ -39,8 +39,15 @@ const FooterBar = () => (
   </footer>
 );
 
+import LoginPage from './components/auth/LoginPage';
+
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentModule, setCurrentModule] = useState('Dashboard');
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   const renderContent = () => {
     switch (currentModule) {
@@ -74,7 +81,11 @@ function App() {
 
   return (
     <>
-      <Sidebar activeModule={currentModule} onModuleChange={setCurrentModule} />
+      <Sidebar 
+        activeModule={currentModule} 
+        onModuleChange={setCurrentModule} 
+        onLogout={() => setIsAuthenticated(false)}
+      />
       <div className="main-layout">
         <header className="header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
@@ -90,8 +101,13 @@ function App() {
               <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Workers: 8 Active</span>
             </div>
             <div style={{ height: '24px', width: '1px', background: 'var(--border-color)' }} />
-            <button className="btn" style={{ border: 'none', padding: '0.25rem' }}>
-              <ShieldCheck size={20} color="var(--text-muted)" />
+            <button 
+              className="btn" 
+              style={{ border: 'none', padding: '0.25rem' }}
+              onClick={() => setIsAuthenticated(false)}
+              title="Log Out"
+            >
+              <ShieldCheck size={20} color="var(--status-teal)" />
             </button>
           </div>
         </header>
