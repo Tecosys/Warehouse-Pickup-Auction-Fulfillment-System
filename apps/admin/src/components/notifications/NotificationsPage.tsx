@@ -20,9 +20,7 @@ import {
   MessageSquare,
   Package,
   Gavel,
-  X,
-  Type,
-  Eye
+  X
 } from 'lucide-react';
 
 const NotificationCard = ({ notification, onSend }: any) => (

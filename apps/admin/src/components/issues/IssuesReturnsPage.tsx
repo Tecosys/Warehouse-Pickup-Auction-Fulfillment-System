@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, AlertTriangle, ChevronRight, X, Plus, Printer, ArrowLeft, ScanLine } from 'lucide-react';
+import { Search, Filter, AlertTriangle, Plus } from 'lucide-react';
 import CasesTable from './components/CasesTable';
 import CaseDetailDrawer from './components/CaseDetailDrawer';
 import ReturnIntakeTab from './tabs/ReturnIntakeTab';

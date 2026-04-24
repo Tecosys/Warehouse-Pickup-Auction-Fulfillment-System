@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   List, 
@@ -6,15 +6,9 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Copy, 
-  Settings, 
   Search, 
   Filter, 
-  Download, 
   UserPlus,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
   MoreVertical,
   X,
   ChevronDown

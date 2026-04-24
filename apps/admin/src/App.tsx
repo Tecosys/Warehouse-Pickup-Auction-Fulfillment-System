@@ -7,6 +7,7 @@ import SlotManagementPage from './components/slots/SlotManagementPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
 import InventoryClerkPage from './components/clerk/InventoryClerkPage';
 import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
+import ShippingPage from './components/shipping/ShippingPage';
 import { Activity, Users, ShieldCheck } from 'lucide-react';
 
 const FooterBar = () => (
@@ -56,6 +57,8 @@ function App() {
         return <InventoryClerkPage />;
       case 'Issues / Returns':
         return <IssuesReturnsPage />;
+      case 'Shipping':
+        return <ShippingPage />;
       default:
         return (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
