@@ -9,7 +9,7 @@ import InventoryClerkPage from './components/clerk/InventoryClerkPage';
 import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
 import ShippingPage from './components/shipping/ShippingPage';
 import FulfillmentHubPage from './components/fulfillment/FulfillmentHubPage';
-import { Activity, Users, ShieldCheck, Menu } from 'lucide-react';
+import { ShieldCheck, Menu } from 'lucide-react';
 import LoginPage from './components/auth/LoginPage';
 
 const FooterBar = () => (
