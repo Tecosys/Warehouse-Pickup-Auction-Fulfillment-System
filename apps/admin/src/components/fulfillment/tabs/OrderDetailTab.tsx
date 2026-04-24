@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Printer, ScanLine, CheckCircle2, MoreVertical, Flag, X } from 'lucide-react';
-import { NotFoundModal, IssueModal, CompletionModal } from '../components/FulfillmentModals';
+import { NotFoundModal, IssueModal, CompletionModal, CancellationModal } from '../components/FulfillmentModals';
 
 const MOCK_LOTS = [
   { id: '112', desc: 'Samsung 65" 4K Smart TV', storage: 'A2', location: '', status: 'Pending', type: 'Sort (BIN)' },
@@ -51,32 +51,42 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   };
 
   const handlePrintSlip = () => {
-    const content = `
-BIDBOSS PREPARATION SLIP
-------------------------
-Auction: #31
-Bidder: #8821
-Customer: Sarah O'Connor
-Status: ${prepStatus}
-Booking Code: BB31-1221
-
-LOTS (Source Location Order):
-${lots.map(l => `[${l.storage}] Lot #${l.id} - ${l.desc}`).join('\n')}
-
-Prepared by: Marcus V.
-${new Date().toLocaleString()}
-    `;
-    alert("Sending to 80mm Thermal Printer...\n" + content);
+    window.print();
   };
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+      {/* Hidden Print Slip */}
+      <div className="print-slip">
+        <h1>BIDBOSS PREPARATION SLIP</h1>
+        <div style={{ marginBottom: '10px' }}>
+          <div>Auction: #31</div>
+          <div>Bidder: #8821</div>
+          <div>Customer: Sarah O'Connor</div>
+          <div>Status: {prepStatus}</div>
+          <div>Booking Code: BB31-1221</div>
+        </div>
+        <div style={{ borderTop: '1px solid black', paddingTop: '10px' }}>
+          <strong>LOTS (Source Order):</strong>
+          {lots.map(l => (
+            <div key={l.id} className="lot-line">
+              <span>[{l.storage}] Lot #{l.id}</span>
+              <span>{l.desc.substring(0, 20)}...</span>
+            </div>
+          ))}
+        </div>
+        <div className="footer">
+          Prepared by: Marcus V.<br />
+          {new Date().toLocaleString()}
+        </div>
+      </div>
       {/* Back & Print Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', background: 'white', borderBottom: '1px solid var(--border-color)' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-teal)', fontWeight: 700, cursor: 'pointer' }}>
           <ArrowLeft size={18} /> Back to Prep Queue
         </button>
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn" onClick={() => setActiveModal('Cancel')} style={{ padding: '0.5rem 1rem', color: 'var(--status-red)', borderColor: 'var(--status-red)' }}>Cancel Order</button>
           <button className="btn" onClick={handlePrintSlip} style={{ padding: '0.5rem 1rem' }}><Printer size={18} /> Print Prep Slip</button>
           {prepStatus !== 'Ready' && (
             <button 
@@ -292,6 +302,7 @@ ${new Date().toLocaleString()}
       <NotFoundModal isOpen={activeModal === 'NotFound'} onClose={() => setActiveModal(null)} onConfirm={() => setActiveModal(null)} />
       <IssueModal isOpen={activeModal === 'Issue'} onClose={() => setActiveModal(null)} onConfirm={() => setActiveModal(null)} />
       <CompletionModal isOpen={activeModal === 'Complete'} onClose={() => setActiveModal(null)} onConfirm={() => { setActiveModal(null); onBack(); }} flaggedCount={flaggedCount} />
+      <CancellationModal isOpen={activeModal === 'Cancel'} onClose={() => setActiveModal(null)} onConfirm={() => { setActiveModal(null); onBack(); }} />
     </div>
   );
 };

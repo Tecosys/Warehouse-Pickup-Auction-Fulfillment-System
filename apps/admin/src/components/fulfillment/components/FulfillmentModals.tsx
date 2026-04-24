@@ -84,3 +84,27 @@ export const CompletionModal = ({ isOpen, onClose, onConfirm, flaggedCount }: an
     )}
   </Modal>
 );
+export const CancellationModal = ({ isOpen, onClose, onConfirm }: any) => (
+  <Modal 
+    isOpen={isOpen} 
+    onClose={onClose} 
+    onConfirm={onConfirm} 
+    title="Cancel Order"
+    confirmText="Confirm Cancellation"
+    confirmColor="var(--status-red)"
+  >
+    <div style={{ marginBottom: '1rem' }}>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Cancellation Reason</label>
+      <select style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>
+        <option>Customer Forfeited (Sat 3PM)</option>
+        <option>Admin Override</option>
+        <option>Customer Request</option>
+        <option>Duplicate Order</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+      Cancelling will mark all items as returned to stock and notify the customer. This action is tracked internally.
+    </p>
+  </Modal>
+);

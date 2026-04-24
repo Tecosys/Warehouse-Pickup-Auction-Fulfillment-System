@@ -38,10 +38,38 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const selectAll = () => setSelectedLots(new Set(MOCK_LOTS.map(l => l.id)));
   const deselectAll = () => setSelectedLots(new Set());
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!order) return <div style={{ padding: '4rem', textAlign: 'center' }}>No order selected. Please go back to search.</div>;
 
   return (
     <div className="animate-fade" style={{ paddingBottom: '100px' }}>
+      {/* Hidden Print Slip */}
+      <div className="print-slip">
+        <h1>ORDER RELEASE CONFIRMATION</h1>
+        <div style={{ marginBottom: '10px' }}>
+          <div>Auction: #31</div>
+          <div>Bidder: {order.bidderNum}</div>
+          <div>Customer: {order.customer}</div>
+          <div>Appointment: {order.slot || '10:22 AM'}</div>
+          <div>Booking Code: ABC-123-XYZ</div>
+        </div>
+        <div style={{ borderTop: '1px solid black', paddingTop: '10px' }}>
+          <strong>RELEASED LOTS:</strong>
+          {MOCK_LOTS.filter(l => selectedLots.has(l.id)).map(l => (
+            <div key={l.id} className="lot-line">
+              <span>Lot #{l.lotNum}</span>
+              <span>{l.finalLoc}</span>
+            </div>
+          ))}
+        </div>
+        <div className="footer">
+          Released by: Marcus Chen<br />
+          {new Date().toLocaleString()}
+        </div>
+      </div>
       <button 
         onClick={onBack}
         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '1.5rem', fontWeight: 600 }}
@@ -97,7 +125,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <button className="btn" style={{ width: '100%', justifyContent: 'center' }}>
+            <button onClick={handlePrint} className="btn" style={{ width: '100%', justifyContent: 'center' }}>
               <Printer size={18} />
               Print Pickup Summary
             </button>

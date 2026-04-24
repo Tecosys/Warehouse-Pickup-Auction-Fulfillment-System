@@ -56,7 +56,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filter By:</span>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            {['Today\'s Slot', 'VIP Bidders', 'Past Due Only', 'Palletized Orders'].map(filter => (
+            {['Today\'s Slot', 'Past Due Only'].map(filter => (
               <button key={filter} className="btn" style={{ fontSize: '0.875rem', borderRadius: '2rem', padding: '0.4rem 1.25rem' }}>
                 {filter}
               </button>

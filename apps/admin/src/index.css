@@ -332,3 +332,43 @@ tr:hover td {
     min-width: 600px; /* Ensure table doesn't squash too much */
   }
 }
+
+/* Print Styles for Thermal Printers */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-slip, .print-slip * {
+    visibility: visible;
+  }
+  .print-slip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10pt;
+    line-height: 1.2;
+    padding: 2mm;
+    color: black;
+  }
+  .print-slip h1, .print-slip h2 {
+    font-size: 12pt;
+    margin: 5px 0;
+    text-align: center;
+    border-bottom: 1px dashed black;
+    padding-bottom: 5px;
+  }
+  .print-slip .lot-line {
+    margin: 3px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  .print-slip .footer {
+    margin-top: 10px;
+    border-top: 1px dashed black;
+    padding-top: 5px;
+    text-align: center;
+    font-size: 8pt;
+  }
+}
