@@ -173,7 +173,20 @@ const NotificationsPage = () => {
     { id: '12', name: 'Review Request', desc: 'Sent after pickup if no open cases', trigger: 'Auto', status: 'Sent', recipients: '38 sends' },
     { id: '13', name: 'Tracking Notification', desc: 'Order shipped with tracking number', trigger: 'Manual/Batch', status: 'Sent', recipients: '212 sends' },
   ];
-
+  const groupedNotifications = [
+    {
+      title: 'Phase 1: Initial Outreach & Booking',
+      items: [notifications[0], notifications[6], notifications[2], notifications[3], notifications[1]]
+    },
+    {
+      title: 'Phase 2: Reminders & Enforcement',
+      items: [notifications[4], notifications[5], notifications[7], notifications[8]]
+    },
+    {
+      title: 'Phase 3: Fulfillment & Post-Pickup',
+      items: [notifications[12], notifications[9], notifications[11], notifications[10]]
+    }
+  ];
   const templates = [
     ...notifications,
     { id: 'MKT', name: 'Weekly Catalogue Reminder', desc: 'Marketing blast for new auction catalogue', trigger: 'Manual', status: '-', recipients: '-' }
@@ -207,8 +220,15 @@ const NotificationsPage = () => {
       {activeTab === 'Send Notifications' && (
         <>
           <div className="notification-list">
-            {notifications.map(n => (
-              <NotificationCard key={n.id} notification={n} onSend={setShowSendModal} />
+            {groupedNotifications.map(group => (
+              <div key={group.title} style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  {group.title}
+                </h3>
+                {group.items.map(n => (
+                  <NotificationCard key={n.id} notification={n} onSend={setShowSendModal} />
+                ))}
+              </div>
             ))}
           </div>
           <div className="card" style={{ marginTop: '3rem', border: '1px dashed var(--border-color)', background: '#f8fafc' }}>

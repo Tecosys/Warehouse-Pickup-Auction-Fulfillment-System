@@ -78,8 +78,8 @@ const PostImportSuccess = ({ run, onReset, onNavigate }: any) => (
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <button className="btn btn-primary" style={{ padding: '1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-          <Send size={20} /> Send Batch Notification
+        <button className="btn btn-primary" style={{ padding: '1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: 'var(--status-teal)' }}>
+          <Send size={20} /> Send Initial Customer Links
         </button>
         <button className="btn" style={{ padding: '1rem', fontWeight: 600 }}>
           Send One by One (Manual Review)
@@ -117,10 +117,10 @@ const FileImportPage = ({ onNavigate }: any) => {
       p += 5;
       setImportProgress(p);
       if (p < 20) setStatusMsg('Validating file structures...');
-      else if (p < 40) setStatusMsg('Creating order records (412/1284)...');
-      else if (p < 60) setStatusMsg('Matching bidder details...');
-      else if (p < 80) setStatusMsg('Saving lot storage locations...');
-      else if (p < 100) setStatusMsg('Finalizing auction run ID-2024-043...');
+      else if (p < 40) setStatusMsg('Creating Auction Run...');
+      else if (p < 60) setStatusMsg('Matching bidder details & creating lots...');
+      else if (p < 80) setStatusMsg('Generating order records (412/1284)...');
+      else if (p < 100) setStatusMsg('Finalizing import details...');
       
       if (p >= 100) {
         clearInterval(interval);
@@ -171,28 +171,10 @@ const FileImportPage = ({ onNavigate }: any) => {
         <div className="new-import-flow">
           {step === 0 && (
             <>
-              {/* Step 1: Run Setup */}
+              {/* Step 1: Upload Files */}
               <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--status-teal)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</div>
-                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Link to Auction Run</h3>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', paddingLeft: '2.5rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>AUCTION NUMBER</label>
-                    <input type="text" className="card" placeholder="e.g. 043" style={{ width: '100%', padding: '0.75rem' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>AUCTION TITLE</label>
-                    <input type="text" className="card" placeholder="e.g. Summer Sports Memorabilia" style={{ width: '100%', padding: '0.75rem' }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 2: Upload Files */}
-              <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--status-teal)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</div>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Source Data Files</h3>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', paddingLeft: '2.5rem' }}>

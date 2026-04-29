@@ -151,11 +151,10 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
           </div>
         </div>
 
-        {/* Right Column - Lot Release Panel */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--status-teal)', boxShadow: '0 4px 6px -1px rgba(13, 148, 136, 0.1)' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdfa' }}>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>
-              {MOCK_LOTS.length} Lots — <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span> — {withheldCount} Withheld
+              {MOCK_LOTS.length} Lots — <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span> — <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'inherit' }}>{withheldCount} Withheld</span>
             </h2>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <button onClick={selectAll} className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-teal)', fontSize: '0.875rem', fontWeight: 600 }}>Select All</button>
@@ -255,8 +254,9 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
           bottom: var(--footer-height);
           left: var(--sidebar-width);
           right: 0;
-          background: white;
-          border-top: 1px solid var(--border-color);
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(0,0,0,0.05);
           padding: 1.25rem 2.5rem;
           display: flex;
           justify-content: space-between;

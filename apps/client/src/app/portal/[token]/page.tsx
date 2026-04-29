@@ -34,7 +34,7 @@ export default function CustomerPortal({ params }: { params: { token: string } }
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-[#f9fafb]">
       {/* Top Bar */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -98,8 +98,8 @@ export default function CustomerPortal({ params }: { params: { token: string } }
         {/* Action Section */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Pickup Card */}
-          <div className={`bg-white rounded-2xl border-2 p-8 transition-all ${
-            isBooked ? 'border-[#0d9488]' : 'border-transparent shadow-sm hover:shadow-md'
+          <div className={`bg-white rounded-3xl border-2 p-8 transition-all duration-300 transform hover:-translate-y-1 ${
+            isBooked ? 'border-[#0d9488] shadow-lg shadow-teal-500/10' : 'border-transparent shadow-md hover:shadow-xl hover:border-teal-500/20'
           }`}>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 ${
               isBooked ? 'bg-teal-50 text-[#0d9488]' : 'bg-gray-50 text-gray-400'
@@ -157,7 +157,8 @@ export default function CustomerPortal({ params }: { params: { token: string } }
         </div>
 
         {/* Authorized Pickup Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-3xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-gray-900">Authorized Pickup Person</h3>
