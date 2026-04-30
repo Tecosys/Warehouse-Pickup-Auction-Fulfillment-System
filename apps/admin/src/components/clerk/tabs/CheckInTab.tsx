@@ -1,17 +1,5 @@
-import { useState } from 'react';
-import { Search, Clock } from 'lucide-react';
-
-const MOCK_CHECKED_IN = [
-  { id: '1', bidderNum: '#4492', customer: 'Dominic Santoro', items: 14, total: '$1,240.00', slot: '10:15 AM', status: 'LATE', fulfillment: 'Ready', customerStatus: 'Checked In' },
-  { id: '2', bidderNum: '#9102', customer: 'Sarah McAllister', items: 3, total: '$425.00', slot: '10:45 AM', fulfillment: 'Ready', customerStatus: 'Checked In' },
-  { id: '3', bidderNum: '#2231', customer: 'Robert J. Vance', items: 32, total: '$8,910.00', slot: '11:00 AM', fulfillment: 'Ready', customerStatus: 'Checked In' },
-];
-
-const MOCK_AWAITING = [
-  { id: '4', bidderNum: '#5512', customer: 'Elena Rodriguez', items: 6, status: 'Unpaid', slot: '11:15 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-  { id: '5', bidderNum: '#3381', customer: 'Kevin O\'Shea', items: 1, status: 'Paid', slot: '11:30 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-  { id: '6', bidderNum: '#8827', customer: 'Linda Wu-Stevens', items: 19, status: 'Paid', slot: '11:30 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-];
+import { useState, useEffect } from 'react';
+import { Search, Clock, Loader2 } from 'lucide-react';
 
 interface CheckInTabProps {
   onOpenRelease: (order: any) => void;
@@ -19,6 +7,65 @@ interface CheckInTabProps {
 
 const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [checkedInOrders, setCheckedInOrders] = useState<any[]>([]);
+  const [awaitingOrders, setAwaitingOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const fetchSummary = async () => {
+    try {
+      setIsLoading(true);
+      // In a real app, we'd have a specific summary endpoint
+      // For now, search all and filter locally for the dashboard view
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/search?q= `);
+      const data = await response.json();
+      
+      setCheckedInOrders(data.filter((o: any) => o.customerStatus === 'Checked In'));
+      setAwaitingOrders(data.filter((o: any) => o.customerStatus === 'Booked'));
+    } catch (error) {
+      console.error("Fetch summary failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setIsSearching(false);
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/search?q=${searchQuery}`);
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Search failed", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCheckIn = async (orderId: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}/check-in`, {
+        method: 'PATCH'
+      });
+      if (response.ok) {
+        fetchSummary();
+        handleSearch();
+      }
+    } catch (error) {
+      console.error("Check-in failed", error);
+    }
+  };
 
   return (
     <div className="animate-fade">
@@ -35,6 +82,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               placeholder="Search by customer name, bidder number, or booking code..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               style={{
                 width: '100%',
                 padding: '1rem 1rem 1rem 3.5rem',
@@ -48,21 +96,39 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
             />
           </div>
-          <button className="btn btn-primary" style={{ padding: '0 2.5rem', borderRadius: '0.75rem', fontSize: '1.125rem' }}>
+          <button 
+            onClick={handleSearch} 
+            disabled={isSearching}
+            className="btn btn-primary" 
+            style={{ padding: '0 2.5rem', borderRadius: '0.75rem', fontSize: '1.125rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            {isSearching && <Loader2 size={18} className="animate-spin" />}
             Search
           </button>
         </div>
         
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filter By:</span>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            {['Today\'s Slot', 'Past Due Only'].map(filter => (
-              <button key={filter} className="btn" style={{ fontSize: '0.875rem', borderRadius: '2rem', padding: '0.4rem 1.25rem' }}>
-                {filter}
-              </button>
-            ))}
+        {searchResults.length > 0 && (
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>Search Results</h3>
+            <div className="search-results-grid" style={{ display: 'grid', gap: '1rem' }}>
+              {searchResults.map(order => (
+                <div key={order._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>{order.customer?.name} <span style={{ color: 'var(--status-teal)', marginLeft: '0.5rem' }}>#{order.bidderNumber}</span></div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status: {order.customerStatus} • Booking: {order.bookingCode || 'N/A'}</div>
+                  </div>
+                  <div>
+                    {order.customerStatus === 'Checked In' ? (
+                      <button onClick={() => onOpenRelease(order)} className="btn btn-primary" style={{ background: 'var(--status-teal)' }}>Open Release</button>
+                    ) : (
+                      <button onClick={() => handleCheckIn(order._id)} className="btn">Check In</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
@@ -75,7 +141,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               </div>
               <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Checked-in Today</h2>
             </div>
-            <span className="badge badge-teal">12 ACTIVE</span>
+            <span className="badge badge-teal">{checkedInOrders.length} ACTIVE</span>
           </div>
           
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -83,30 +149,20 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bidder #</th>
                 <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Slot</th>
                 <th style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {MOCK_CHECKED_IN.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.125rem' }}>{order.bidderNum}</td>
+              {isLoading ? (
+                <tr><td colSpan={3} style={{ padding: '2rem', textAlign: 'center' }}><Loader2 className="animate-spin" style={{ margin: '0 auto' }} /></td></tr>
+              ) : checkedInOrders.length === 0 ? (
+                <tr><td colSpan={3} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No one checked in yet.</td></tr>
+              ) : checkedInOrders.map((order) => (
+                <tr key={order._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.125rem' }}>#{order.bidderNumber}</td>
                   <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontWeight: 600 }}>{order.customer}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.items} Items • {order.total}</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '0.25rem', 
-                      background: order.status === 'LATE' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                      color: order.status === 'LATE' ? 'var(--status-red)' : 'var(--status-green)',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      display: 'inline-block'
-                    }}>
-                      {order.slot} {order.status && `(${order.status})`}
-                    </div>
+                    <div style={{ fontWeight: 600 }}>{order.customer?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.appointmentTime ? new Date(order.appointmentTime).toLocaleTimeString() : 'No Appt'}</div>
                   </td>
                   <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                     <button 
@@ -137,7 +193,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               </div>
               <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Awaiting Arrival Today</h2>
             </div>
-            <span className="badge badge-gray">28 REMAINING</span>
+            <span className="badge badge-gray">{awaitingOrders.length} REMAINING</span>
           </div>
           
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -145,23 +201,23 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bidder #</th>
                 <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Est. Time</th>
                 <th style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {MOCK_AWAITING.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)' }}>{order.bidderNum}</td>
+              {isLoading ? (
+                <tr><td colSpan={3} style={{ padding: '2rem', textAlign: 'center' }}><Loader2 className="animate-spin" style={{ margin: '0 auto' }} /></td></tr>
+              ) : awaitingOrders.length === 0 ? (
+                <tr><td colSpan={3} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No scheduled arrivals.</td></tr>
+              ) : awaitingOrders.map((order) => (
+                <tr key={order._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)' }}>#{order.bidderNumber}</td>
                   <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontWeight: 600 }}>{order.customer}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.items} Items • {order.status}</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{order.slot}</div>
+                    <div style={{ fontWeight: 600 }}>{order.customer?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.appointmentTime ? new Date(order.appointmentTime).toLocaleTimeString() : 'No Appt'}</div>
                   </td>
                   <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                    <button className="btn" style={{ padding: '0.5rem 1.5rem' }}>
+                    <button onClick={() => handleCheckIn(order._id)} className="btn" style={{ padding: '0.5rem 1.5rem' }}>
                       Check In
                     </button>
                   </td>
@@ -169,11 +225,6 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               ))}
             </tbody>
           </table>
-          <div style={{ padding: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--border-color)' }}>
-            <button className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-teal)', fontSize: '0.875rem' }}>
-              View All 28 Scheduled Arrivals
-            </button>
-          </div>
         </div>
       </div>
     </div>
