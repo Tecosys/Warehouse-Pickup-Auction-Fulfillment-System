@@ -24,31 +24,6 @@ const InventoryClerkPage = () => {
     setActiveTab('Partial Release');
   };
 
-  const handleCompleteRelease = async (lotOutcomes: any) => {
-    if (!selectedOrder) return;
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${selectedOrder._id}/release`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clerkName: 'Marcus Chen', // In a real app, this comes from auth context
-          lotOutcomes
-        })
-      });
-
-      if (response.ok) {
-        setConfirmType(Object.values(lotOutcomes).includes('Not Found') || Object.values(lotOutcomes).includes('Refused') ? 'partial' : 'full');
-        setIsConfirmModalOpen(true);
-      } else {
-        alert("Failed to release order. Please try again.");
-      }
-    } catch (error) {
-      console.error("Release failed", error);
-      alert("An error occurred during release.");
-    }
-  };
-
   return (
     <div className="inventory-clerk-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
@@ -96,14 +71,20 @@ const InventoryClerkPage = () => {
             order={selectedOrder} 
             onReviewWithheld={handleReviewWithheld} 
             onBack={() => setActiveTab('Check-in & Search')}
-            onComplete={handleCompleteRelease}
+            onComplete={() => {
+              setConfirmType('full');
+              setIsConfirmModalOpen(true);
+            }}
           />
         )}
         {activeTab === 'Partial Release' && (
           <PartialReleaseTab 
             order={selectedOrder} 
             onBack={() => setActiveTab('Order Release')}
-            onComplete={handleCompleteRelease}
+            onComplete={() => {
+              setConfirmType('partial');
+              setIsConfirmModalOpen(true);
+            }}
           />
         )}
       </div>

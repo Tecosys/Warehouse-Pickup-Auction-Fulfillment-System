@@ -9,12 +9,9 @@ export interface IOrder extends Document {
   customerStatus: 'Awaiting Choice' | 'Booked' | 'Checked In' | 'Picked Up' | 'Shipping Selected' | 'Cancelled';
   appointmentTime?: Date;
   isCheckedIn: boolean;
-  checkInTimestamp?: Date;
   workerName?: string;
-  clerkName?: string;
   startTimestamp?: Date;
   completeTimestamp?: Date;
-  pickupTimestamp?: Date;
 }
 
 const OrderSchema: Schema = new Schema({
@@ -34,12 +31,9 @@ const OrderSchema: Schema = new Schema({
   },
   appointmentTime: { type: Date },
   isCheckedIn: { type: Boolean, default: false },
-  checkInTimestamp: { type: Date },
   workerName: { type: String },
-  clerkName: { type: String },
   startTimestamp: { type: Date },
-  completeTimestamp: { type: Date },
-  pickupTimestamp: { type: Date }
+  completeTimestamp: { type: Date }
 });
 
 export default mongoose.model<IOrder>('Order', OrderSchema);
