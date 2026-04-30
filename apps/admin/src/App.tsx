@@ -116,18 +116,13 @@ function App() {
         onClose={() => setIsSidebarOpen(false)}
         activeModule={currentModule} 
         user={user}
-        <Sidebar 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          activeModule={currentModule} 
-          user={user}
-          onModuleChange={(module: string) => {
-            setCurrentModule(module);
-            sessionStorage.setItem('bidboss_module', module);
-            setIsSidebarOpen(false); // Close sidebar on mobile after selection
-          }} 
-          onLogout={handleLogout}
-        />
+        onModuleChange={(module: string) => {
+          setCurrentModule(module);
+          sessionStorage.setItem('bidboss_module', module);
+          setIsSidebarOpen(false); // Close sidebar on mobile after selection
+        }} 
+        onLogout={handleLogout}
+      />
         
         <div className="main-layout">
           <header className="header">
