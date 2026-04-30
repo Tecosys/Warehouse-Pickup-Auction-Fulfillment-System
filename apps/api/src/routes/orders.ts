@@ -48,7 +48,24 @@ router.post('/:id/book', async (req: any, res: any) => {
     const { slotId } = req.body;
     const orderId = req.params.id;
 
-    // 1. Find and update slot atomically if capacity remains
+    // 1. Check if rescheduling is allowed (2-hour rule)
+    const existingOrder = await Order.findById(orderId);
+    if (existingOrder && existingOrder.appointmentTime) {
+      const now = new Date();
+      const diffMs = existingOrder.appointmentTime.getTime() - now.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      
+      if (diffHours < 2) {
+        throw new Error('Rescheduling is only allowed up to 2 hours before your appointment.');
+      }
+
+      // If rescheduling, decrement current slot
+      if (existingOrder.selectedSlot) {
+        await Slot.findByIdAndUpdate(existingOrder.selectedSlot, { $inc: { currentBookings: -1 } }, { session });
+      }
+    }
+
+    // 2. Find and update new slot atomically if capacity remains
     const slot = await Slot.findOneAndUpdate(
       { _id: slotId, $expr: { $lt: ["$currentBookings", "$maxCapacity"] } },
       { $inc: { currentBookings: 1 } },

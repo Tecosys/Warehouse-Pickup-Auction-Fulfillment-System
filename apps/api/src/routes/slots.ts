@@ -54,4 +54,40 @@ router.post('/initialize', async (req: any, res: any) => {
   }
 });
 
+// Clone slots from a previous auction run
+router.post('/clone', async (req: any, res: any) => {
+  try {
+    const { fromAuctionRunId, toAuctionRunId, newDates } = req.body;
+    
+    // 1. Get original slots
+    const originalSlots = await Slot.find({ auctionRun: fromAuctionRunId }).sort({ date: 1, startTime: 1 });
+    if (originalSlots.length === 0) throw new Error('No slots found to clone');
+
+    // 2. Map original slots to new dates
+    // Assuming the number of unique dates in original match the newDates array
+    const originalDates = [...new Set(originalSlots.map(s => s.date))].sort();
+    
+    const slotsToCreate = [];
+    for (let i = 0; i < newDates.length; i++) {
+      const newDate = newDates[i];
+      const matchingSlots = originalSlots.filter(s => s.date === originalDates[i % originalDates.length]);
+      
+      for (const s of matchingSlots) {
+        slotsToCreate.push({
+          auctionRun: toAuctionRunId,
+          date: newDate,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          maxCapacity: s.maxCapacity
+        });
+      }
+    }
+
+    await Slot.insertMany(slotsToCreate, { ordered: false }).catch(() => {});
+    res.json({ success: true, count: slotsToCreate.length });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
