@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { 
   CheckCircle2, 
-  Search, 
   ArrowRight,
   Users,
   Package,

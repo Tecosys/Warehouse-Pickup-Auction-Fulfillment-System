@@ -30,7 +30,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
             }
             onClose();
           },
-          (errorMessage) => {
+          () => {
             // parse error, ignore
           }
         );

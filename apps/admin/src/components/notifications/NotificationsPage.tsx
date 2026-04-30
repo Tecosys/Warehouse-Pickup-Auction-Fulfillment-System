@@ -10,8 +10,7 @@ import {
   Smartphone,
   Edit2,
   Gavel,
-  X,
-  AlertCircle
+  X
 } from 'lucide-react';
 
 const NotificationCard = ({ notification, onSend }: any) => (
