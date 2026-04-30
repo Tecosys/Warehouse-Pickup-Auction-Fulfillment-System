@@ -2,18 +2,27 @@ import React, { useState } from 'react';
 import { Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 interface LoginPageProps {
-  onLogin: (password: string) => void;
+  onLogin: (userData: { role: string; name: string; title: string }) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
 
+  const MOCK_USERS: Record<string, { pass: string; role: string; name: string; title: string }> = {
+    'admin': { pass: 'admin123', role: 'Admin', name: 'Marcus V.', title: 'Floor Manager' },
+    'worker': { pass: 'worker123', role: 'Worker', name: 'Sarah J.', title: 'Fulfillment Specialist' },
+    'clerk': { pass: 'clerk123', role: 'Clerk', name: 'David M.', title: 'Inventory Clerk' },
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') { // Simple demo password
-      onLogin(password);
+    const user = MOCK_USERS[username.toLowerCase()];
+    
+    if (user && user.pass === password) {
+      onLogin({ role: user.role, name: user.name, title: user.title });
     } else {
       setError(true);
       setTimeout(() => setError(false), 2000);
@@ -50,10 +59,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div style={{ position: 'relative' }}>
               <input 
                 type="text" 
-                defaultValue="admin"
-                readOnly
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin, worker, or clerk"
                 className="card"
-                style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', outline: 'none', background: '#f1f5f9' }}
+                style={{ 
+                  width: '100%', 
+                  padding: '0.75rem 1rem 0.75rem 2.5rem', 
+                  outline: 'none',
+                  borderColor: error ? 'var(--status-red)' : 'var(--border-color)',
+                }}
               />
               <User size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
@@ -75,7 +90,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   borderColor: error ? 'var(--status-red)' : 'var(--border-color)',
                   transition: 'border-color 0.2s'
                 }}
-                autoFocus
               />
               <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <button 
@@ -86,7 +100,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {error && <p style={{ color: 'var(--status-red)', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 600 }}>Incorrect password. Please try again.</p>}
+            {error && <p style={{ color: 'var(--status-red)', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 600 }}>Invalid credentials. Try admin, worker, or clerk.</p>}
           </div>
 
           <button 
@@ -100,7 +114,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Forgot password? Contact system administrator.
+            Demo Passwords: <span style={{ fontWeight: 600 }}>admin123, worker123, clerk123</span>
           </p>
         </div>
       </div>

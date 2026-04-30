@@ -38,16 +38,28 @@ const FooterBar = () => (
 );
 
 function App() {
-  // Set to true to bypass login for now as requested
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [user, setUser] = useState<{ role: string; name: string; title: string } | null>(null);
   const [currentModule, setCurrentModule] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  const handleLogin = (userData: { role: string; name: string; title: string }) => {
+    setUser(userData);
+    // Set initial module based on role
+    if (userData.role === 'Worker') {
+      setCurrentModule('Fulfillment Hub');
+    } else if (userData.role === 'Clerk') {
+      setCurrentModule('Inventory Clerk');
+    } else {
+      setCurrentModule('Dashboard');
+    }
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   const renderContent = () => {
+
     switch (currentModule) {
       case 'Dashboard':
         return <Dashboard />;
@@ -88,11 +100,12 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         activeModule={currentModule} 
+        user={user}
         onModuleChange={(module: string) => {
           setCurrentModule(module);
           setIsSidebarOpen(false); // Close sidebar on mobile after selection
         }} 
-        onLogout={() => setIsAuthenticated(false)}
+        onLogout={() => setUser(null)}
       />
       
       <div className="main-layout">
@@ -109,7 +122,7 @@ function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
               <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-green)' }}>
                 <div className="status-dot pulse" style={{ background: 'var(--status-green)' }}></div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: Active</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: {user.role} Portal</span>
               </div>
             </div>
           </div>
@@ -118,13 +131,14 @@ function App() {
             <button 
               className="btn" 
               style={{ border: 'none', padding: '0.25rem' }}
-              onClick={() => setIsAuthenticated(false)}
+              onClick={() => setUser(null)}
               title="Log Out"
             >
               <ShieldCheck size={20} color="var(--status-teal)" />
             </button>
           </div>
         </header>
+
 
         <main className="content animate-slide" key={currentModule}>
           {renderContent()}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Printer, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { Printer, AlertTriangle, ChevronLeft, ScanLine } from 'lucide-react';
 import ReceiptPreviewModal from '../../fulfillment/components/ReceiptPreviewModal';
+import QRScannerModal from '../../shared/QRScannerModal';
 
 const MOCK_LOTS = [
   { id: '1', lotNum: '594', description: 'Samsung 65" 4K Smart TV', sourceLoc: 'A-12-3', finalLoc: 'BIN01', status: 'Ready' },
@@ -22,6 +23,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const [selectedLots, setSelectedLots] = useState<Set<string>>(new Set(MOCK_LOTS.map(l => l.id)));
   const [withheldCount, setWithheldCount] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     setWithheldCount(MOCK_LOTS.length - selectedLots.size);
@@ -44,6 +46,25 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
     setIsPreviewOpen(true);
   };
 
+  const handleScanSuccess = (decodedText: string) => {
+    // In Release flow, scanning an item deselects it (marks it as withheld/exception)
+    const matchedLot = MOCK_LOTS.find(l => l.lotNum === decodedText);
+    if (matchedLot) {
+      const newSelected = new Set(selectedLots);
+      if (newSelected.has(matchedLot.id)) {
+        newSelected.delete(matchedLot.id);
+        setSelectedLots(newSelected);
+        alert(`Lot ${matchedLot.lotNum} deselected (marked as withheld).`);
+      } else {
+        newSelected.add(matchedLot.id);
+        setSelectedLots(newSelected);
+        alert(`Lot ${matchedLot.lotNum} re-selected.`);
+      }
+    } else {
+      alert(`No lot found with number: ${decodedText}`);
+    }
+  };
+
   if (!order) return <div style={{ padding: '4rem', textAlign: 'center' }}>No order selected. Please go back to search.</div>;
 
   return (
@@ -60,6 +81,13 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
           items: MOCK_LOTS.filter(l => selectedLots.has(l.id)).map(l => ({ id: l.lotNum, desc: l.description, loc: l.finalLoc })),
           worker: "Marcus Chen"
         }}
+      />
+
+      <QRScannerModal 
+        isOpen={isScannerOpen} 
+        onClose={() => setIsScannerOpen(false)} 
+        onScan={handleScanSuccess}
+        title="Scan to Select/Deselect Lot"
       />
 
       {/* Hidden Print Slip for actual browser printing */}
@@ -144,6 +172,10 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
             <button onClick={handlePrint} className="btn" style={{ width: '100%', justifyContent: 'center' }}>
               <Printer size={18} />
               Print Pickup Summary
+            </button>
+            <button onClick={() => setIsScannerOpen(true)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--status-teal)' }}>
+              <ScanLine size={18} />
+              Scan ManyFastScan QR
             </button>
             <button className="btn" style={{ width: '100%', justifyContent: 'center', color: 'var(--status-amber)', borderColor: 'var(--status-amber)' }}>
               Request Helper

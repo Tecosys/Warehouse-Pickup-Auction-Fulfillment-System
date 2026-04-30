@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ChevronDown, 
   Search, 
@@ -10,7 +10,8 @@ import {
   Smartphone,
   Edit2,
   Gavel,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 
 const NotificationCard = ({ notification, onSend }: any) => (
@@ -37,7 +38,7 @@ const NotificationCard = ({ notification, onSend }: any) => (
     </div>
 
     <div style={{ width: '120px', textAlign: 'right' }}>
-      {notification.trigger !== 'Auto' ? (
+      {notification.trigger.includes('Manual') ? (
         <button className="btn btn-primary" style={{ padding: '4px 12px', fontSize: '0.75rem' }} onClick={() => onSend(notification)}>
           Send Now
         </button>
@@ -48,45 +49,78 @@ const NotificationCard = ({ notification, onSend }: any) => (
   </div>
 );
 
-const SendModal = ({ notification, onClose }: any) => (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
-    <div className="card animate-slide" style={{ width: '600px', padding: '2rem' }} onClick={e => e.stopPropagation()}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Send: {notification.name}</h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Transactional Notification • SMS & Email</p>
+const SendModal = ({ notification, onClose }: any) => {
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSend = async () => {
+    setIsSending(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/notifications/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auctionRunId: '663123456789012345678901', // MOCK RUN ID
+          type: parseInt(notification.id)
+        })
+      });
+      if (response.ok) {
+        alert('Batch notification initiated successfully!');
+        onClose();
+      } else {
+        throw new Error('Failed to send');
+      }
+    } catch (e) {
+      alert('Error sending notifications. Ensure backend is running.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '600px', padding: '2rem' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Send: {notification.name}</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Transactional Notification • SMS & Email</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
-      </div>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.75rem' }}>RECIPIENT GROUP</label>
-        <select className="card" style={{ width: '100%', padding: '0.75rem' }}>
-          <option>All customers this auction (1,284)</option>
-          <option>Customers with no choice made (412)</option>
-          <option>Specific Bidder #</option>
-        </select>
-      </div>
-
-      <div className="card" style={{ background: '#f8fafc', padding: '1.5rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>PREVIEW</span>
-          <span style={{ fontSize: '0.625rem', fontWeight: 700, padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px' }}>SMS</span>
+        <div style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.75rem' }}>RECIPIENT GROUP</label>
+          <select className="card" style={{ width: '100%', padding: '0.75rem' }}>
+            <option>All customers this auction</option>
+            <option>Customers with no choice made</option>
+            <option>Specific Bidder #</option>
+          </select>
         </div>
-        <p style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>
-          "Congratulations on your winnings from Bid Boss Auction #043. Please use your link to choose Pickup or Shipping: https://portal.bidboss.ca/x/7k2j"
-        </p>
-      </div>
 
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <button className="btn btn-primary" style={{ flex: 1, padding: '1rem', fontSize: '1rem' }} onClick={onClose}>
-          Send to 1,284 Customers
-        </button>
-        <button className="btn" style={{ flex: 1, padding: '1rem' }} onClick={onClose}>Cancel</button>
+        <div className="card" style={{ background: '#f8fafc', padding: '1.5rem', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>PREVIEW</span>
+            <span style={{ fontSize: '0.625rem', fontWeight: 700, padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px' }}>SMS</span>
+          </div>
+          <p style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>
+            "Congratulations on your winnings from Bid Boss Auction #043. Please use your link to choose Pickup or Shipping: https://portal.bidboss.ca/order/ABC-123"
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn btn-primary" 
+            style={{ flex: 1, padding: '1rem', fontSize: '1rem', background: 'var(--status-teal)' }} 
+            onClick={handleSend}
+            disabled={isSending}
+          >
+            {isSending ? 'Sending...' : 'Confirm and Send Batch'}
+          </button>
+          <button className="btn" style={{ flex: 1, padding: '1rem' }} onClick={onClose}>Cancel</button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TemplateEditor = ({ template, onClose }: any) => (
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
@@ -157,6 +191,31 @@ const NotificationsPage = () => {
   const [activeTab, setActiveTab] = useState('Send Notifications');
   const [showSendModal, setShowSendModal] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState<any>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'Notification Log') {
+      fetchLogs();
+    }
+  }, [activeTab]);
+
+  const fetchLogs = async () => {
+    setIsLoadingLogs(true);
+    try {
+      // In a real app, we'd filter by auction run
+      const response = await fetch('http://localhost:5000/api/notifications/logs/all'); 
+      // Note: I'll need to add an "all logs" endpoint or mock this for the demo
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch logs');
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
 
   const notifications = [
     { id: '01', name: 'Initial Action Link', desc: 'Customer link to choose Pickup or Shipping', trigger: 'Manual/Batch', status: 'Not Sent', recipients: '1,284 customers' },
@@ -269,19 +328,19 @@ const NotificationsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {[
-                { time: '10:15 AM', type: 'Ready for Pickup', name: 'David Miller', bidder: '8221', channel: 'SMS', status: 'Sent' },
-                { time: '10:12 AM', type: 'Initial Action Link', name: 'Sarah Wilson', bidder: '7442', channel: 'Both', status: 'Sent' },
-                { time: '09:45 AM', type: 'Booking Conf.', name: 'James Chen', bidder: '9012', channel: 'Email', status: 'Failed' },
-              ].map((log, i) => (
+              {isLoadingLogs ? (
+                <tr><td colSpan={6} style={{ padding: '2rem', textAlign: 'center' }}><Clock className="pulse" /> Loading logs...</td></tr>
+              ) : logs.length === 0 ? (
+                <tr><td colSpan={6} style={{ padding: '2rem', textAlign: 'center' }}>No notification logs found.</td></tr>
+              ) : logs.map((log, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1rem' }}>Today, {log.time}</td>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>{log.type}</td>
-                  <td style={{ padding: '1rem' }}>{log.name}</td>
-                  <td style={{ padding: '1rem', fontWeight: 700 }}>{log.bidder}</td>
+                  <td style={{ padding: '1rem' }}>{new Date(log.createdAt).toLocaleString()}</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>Type #{log.type}</td>
+                  <td style={{ padding: '1rem' }}>{log.customer?.name || 'Unknown'}</td>
+                  <td style={{ padding: '1rem', fontWeight: 700 }}>{log.customer?.bidderNumber || 'N/A'}</td>
                   <td style={{ padding: '1rem', display: 'flex', gap: '8px' }}>
-                    {log.channel === 'Both' || log.channel === 'SMS' ? <Smartphone size={16} color="var(--text-muted)" /> : null}
-                    {log.channel === 'Both' || log.channel === 'Email' ? <Mail size={16} color="var(--text-muted)" /> : null}
+                    <Smartphone size={16} color="var(--text-muted)" />
+                    <Mail size={16} color="var(--text-muted)" />
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <span style={{ padding: '4px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '0.75rem', background: log.status === 'Sent' ? '#ccfbf1' : '#fef2f2', color: log.status === 'Sent' ? '#0d9488' : '#b91c1c' }}>{log.status}</span>

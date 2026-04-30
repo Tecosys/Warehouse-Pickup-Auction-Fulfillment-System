@@ -4,8 +4,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 
-// Load .env from root
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+import importRouter from './routes/import';
+import notificationRouter from './routes/notifications';
+import orderRouter from './routes/orders';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,6 +14,11 @@ const MONGODB_URI = process.env.DB_URI;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/import', importRouter);
+app.use('/api/notifications', notificationRouter);
+app.use('/api/orders', orderRouter);
 
 app.get('/', (req, res) => {
   res.send('Warehouse Pickup API is running');

@@ -12,18 +12,20 @@ import {
   X
 } from 'lucide-react';
 
-const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose }: any) => {
-  const menuItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { icon: <Gavel size={20} />, label: 'Auction Runs' },
-    { icon: <FileUp size={20} />, label: 'File Import' },
-    { icon: <ClipboardList size={20} />, label: 'Fulfillment Hub' },
-    { icon: <Settings2 size={20} />, label: 'Slot Management' },
-    { icon: <Bell size={20} />, label: 'Batch Notifications' },
-    { icon: <ClipboardList size={20} />, label: 'Inventory Clerk' },
-    { icon: <Truck size={20} />, label: 'Shipping' },
-    { icon: <AlertCircle size={20} />, label: 'Issues / Returns' },
+const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose, user }: any) => {
+  const allMenuItems = [
+    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['Admin'] },
+    { icon: <Gavel size={20} />, label: 'Auction Runs', roles: ['Admin'] },
+    { icon: <FileUp size={20} />, label: 'File Import', roles: ['Admin'] },
+    { icon: <ClipboardList size={20} />, label: 'Fulfillment Hub', roles: ['Admin', 'Worker', 'Clerk'] },
+    { icon: <Settings2 size={20} />, label: 'Slot Management', roles: ['Admin'] },
+    { icon: <Bell size={20} />, label: 'Batch Notifications', roles: ['Admin'] },
+    { icon: <ClipboardList size={20} />, label: 'Inventory Clerk', roles: ['Admin', 'Clerk'] },
+    { icon: <Truck size={20} />, label: 'Shipping', roles: ['Admin'] },
+    { icon: <AlertCircle size={20} />, label: 'Issues / Returns', roles: ['Admin', 'Clerk'] },
   ];
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(user?.role || ''));
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -68,8 +70,8 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose }: an
             <User size={20} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>Marcus V.</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Floor Manager</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>{user?.name || 'Staff User'}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{user?.title || user?.role}</div>
           </div>
         </div>
         <button 
@@ -99,5 +101,6 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose }: an
     </aside>
   );
 };
+
 
 export default Sidebar;

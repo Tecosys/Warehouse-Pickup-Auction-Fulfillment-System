@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Printer, ScanLine, CheckCircle2, MoreVertical, Flag, X } from 'lucide-react';
 import { NotFoundModal, IssueModal, CompletionModal, CancellationModal } from '../components/FulfillmentModals';
 import ReceiptPreviewModal from '../components/ReceiptPreviewModal';
+import QRScannerModal from '../../shared/QRScannerModal';
 
 const MOCK_LOTS = [
   { id: '112', desc: 'Samsung 65" 4K Smart TV', storage: 'A2', location: '', status: 'Pending', type: 'Sort (BIN)' },
@@ -27,6 +28,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [bulkLocation, setBulkLocation] = useState('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const readyCount = lots.filter(l => l.status === 'Ready').length;
   const flaggedCount = lots.filter(l => l.status === 'Issue' || l.status === 'Not Found').length;
@@ -48,11 +50,44 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
   const handleStartPrep = () => {
     setPrepStatus('In Progress');
-    // In real app, would save worker name and start timestamp here
   };
 
   const handlePrintSlip = () => {
     setActiveModal('Receipt');
+  };
+
+  const handleScanSuccess = (decodedText: string) => {
+    // Assuming decodedText contains the ManyFastScan internal item ID
+    // In this mock, we'll try to match it with lot.id
+    const matchedLot = lots.find(l => l.id === decodedText);
+    if (matchedLot) {
+      // 1. Determine prefix based on storage location (B = BIN, Others = PU)
+      const prefix = matchedLot.storage.startsWith('B') ? 'BIN' : 'PU';
+      
+      // 2. Update the lot with the prefix if location is empty
+      if (!matchedLot.location) {
+        updateLotLocation(matchedLot.id, prefix);
+      }
+
+      // 3. Auto-select the lot
+      const next = new Set(selectedLots);
+      next.add(matchedLot.id);
+      setSelectedLots(next);
+      
+      // 4. Provide feedback
+      // In a real app, we might use a toast or just scroll to the item
+      console.log(`Lot ${matchedLot.id} found. Auto-filled prefix: ${prefix}`);
+    } else {
+      alert(`No lot found for ID: ${decodedText}`);
+    }
+  };
+
+  const updateLotLocation = (id: string, location: string) => {
+    setLots(prev => prev.map(l => l.id === id ? { ...l, location } : l));
+  };
+
+  const handleLotComplete = (id: string) => {
+    setLots(prev => prev.map(l => l.id === id ? { ...l, status: 'Ready' } : l));
   };
 
   return (
@@ -70,6 +105,12 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
           items: lots.map(l => ({ id: l.id, desc: l.desc, storage: l.storage })),
           worker: "Marcus V."
         }}
+      />
+
+      <QRScannerModal 
+        isOpen={isScannerOpen} 
+        onClose={() => setIsScannerOpen(false)} 
+        onScan={handleScanSuccess} 
       />
 
       {/* Hidden Print Slip for actual browser printing */}
@@ -96,6 +137,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
           {new Date().toLocaleString()}
         </div>
       </div>
+
       {/* Back & Print Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', background: 'white', borderBottom: '1px solid var(--border-color)' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-teal)', fontWeight: 700, cursor: 'pointer' }}>
@@ -253,11 +295,17 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                       type="text" 
                       placeholder="BIN or PU Location..."
                       value={lot.location}
+                      onChange={(e) => updateLotLocation(lot.id, e.target.value)}
+                      onBlur={() => lot.location && handleLotComplete(lot.id)}
                       className="card"
                       style={{ width: '100%', padding: '0.75rem 2.5rem 0.75rem 1rem', fontSize: '0.875rem', outline: 'none' }}
                       readOnly={lot.status === 'Ready' || prepStatus === 'Ready'}
                     />
-                    <ScanLine size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <ScanLine 
+                      size={18} 
+                      onClick={() => setIsScannerOpen(true)}
+                      style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--status-teal)', cursor: 'pointer' }} 
+                    />
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
@@ -306,7 +354,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
         </div>
       )}
 
-      {/* Mobile Sticky Bar (Hidden on Desktop if needed, but keeping for now as a safe fallback) */}
+      {/* Mobile Sticky Bar */}
       <div className="mobile-only-bar" style={{ display: 'none' }}>
         <div style={{ position: 'sticky', bottom: 0, background: 'white', padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', zIndex: 10 }}>
           <button className="btn" style={{ padding: '0.75rem' }} onClick={onBack}>Pause</button>

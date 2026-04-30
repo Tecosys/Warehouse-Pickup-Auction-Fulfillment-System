@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   CheckCircle2, 
   Search, 
@@ -14,39 +14,51 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-const FileZone = ({ label, desc, required, file, onUpload }: any) => (
-  <div className={`card`} style={{ 
-    textAlign: 'center', 
-    border: file ? '2px solid var(--status-teal)' : '2px dashed var(--border-color)',
-    background: file ? '#f0fdfa' : 'white',
-    padding: '2rem'
-  }}>
-    <div style={{ color: file ? 'var(--status-teal)' : 'var(--text-muted)', marginBottom: '1rem' }}>
-      <FileSpreadsheet size={32} />
-    </div>
-    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>{label}</h4>
-    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{desc}</p>
-    
-    {file ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{file.name}</span>
-        <button onClick={() => onUpload(null)} style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}>
-          <X size={16} />
-        </button>
+const FileZone = ({ label, desc, required, file, onUpload }: any) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className={`card`} style={{ 
+      textAlign: 'center', 
+      border: file ? '2px solid var(--status-teal)' : '2px dashed var(--border-color)',
+      background: file ? '#f0fdfa' : 'white',
+      padding: '2rem',
+      position: 'relative'
+    }}>
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        onChange={(e) => onUpload(e.target.files?.[0] || null)}
+        style={{ display: 'none' }}
+        accept=".csv"
+      />
+      <div style={{ color: file ? 'var(--status-teal)' : 'var(--text-muted)', marginBottom: '1rem' }}>
+        <FileSpreadsheet size={32} />
       </div>
-    ) : (
-      <button className="btn" style={{ fontSize: '0.75rem' }} onClick={() => onUpload({ name: `${label}.csv`, size: '124 KB' })}>
-        Browse Files
-      </button>
-    )}
+      <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>{label}</h4>
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{desc}</p>
+      
+      {file ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+          <button onClick={() => onUpload(null)} style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}>
+            <X size={16} />
+          </button>
+        </div>
+      ) : (
+        <button className="btn" style={{ fontSize: '0.75rem' }} onClick={() => fileInputRef.current?.click()}>
+          Browse Files
+        </button>
+      )}
 
-    <div style={{ marginTop: '1rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-      REQUIRED: {required}
+      <div style={{ marginTop: '1rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+        REQUIRED: {required}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-const PostImportSuccess = ({ run, onReset, onNavigate }: any) => (
+const PostImportSuccess = ({ stats, run, onReset, onNavigate }: any) => (
   <div className="success-screen animate-fade">
     <div className="card" style={{ textAlign: 'center', padding: '3rem', marginBottom: '2rem', borderTop: '6px solid var(--status-green)' }}>
       <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#dcfce7', color: 'var(--status-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
@@ -57,10 +69,10 @@ const PostImportSuccess = ({ run, onReset, onNavigate }: any) => (
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginTop: '2.5rem' }}>
         {[
-          { label: 'Orders Created', val: '1,284', icon: <FileText size={18} /> },
-          { label: 'Lots Created', val: '4,512', icon: <Package size={18} /> },
-          { label: 'Customers Matched', val: '942', icon: <Users size={18} /> },
-          { label: 'Issues Flagged', val: '3', icon: <AlertTriangle size={18} />, color: 'var(--status-red)' }
+          { label: 'Orders Created', val: stats.ordersCreated, icon: <FileText size={18} /> },
+          { label: 'Lots Created', val: stats.lotsCreated, icon: <Package size={18} /> },
+          { label: 'Customers Matched', val: stats.customersMatched, icon: <Users size={18} /> },
+          { label: 'Issues Flagged', val: stats.issuesFlagged, icon: <AlertTriangle size={18} />, color: 'var(--status-red)' }
         ].map((stat, i) => (
           <div key={i} style={{ padding: '1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: stat.color || 'var(--text-muted)', marginBottom: '0.5rem' }}>{stat.icon}</div>
@@ -105,28 +117,47 @@ const FileImportPage = ({ onNavigate }: any) => {
   const [activeTab, setActiveTab] = useState('New Import');
   const [step, setStep] = useState(0); // 0: Setup, 1: Progress, 2: Success
   const [files, setFiles] = useState<any>({ catalog: null, winning: null, bidders: null });
+  const [auctionInfo, setAuctionInfo] = useState({ number: '', title: '' });
   const [importProgress, setImportProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState('Initializing import...');
+  const [importResult, setImportResult] = useState<any>(null);
 
-  const allFilesUploaded = files.catalog && files.winning && files.bidders;
+  const allFilesUploaded = files.catalog && files.winning && files.bidders && auctionInfo.number && auctionInfo.title;
 
-  const startImport = () => {
+  const startImport = async () => {
     setStep(1);
-    let p = 0;
-    const interval = setInterval(() => {
-      p += 5;
-      setImportProgress(p);
-      if (p < 20) setStatusMsg('Validating file structures...');
-      else if (p < 40) setStatusMsg('Creating Auction Run...');
-      else if (p < 60) setStatusMsg('Matching bidder details & creating lots...');
-      else if (p < 80) setStatusMsg('Generating order records (412/1284)...');
-      else if (p < 100) setStatusMsg('Finalizing import details...');
+    setImportProgress(10);
+    setStatusMsg('Uploading files...');
+
+    const formData = new FormData();
+    formData.append('catalog', files.catalog);
+    formData.append('winning', files.winning);
+    formData.append('bidders', files.bidders);
+    formData.append('auctionNumber', auctionInfo.number);
+    formData.append('auctionTitle', auctionInfo.title);
+
+    try {
+      setImportProgress(40);
+      setStatusMsg('Backend is processing files and matching records...');
       
-      if (p >= 100) {
-        clearInterval(interval);
-        setStep(2);
+      const response = await fetch('http://localhost:5000/api/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Import failed');
       }
-    }, 150);
+
+      const result = await response.json();
+      setImportProgress(100);
+      setImportResult(result);
+      setStep(2);
+    } catch (error) {
+      console.error(error);
+      alert('Import failed. Please check backend status.');
+      setStep(0);
+    }
   };
 
   return (
@@ -135,15 +166,6 @@ const FileImportPage = ({ onNavigate }: any) => {
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>File Import</h1>
           <p style={{ color: 'var(--text-muted)' }}>Upload source files to create or update an auction run</p>
-        </div>
-        <div style={{ position: 'relative', width: '320px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search imports..." 
-            className="card"
-            style={{ width: '100%', padding: '0.625rem 1rem 0.625rem 2.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}
-          />
         </div>
       </div>
 
@@ -171,10 +193,42 @@ const FileImportPage = ({ onNavigate }: any) => {
         <div className="new-import-flow">
           {step === 0 && (
             <>
-              {/* Step 1: Upload Files */}
+              {/* Step 1: Auction Info */}
               <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--status-teal)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Auction Reference</h3>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1.5rem', paddingLeft: '2.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Auction #</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 043" 
+                      value={auctionInfo.number}
+                      onChange={(e) => setAuctionInfo({...auctionInfo, number: e.target.value})}
+                      className="card"
+                      style={{ width: '100%', padding: '0.75rem 1rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Auction Title</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Weekly Liquidation Auction" 
+                      value={auctionInfo.title}
+                      onChange={(e) => setAuctionInfo({...auctionInfo, title: e.target.value})}
+                      className="card"
+                      style={{ width: '100%', padding: '0.75rem 1rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Upload Files */}
+              <div className="card" style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--status-teal)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</div>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Source Data Files</h3>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', paddingLeft: '2.5rem' }}>
@@ -210,7 +264,7 @@ const FileImportPage = ({ onNavigate }: any) => {
                        <CheckCircle2 color="var(--status-green)" size={24} />
                        <div>
                          <h4 style={{ fontWeight: 700 }}>Pre-import Validation Successful</h4>
-                         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>3 files ready — 1,284 orders detected across 4,512 lots.</p>
+                         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Files and auction info ready to be processed.</p>
                        </div>
                      </div>
                      <button className="btn btn-primary" onClick={startImport} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
@@ -233,9 +287,10 @@ const FileImportPage = ({ onNavigate }: any) => {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 2 && importResult && (
             <PostImportSuccess 
-              run={{ number: '043', title: 'Summer Sports Memorabilia' }} 
+              stats={importResult.stats}
+              run={importResult.run} 
               onReset={() => { setStep(0); setFiles({ catalog: null, winning: null, bidders: null }); }}
               onNavigate={onNavigate}
             />
