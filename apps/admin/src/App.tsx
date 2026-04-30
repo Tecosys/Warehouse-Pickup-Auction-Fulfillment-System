@@ -38,20 +38,35 @@ const FooterBar = () => (
 );
 
 function App() {
-  const [user, setUser] = useState<{ role: string; name: string; title: string } | null>(null);
-  const [currentModule, setCurrentModule] = useState('Dashboard');
+  const [user, setUser] = useState<{ role: string; name: string; title: string } | null>(() => {
+    const savedUser = sessionStorage.getItem('bidboss_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [currentModule, setCurrentModule] = useState(() => {
+    return sessionStorage.getItem('bidboss_module') || 'Dashboard';
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogin = (userData: { role: string; name: string; title: string }) => {
+    sessionStorage.setItem('bidboss_user', JSON.stringify(userData));
     setUser(userData);
+    
     // Set initial module based on role
+    let initialModule = 'Dashboard';
     if (userData.role === 'Worker') {
-      setCurrentModule('Fulfillment Hub');
+      initialModule = 'Fulfillment Hub';
     } else if (userData.role === 'Clerk') {
-      setCurrentModule('Inventory Clerk');
-    } else {
-      setCurrentModule('Dashboard');
+      initialModule = 'Inventory Clerk';
     }
+    
+    setCurrentModule(initialModule);
+    sessionStorage.setItem('bidboss_module', initialModule);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('bidboss_user');
+    sessionStorage.removeItem('bidboss_module');
+    setUser(null);
   };
 
   if (!user) {
@@ -101,43 +116,49 @@ function App() {
         onClose={() => setIsSidebarOpen(false)}
         activeModule={currentModule} 
         user={user}
-        onModuleChange={(module: string) => {
-          setCurrentModule(module);
-          setIsSidebarOpen(false); // Close sidebar on mobile after selection
-        }} 
-        onLogout={() => setUser(null)}
-      />
-      
-      <div className="main-layout">
-        <header className="header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button 
-              className="btn mobile-only" 
-              style={{ display: 'none', border: 'none', padding: '0.5rem' }} 
-              onClick={() => setIsSidebarOpen(true)}
-              id="hamburger-menu"
-            >
-              <Menu size={24} />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-green)' }}>
-                <div className="status-dot pulse" style={{ background: 'var(--status-green)' }}></div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: {user.role} Portal</span>
+        <Sidebar 
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          activeModule={currentModule} 
+          user={user}
+          onModuleChange={(module: string) => {
+            setCurrentModule(module);
+            sessionStorage.setItem('bidboss_module', module);
+            setIsSidebarOpen(false); // Close sidebar on mobile after selection
+          }} 
+          onLogout={handleLogout}
+        />
+        
+        <div className="main-layout">
+          <header className="header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button 
+                className="btn mobile-only" 
+                style={{ display: 'none', border: 'none', padding: '0.5rem' }} 
+                onClick={() => setIsSidebarOpen(true)}
+                id="hamburger-menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-green)' }}>
+                  <div className="status-dot pulse" style={{ background: 'var(--status-green)' }}></div>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: {user.role} Portal</span>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <button 
-              className="btn" 
-              style={{ border: 'none', padding: '0.25rem' }}
-              onClick={() => setUser(null)}
-              title="Log Out"
-            >
-              <ShieldCheck size={20} color="var(--status-teal)" />
-            </button>
-          </div>
-        </header>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button 
+                className="btn" 
+                style={{ border: 'none', padding: '0.25rem' }}
+                onClick={handleLogout}
+                title="Log Out"
+              >
+                <ShieldCheck size={20} color="var(--status-teal)" />
+              </button>
+            </div>
+          </header>
 
 
         <main className="content animate-slide" key={currentModule}>
