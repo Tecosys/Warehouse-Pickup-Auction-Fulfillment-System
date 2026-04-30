@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Printer, AlertTriangle, ChevronLeft, ScanLine } from 'lucide-react';
+import { Printer, AlertTriangle, ChevronLeft, ScanLine, Loader2 } from 'lucide-react';
 import ReceiptPreviewModal from '../../fulfillment/components/ReceiptPreviewModal';
 import QRScannerModal from '../../shared/QRScannerModal';
 
