@@ -41,13 +41,20 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
       return;
     }
 
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) {
+      alert("Error: VITE_API_URL is not set.");
+      return;
+    }
+
     try {
       setIsSearching(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/search?q=${searchQuery}`);
+      const response = await fetch(`${apiUrl}/api/orders/search?q=${searchQuery}`);
       const data = await response.json();
       setSearchResults(data);
     } catch (error) {
       console.error("Search failed", error);
+      alert("Search failed. Check your network or VITE_API_URL.");
     } finally {
       setIsSearching(false);
     }
@@ -68,16 +75,30 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
   };
 
   const handleSeedData = async () => {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) {
+      alert("Error: VITE_API_URL is not set in environment variables.");
+      return;
+    }
+
     try {
       setIsSearching(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/seed`, { method: 'POST' });
+      const response = await fetch(`${apiUrl}/api/orders/seed`, { method: 'POST' });
       if (response.ok) {
-        alert("Test data seeded! Search for '888' or 'Test Customer'");
+        alert("Test data seeded successfully! Searching for Bidder #888...");
         setSearchQuery('888');
-        // We'll call handleSearch after the alert
+        
+        // Fetch again with the new query
+        const searchRes = await fetch(`${apiUrl}/api/orders/search?q=888`);
+        const searchData = await searchRes.json();
+        setSearchResults(searchData);
+      } else {
+        const errData = await response.json();
+        alert(`Seed failed: ${errData.error || response.statusText}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Seed failed", error);
+      alert(`Network error during seeding: ${error.message}`);
     } finally {
       setIsSearching(false);
     }
