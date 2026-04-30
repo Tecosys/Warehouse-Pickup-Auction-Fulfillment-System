@@ -128,4 +128,55 @@ router.patch('/:id/release', async (req: any, res: any) => {
   }
 });
 
+// SEED: Create test data for Clerk Module
+router.post('/seed', async (req: any, res: any) => {
+  try {
+    const AuctionRun = require('../models/AuctionRun').default;
+    const Lot = require('../models/Lot').default;
+    
+    // 1. Create/Find Customer
+    let customer = await Customer.findOne({ email: 'test@example.com' });
+    if (!customer) {
+      customer = await Customer.create({
+        name: 'Test Customer',
+        email: 'test@example.com',
+        phone: '555-0199',
+        bidderNumber: '888'
+      });
+    }
+
+    // 2. Create Auction Run if none
+    let auction = await AuctionRun.findOne({ auctionNumber: '31' });
+    if (!auction) {
+      auction = await AuctionRun.create({
+        auctionNumber: '31',
+        title: 'Weekly Auction #31',
+        status: 'Active'
+      });
+    }
+
+    // 3. Create Order
+    const order = await Order.create({
+      customer: customer._id,
+      auctionRun: auction._id,
+      bidderNumber: '888',
+      bookingCode: 'BOK-TEST-777',
+      fulfillmentStatus: 'Ready',
+      customerStatus: 'Pending',
+      appointmentTime: new Date()
+    });
+
+    // 4. Create Lots
+    await Lot.create([
+      { order: order._id, auctionRun: auction._id, lotNumber: '101', description: 'Samsung 65" 4K TV', finalPickupLocation: 'BIN-A1', type: 'Non-Sort', status: 'Ready' },
+      { order: order._id, auctionRun: auction._id, lotNumber: '102', description: 'KitchenAid Mixer', finalPickupLocation: 'BIN-A1', type: 'Sort', status: 'Ready' },
+      { order: order._id, auctionRun: auction._id, lotNumber: '103', description: 'Apple iPad Pro', finalPickupLocation: 'PU-05', type: 'Non-Sort', status: 'Ready' }
+    ]);
+
+    res.json({ success: true, orderId: order._id });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

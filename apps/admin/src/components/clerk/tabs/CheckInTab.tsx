@@ -67,6 +67,22 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
     }
   };
 
+  const handleSeedData = async () => {
+    try {
+      setIsSearching(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/seed`, { method: 'POST' });
+      if (response.ok) {
+        alert("Test data seeded! Search for '888' or 'Test Customer'");
+        setSearchQuery('888');
+        // We'll call handleSearch after the alert
+      }
+    } catch (error) {
+      console.error("Seed failed", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="animate-fade">
       {/* Search Bar */}
@@ -104,6 +120,15 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
           >
             {isSearching && <Loader2 size={18} className="animate-spin" />}
             Search
+          </button>
+          <button 
+            onClick={handleSeedData}
+            disabled={isSearching}
+            className="btn" 
+            style={{ padding: '0 1.5rem', borderRadius: '0.75rem', borderColor: 'var(--status-teal)', color: 'var(--status-teal)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            title="Seed Test Data"
+          >
+            Seed
           </button>
         </div>
         
