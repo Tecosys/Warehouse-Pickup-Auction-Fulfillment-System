@@ -258,10 +258,19 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
 
       {/* Sticky Action Bar */}
       <div className="sticky-action-bar">
-        <div style={{ fontSize: '1rem', fontWeight: 600 }}>
-          <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span>
-          <span style={{ margin: '0 0.75rem', color: 'var(--border-color)' }}>|</span>
-          <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'var(--text-muted)' }}>{withheldCount} Withheld</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 600 }}>
+            <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span>
+            <span style={{ margin: '0 0.75rem', color: 'var(--border-color)' }}>|</span>
+            <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'var(--text-muted)' }}>{withheldCount} Withheld</span>
+          </div>
+          <button 
+            className="btn" 
+            onClick={handlePrint}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid var(--border-color)' }}
+          >
+            <Printer size={18} /> Print Release Slip
+          </button>
         </div>
         <div>
           {withheldCount > 0 ? (

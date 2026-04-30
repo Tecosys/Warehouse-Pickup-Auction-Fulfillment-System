@@ -7,6 +7,7 @@ import path from 'path';
 import importRouter from './routes/import';
 import notificationRouter from './routes/notifications';
 import orderRouter from './routes/orders';
+import slotRouter from './routes/slots';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/import', importRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/slots', slotRouter);
 
 app.get('/', (req, res) => {
   res.send('Warehouse Pickup API is running');

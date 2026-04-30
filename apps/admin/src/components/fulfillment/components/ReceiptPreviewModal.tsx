@@ -23,77 +23,93 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
     window.print();
   };
 
+  const isPrep = title.toLowerCase().includes('prep');
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div className="card animate-fade" style={{ maxWidth: '450px', width: '100%', padding: '1.5rem', background: '#f8fafc' }}>
+    <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div className="card animate-fade" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', background: '#f8fafc' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title} Preview</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={24} /></button>
         </div>
 
-        {/* Realistic Receipt Preview */}
-        <div style={{ 
+        <div id="receipt-content" style={{ 
           background: 'white', 
           padding: '2rem 1.5rem', 
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', 
           borderRadius: '4px', 
-          fontFamily: 'monospace', 
+          fontFamily: "'Courier New', Courier, monospace", 
           color: 'black',
           marginBottom: '1.5rem',
-          position: 'relative',
-          overflow: 'hidden'
+          border: '1px solid #ddd'
         }}>
-          {/* Jagged Edge Top */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(45deg, transparent 33.333%, #f8fafc 33.333%, #f8fafc 66.666%, transparent 66.666%), linear-gradient(-45deg, transparent 33.333%, #f8fafc 33.333%, #f8fafc 66.666%, transparent 66.666%)', backgroundSize: '8px 16px' }}></div>
-
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.25rem' }}>BIDBOSS</div>
-            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Fulfillment Center</div>
-            <div style={{ margin: '1rem 0', borderTop: '1px dashed black', borderBottom: '1px dashed black', padding: '0.5rem 0' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>#{data.bidder}</div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>{data.customer}</div>
-            </div>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem', borderBottom: '2px solid black', paddingBottom: '0.5rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>BIDBOSS</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{isPrep ? 'PREPARATION SLIP' : 'RELEASE CONFIRMATION'}</div>
           </div>
 
-          <div style={{ fontSize: '0.8125rem', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>AUCTION:</span> <span>{data.auction}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>DATE:</span> <span>{new Date().toLocaleDateString()}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>CODE:</span> <span>{data.bookingCode}</span></div>
-            {data.status && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>STATUS:</span> <span>{data.status}</span></div>}
+          <div style={{ fontSize: '0.9rem', marginBottom: '1rem', lineHeight: '1.4' }}>
+            <div>AUCTION: <strong>#{data.auction}</strong></div>
+            <div>BIDDER: <strong style={{ fontSize: '1.2rem' }}>{data.bidder}</strong></div>
+            <div>NAME: <strong>{data.customer}</strong></div>
+            {data.bookingCode && <div>BOOKING: <strong>{data.bookingCode}</strong></div>}
+            <div>DATE: {new Date().toLocaleDateString()}</div>
           </div>
 
-          <div style={{ borderTop: '1px solid black', paddingTop: '0.75rem', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, marginBottom: '0.5rem' }}>ITEMS TO PICK:</div>
-            {data.items.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
-                <span>[{item.storage || item.loc}] #{item.id}</span>
-                <span style={{ flex: 1, marginLeft: '0.5rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.desc}</span>
-              </div>
-            ))}
+          <div style={{ borderTop: '1px solid black', borderBottom: '1px solid black', padding: '0.5rem 0', margin: '1rem 0' }}>
+            <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', borderBottom: '1px solid black' }}>
+                  <th style={{ padding: '4px 0' }}>LOT</th>
+                  <th style={{ padding: '4px 0' }}>{isPrep ? 'STORAGE' : 'PU LOC'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((item, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: '4px 0' }}>#{item.id} {item.desc.substring(0, 15)}...</td>
+                    <td style={{ padding: '4px 0', fontWeight: 900 }}>{isPrep ? (item.storage || '---') : (item.loc || '---')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div style={{ textAlign: 'center', fontSize: '0.75rem' }}>
-            <div style={{ marginBottom: '0.5rem' }}>TOTAL ITEMS: {data.items.length}</div>
-            <div style={{ fontSize: '0.625rem', color: '#666' }}>
-              Prepared by: {data.worker || 'Marcus V.'}<br />
-              {new Date().toLocaleString()}
-            </div>
+          <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem' }}>
+            <div>TOTAL ITEMS: {data.items.length}</div>
+            {isPrep && <div style={{ marginTop: '1rem', border: '1px solid black', padding: '10px' }}>SIGN: ________________</div>}
+            {!isPrep && <div style={{ marginTop: '0.5rem' }}>Thank you for bidding!</div>}
           </div>
-
-          {/* Jagged Edge Bottom */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(45deg, transparent 33.333%, #f8fafc 33.333%, #f8fafc 66.666%, transparent 66.666%), linear-gradient(-45deg, transparent 33.333%, #f8fafc 33.333%, #f8fafc 66.666%, transparent 66.666%)', backgroundSize: '8px 16px', transform: 'rotate(180deg)' }}></div>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn" style={{ flex: 1 }} onClick={onClose}>Close Preview</button>
+          <button className="btn" style={{ flex: 1 }} onClick={onClose}>Close</button>
           <button 
             className="btn btn-primary" 
             style={{ flex: 1, background: 'var(--status-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
             onClick={handlePrint}
           >
-            <Printer size={18} /> Print Now
+            <Printer size={18} /> Print
           </button>
         </div>
+
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            .no-print { display: none !important; }
+            #receipt-content, #receipt-content * { 
+              visibility: visible; 
+            }
+            #receipt-content {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 10px;
+              border: none;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
