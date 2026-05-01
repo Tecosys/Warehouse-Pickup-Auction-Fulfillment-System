@@ -153,10 +153,12 @@ const SlotModal = ({ onClose }: any) => (
   </div>
 );
 
-const SlotManagementPage = () => {
+const SlotManagementPage = ({ user }: { user: any }) => {
   const [activeTab, setActiveTab] = useState('Schedule View');
   const [viewType, setViewType] = useState('Calendar');
   const [showModal, setShowModal] = useState(false);
+
+  const isAdmin = user?.role === 'Admin';
 
   return (
     <div className="slot-management animate-slide">
@@ -165,7 +167,7 @@ const SlotManagementPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Slot Management</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Configure and manage pickup appointment slots</p>
+          <p style={{ color: 'var(--text-muted)' }}>{isAdmin ? 'Configure and manage pickup appointment slots' : 'Manage customer pickup bookings'}</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid var(--border-color)', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
@@ -177,14 +179,16 @@ const SlotManagementPage = () => {
             <button onClick={() => setViewType('Calendar')} style={{ padding: '6px 12px', border: 'none', background: viewType === 'Calendar' ? '#f1f5f9' : 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: viewType === 'Calendar' ? 'var(--status-teal)' : 'var(--text-muted)' }}><CalendarIcon size={16} /> Calendar</button>
             <button onClick={() => setViewType('List')} style={{ padding: '6px 12px', border: 'none', background: viewType === 'List' ? '#f1f5f9' : 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: viewType === 'List' ? 'var(--status-teal)' : 'var(--text-muted)' }}><List size={16} /> List</button>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={18} /> Add Slot
-          </button>
+          {isAdmin && (
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Add Slot
+            </button>
+          )}
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: '2rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--border-color)' }}>
-        {['Schedule View', 'Slot Settings', 'Bookings'].map(tab => (
+        {['Schedule View', 'Slot Settings', 'Bookings'].filter(tab => isAdmin || tab !== 'Slot Settings').map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '0.75rem 0', background: 'none', border: 'none', borderBottom: activeTab === tab ? '2px solid var(--status-teal)' : '2px solid transparent', color: activeTab === tab ? 'var(--status-teal)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}>{tab}</button>
         ))}
       </div>

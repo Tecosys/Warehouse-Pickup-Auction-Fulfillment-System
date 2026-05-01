@@ -79,21 +79,21 @@ function App() {
       case 'Dashboard':
         return <Dashboard />;
       case 'Auction Runs':
-        return <AuctionRunsPage />;
+        return <AuctionRunsPage user={user} />;
       case 'File Import':
-        return <FileImportPage onNavigate={setCurrentModule} />;
+        return <FileImportPage onNavigate={setCurrentModule} user={user} />;
       case 'Slot Management':
-        return <SlotManagementPage />;
+        return <SlotManagementPage user={user} />;
       case 'Batch Notifications':
-        return <NotificationsPage />;
+        return <NotificationsPage user={user} />;
       case 'Inventory Clerk':
-        return <InventoryClerkPage />;
+        return <InventoryClerkPage user={user} />;
       case 'Issues / Returns':
-        return <IssuesReturnsPage />;
+        return <IssuesReturnsPage user={user} />;
       case 'Shipping':
-        return <ShippingPage />;
+        return <ShippingPage user={user} />;
       case 'Fulfillment Hub':
-        return <FulfillmentHubPage />;
+        return <FulfillmentHubPage user={user} />;
       default:
         return (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
