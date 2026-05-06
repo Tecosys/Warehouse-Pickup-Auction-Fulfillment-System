@@ -11,6 +11,7 @@ export type TabType = 'Check-in & Search' | 'Order Release' | 'Partial Release';
 const InventoryClerkPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('Check-in & Search');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [withheldLots, setWithheldLots] = useState<any[]>([]);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmType, setConfirmType] = useState<'full' | 'partial'>('full');
@@ -20,7 +21,8 @@ const InventoryClerkPage = () => {
     setActiveTab('Order Release');
   };
 
-  const handleReviewWithheld = () => {
+  const handleReviewWithheld = (lots: any[]) => {
+    setWithheldLots(lots);
     setActiveTab('Partial Release');
   };
 
@@ -80,6 +82,7 @@ const InventoryClerkPage = () => {
         {activeTab === 'Partial Release' && (
           <PartialReleaseTab 
             order={selectedOrder} 
+            withheldLots={withheldLots}
             onBack={() => setActiveTab('Order Release')}
             onComplete={() => {
               setConfirmType('partial');

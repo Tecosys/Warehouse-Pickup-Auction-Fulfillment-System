@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, AlertTriangle, Plus } from 'lucide-react';
 import CasesTable from './components/CasesTable';
 import CaseDetailDrawer from './components/CaseDetailDrawer';
@@ -7,14 +7,41 @@ import ReturnIntakeTab from './tabs/ReturnIntakeTab';
 export type CaseStatus = 'Open' | 'In Review' | 'Resolved';
 export type CaseTab = 'All Cases' | 'Open' | 'In Review' | 'Resolved' | 'Return Intake';
 
-const IssuesReturnsPage = () => {
+const IssuesReturnsPage = ({ user }: { user: any }) => {
   const [activeTab, setActiveTab] = useState<CaseTab>('All Cases');
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  
+  const [filters, setFilters] = useState({
+    search: '',
+    type: 'All Types',
+    auctionId: 'All Auctions'
+  });
+
+  const [auctions, setAuctions] = useState<any[]>([]);
+  const [stats, setStats] = useState({ over24h: 0, over48h: 0 });
+
+  useEffect(() => {
+    // Fetch auctions for filter
+    fetch('http://localhost:5000/api/auctions')
+      .then(res => res.json())
+      .then(data => setAuctions(data))
+      .catch(console.error);
+
+    // Fetch aging stats
+    fetch('http://localhost:5000/api/cases/stats/aging')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(console.error);
+  }, []);
 
   const handleOpenCase = (caseData: any) => {
     setSelectedCase(caseData);
     setIsDrawerOpen(true);
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -58,77 +85,86 @@ const IssuesReturnsPage = () => {
           <>
             {/* Filter Bar */}
             <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 150px', gap: '1rem', alignItems: 'end' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '1rem', alignItems: 'end' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Search</label>
                   <div style={{ position: 'relative' }}>
                     <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input 
                       type="text" 
-                      placeholder="Bidder # or Customer..." 
+                      placeholder="Bidder #, Case # or Customer..." 
+                      value={filters.search}
+                      onChange={(e) => handleFilterChange('search', e.target.value)}
                       style={{ width: '100%', padding: '0.625rem 0.75rem 0.625rem 2.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}
                     />
                   </div>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Case Type</label>
-                  <select style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}>
+                  <select 
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange('type', e.target.value)}
+                    style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}
+                  >
                     <option>All Types</option>
                     <option>Missing in Prep</option>
                     <option>Missing at Release</option>
-                    <option>Customer Refused</option>
-                    <option>Issue at Pickup</option>
-                    <option>Returned Item</option>
+                    <option>Refused</option>
+                    <option>Issue</option>
+                    <option>Return</option>
+                    <option>Dispute</option>
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Auction</label>
-                  <select style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}>
+                  <select 
+                    value={filters.auctionId}
+                    onChange={(e) => handleFilterChange('auctionId', e.target.value)}
+                    style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}
+                  >
                     <option>All Auctions</option>
-                    <option>Auction 31</option>
-                    <option>Auction 30</option>
+                    {auctions.map(a => (
+                      <option key={a._id} value={a._id}>{a.title || `Auction #${a.auctionNumber}`}</option>
+                    ))}
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Status</label>
-                  <select style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}>
-                    <option>All Statuses</option>
-                    <option>Open</option>
-                    <option>In Review</option>
-                    <option>Resolved</option>
-                  </select>
-                </div>
-                <button className="btn btn-primary" style={{ height: '42px', width: '100%' }}>
+                <button className="btn btn-primary" style={{ height: '42px', width: '100%' }} onClick={() => {}}>
                   <Filter size={16} />
-                  Filter
+                  Reset Filters
                 </button>
               </div>
             </div>
 
             {/* Aging Alert */}
-            <div style={{ 
-              background: 'rgba(245, 158, 11, 0.05)', 
-              border: '1px solid rgba(245, 158, 11, 0.2)', 
-              padding: '1rem 1.5rem', 
-              borderRadius: '0.75rem', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <AlertTriangle size={20} color="var(--status-amber)" />
-                <span style={{ fontWeight: 600, color: '#92400e' }}>
-                  14 cases open over 24 hours — 2 cases open over 48 hours
-                </span>
+            {(stats.over24h > 0 || stats.over48h > 0) && (
+              <div style={{ 
+                background: 'rgba(245, 158, 11, 0.05)', 
+                border: '1px solid rgba(245, 158, 11, 0.2)', 
+                padding: '1rem 1.5rem', 
+                borderRadius: '0.75rem', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <AlertTriangle size={20} color="var(--status-amber)" />
+                  <span style={{ fontWeight: 600, color: '#92400e' }}>
+                    {stats.over24h} cases open over 24 hours {stats.over48h > 0 && `— ${stats.over48h} cases open over 48 hours`}
+                  </span>
+                </div>
+                <button className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-amber)', fontWeight: 700, textDecoration: 'underline' }}>
+                  View Aging
+                </button>
               </div>
-              <button className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-amber)', fontWeight: 700, textDecoration: 'underline' }}>
-                View Aging
-              </button>
-            </div>
+            )}
 
             {/* Main Table */}
-            <CasesTable filterStatus={activeTab === 'All Cases' ? undefined : activeTab as CaseStatus} onOpenCase={handleOpenCase} />
+            <CasesTable 
+              filterStatus={activeTab === 'All Cases' ? undefined : activeTab as CaseStatus} 
+              onOpenCase={handleOpenCase}
+              filters={filters}
+            />
           </>
         ) : (
           <ReturnIntakeTab />
@@ -139,6 +175,11 @@ const IssuesReturnsPage = () => {
         isOpen={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
         caseData={selectedCase} 
+        user={user}
+        onUpdate={() => {
+          // Trigger refresh if needed
+          setFilters({...filters});
+        }}
       />
 
       <style>{`

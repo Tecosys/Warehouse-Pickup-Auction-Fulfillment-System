@@ -19,11 +19,13 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "@types/xlsx": "^0.0.35",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongoose": "^8.23.0",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "xlsx": "^0.18.5"
   }
 }

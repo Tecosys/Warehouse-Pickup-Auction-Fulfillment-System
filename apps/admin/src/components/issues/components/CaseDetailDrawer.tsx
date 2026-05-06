@@ -1,16 +1,40 @@
 import { useState } from 'react';
-import { X, Plus, Send, MessageSquare, Clock, User, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Send, MessageSquare, Clock, User, CheckCircle2, Loader2 } from 'lucide-react';
+import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 interface CaseDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   caseData: any;
+  user: any;
+  onUpdate: () => void;
 }
 
-const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData }) => {
+const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData, user, onUpdate }) => {
   const [newNote, setNewNote] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!caseData) return null;
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (res.ok) {
+        onUpdate();
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error updating case status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{
@@ -30,7 +54,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
       <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace' }}>{caseData.id}</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace' }}>{caseData.caseNumber}</h2>
             <span style={{ 
               fontSize: '0.625rem', 
               fontWeight: 900, 
@@ -38,17 +62,23 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
               borderRadius: '1rem', 
               background: 'rgba(59, 130, 246, 0.1)',
               color: 'var(--status-blue)',
-              border: '1px solid currentColor'
+              border: '1px solid currentColor',
+              textTransform: 'uppercase'
             }}>
               {caseData.type}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--status-amber)' }} />
+              <div style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: caseData.status === 'Open' ? 'var(--status-amber)' : caseData.status === 'In Review' ? 'var(--status-blue)' : 'var(--status-green)' 
+              }} />
               <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{caseData.status}</span>
             </div>
           </div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            {caseData.auction} | {caseData.orderId} | {caseData.bidderNum}
+            {caseData.auctionRun?.title} | Bidder #{caseData.bidderNumber}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -63,17 +93,23 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
             <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Created By</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={14} color="var(--text-muted)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Marcus Chen</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{caseData.createdBy || 'System'}</span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>April 24, 2026 at 10:22 AM</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              {new Date(caseData.createdAt).toLocaleString()}
+            </div>
           </div>
           <div className="card" style={{ padding: '1rem' }}>
             <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Last Update</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Clock size={14} color="var(--text-muted)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Status changed to In Review</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                {caseData.status === 'Resolved' ? 'Case Resolved' : 'Awaiting Action'}
+              </span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>2 hours ago by Alex Chen</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              {new Date(caseData.updatedAt).toLocaleString()}
+            </div>
           </div>
         </div>
 
@@ -81,9 +117,6 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Lot Items</h3>
-            <button style={{ color: 'var(--status-teal)', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Plus size={14} /> Add Lot
-            </button>
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
@@ -91,50 +124,32 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Lot #</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Reason</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Status</th>
-                  <th style={{ textAlign: 'right', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Action</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Notes</th>
                 </tr>
               </thead>
               <tbody>
-                {caseData.lots.map((lot: string) => (
-                  <tr key={lot} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>{lot}</td>
-                    <td style={{ padding: '0.75rem 1rem' }}>Damaged at Pickup</td>
-                    <td style={{ padding: '0.75rem 1rem' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--status-blue)' }}>Open</span>
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                      <button style={{ color: 'var(--status-teal)', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 700 }}>Update</button>
-                    </td>
+                {caseData.lines?.map((line: any, idx: number) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>{line.lotNumber}</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>{line.reason}</td>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>{line.notes || 'No notes'}</td>
                   </tr>
                 ))}
+                {(!caseData.lines || caseData.lines.length === 0) && (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No specific lots linked.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Notes Timeline */}
+        {/* Notes Placeholder */}
         <div>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Case Timeline</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', paddingLeft: '1rem' }}>
-            <div style={{ position: 'absolute', left: '1.35rem', top: 0, bottom: 0, width: '1px', background: 'var(--border-color)' }} />
-            
-            {[1, 2].map(i => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', position: 'relative' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'white', border: '2px solid var(--status-teal)', zIndex: 1, marginTop: '4px' }} />
-                <div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                    {i === 1 ? 'Alex Chen' : 'Marcus Chen'}
-                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
-                      {i === 1 ? '2 hours ago' : 'Today, 10:22 AM'}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--text-main)', background: '#f8fafc', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
-                    {i === 1 ? 'Status changed from Open to In Review. Escalating to supervisor for discount approval.' : 'Case created at release. Customer reported screen damage on lot 112.'}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+            Case activity history will appear here.
           </div>
         </div>
       </div>
@@ -149,13 +164,22 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
             style={{ flex: 1, padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', minHeight: '80px', resize: 'none' }}
           />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-          <button className="btn" style={{ padding: '0.625rem' }}>
-            <MessageSquare size={16} /> Add Note
+        <div style={{ display: 'grid', gridTemplateColumns: (user?.role === 'Admin' && caseData.status !== 'Resolved') ? '1fr 1.2fr 1fr' : '1fr 1fr', gap: '1rem' }}>
+          <button className="btn" style={{ padding: '0.625rem' }} onClick={() => handleUpdateStatus('In Review')}>
+            <MessageSquare size={16} /> Mark In Review
           </button>
-          <button className="btn" style={{ padding: '0.625rem', color: 'var(--status-green)', borderColor: 'var(--status-green)' }}>
-            <CheckCircle2 size={16} /> Resolve
-          </button>
+          
+          {user?.role === 'Admin' && caseData.status !== 'Resolved' && (
+            <button 
+              className="btn" 
+              style={{ padding: '0.625rem', color: 'var(--status-green)', borderColor: 'var(--status-green)' }}
+              onClick={() => handleUpdateStatus('Resolved')}
+              disabled={loading}
+            >
+              {loading ? <ButtonSpinner /> : <><CheckCircle2 size={16} /> Resolve Case</>}
+            </button>
+          )}
+          
           <button className="btn btn-primary" style={{ padding: '0.625rem' }}>
             <Send size={16} /> Update Client
           </button>

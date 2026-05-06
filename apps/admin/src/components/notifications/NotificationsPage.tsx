@@ -54,22 +54,28 @@ const SendModal = ({ notification, onClose }: any) => {
   const handleSend = async () => {
     setIsSending(true);
     try {
+      // Fetch the active auction run ID dynamically
+      const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+      if (!auctionRes.ok) throw new Error('No active auction found');
+      const auction = await auctionRes.json();
+
       const response = await fetch('http://localhost:5000/api/notifications/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          auctionRunId: '663123456789012345678901', // MOCK RUN ID
+          auctionRunId: auction._id,
           type: parseInt(notification.id)
         })
       });
       if (response.ok) {
-        alert('Batch notification initiated successfully!');
+        const result = await response.json();
+        alert(`Batch notification sent to ${result.count} customers!`);
         onClose();
       } else {
         throw new Error('Failed to send');
       }
-    } catch (e) {
-      alert('Error sending notifications. Ensure backend is running.');
+    } catch (e: any) {
+      alert(`Error: ${e.message}. Ensure backend is running.`);
     } finally {
       setIsSending(false);
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -76,39 +76,36 @@ const AuctionRunCard = ({ run, onOpen }: any) => (
 const AuctionRunsPage = () => {
   const [selectedRun, setSelectedRun] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('All Runs');
+  const [runs, setRuns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockRuns = [
-    {
-      id: 'ID-2024-042',
-      title: 'Spring Estate Collection #14',
-      status: 'ACTIVE',
-      stats: { orders: '1,248', fulfillment: 82, customers: '942', shipping: '412', issues: 3 },
-      pickup: true,
-      shipping: true,
-      notifications: true,
-      importedAt: '2024-04-24 10:30'
-    },
-    {
-      id: 'ID-2024-041',
-      title: 'Global Electronics Liquidation',
-      status: 'ACTIVE',
-      stats: { orders: '3,892', fulfillment: 24, customers: '2,105', shipping: '12', issues: 0 },
-      pickup: false,
-      shipping: true,
-      notifications: true,
-      importedAt: '2024-04-17 09:15'
-    },
-    {
-      id: 'ID-2024-040',
-      title: 'Collector Vehicle Event #2',
-      status: 'ARCHIVED',
-      stats: { orders: '512', fulfillment: 100, customers: '488', shipping: '488', issues: 12 },
-      pickup: true,
-      shipping: true,
-      notifications: true,
-      importedAt: '2024-04-10 14:00'
-    }
-  ];
+  useEffect(() => {
+    fetch('http://localhost:5000/api/auctions')
+      .then(r => r.json())
+      .then(data => {
+        // Normalize to UI format
+        const mapped = data.map((r: any) => ({
+          id: `#${r.auctionNumber}`,
+          _id: r._id,
+          title: r.title,
+          status: r.status === 'Active' ? 'ACTIVE' : 'ARCHIVED',
+          stats: {
+            orders: r.stats?.totalOrders || 0,
+            fulfillment: r.stats?.readyCount || 0,
+            customers: r.stats?.customersBooked || 0,
+            shipping: r.stats?.shippingInQueue || 0,
+            issues: r.stats?.openCases || 0
+          },
+          pickup: true,
+          shipping: true,
+          notifications: true,
+          importedAt: new Date(r.importedDate).toLocaleString()
+        }));
+        setRuns(mapped);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   if (selectedRun) {
     return <AuctionRunDetail run={selectedRun} onBack={() => setSelectedRun(null)} />;
@@ -160,10 +157,14 @@ const AuctionRunsPage = () => {
       </div>
 
       <div className="runs-list">
-        {mockRuns
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Loading auction runs...</div>
+        ) : runs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No auction runs found. Import your first run using File Import.</div>
+        ) : runs
           .filter(run => activeTab === 'All Runs' || (activeTab === 'Active' && run.status === 'ACTIVE') || (activeTab === 'Archived' && run.status === 'ARCHIVED'))
           .map(run => (
-            <AuctionRunCard key={run.id} run={run} onOpen={setSelectedRun} />
+            <AuctionRunCard key={run._id} run={run} onOpen={setSelectedRun} />
           ))}
       </div>
     </div>
@@ -171,3 +172,4 @@ const AuctionRunsPage = () => {
 };
 
 export default AuctionRunsPage;
+

@@ -12,6 +12,26 @@ export interface IOrder extends Document {
   workerName?: string;
   startTimestamp?: Date;
   completeTimestamp?: Date;
+  retrievalMethod: 'Undecided' | 'Pickup' | 'Shipping' | 'Local Delivery';
+  shippingStatus: 'In Queue' | 'Prepared' | 'Dispatched';
+  trackingNumber?: string;
+  shippedAt?: Date;
+  isReturnProcessed: boolean;
+  cancellationReason?: string;
+  isShippingConfirmed: boolean;
+  hibidData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    phone2?: string;
+    address?: string;
+    state?: string;
+    zip?: string;
+    highBid?: string;
+    maxBid?: string;
+    bids?: string;
+    metadata: Record<string, any>;
+  };
 }
 
 const OrderSchema: Schema = new Schema({
@@ -33,7 +53,35 @@ const OrderSchema: Schema = new Schema({
   isCheckedIn: { type: Boolean, default: false },
   workerName: { type: String },
   startTimestamp: { type: Date },
-  completeTimestamp: { type: Date }
-});
+  completeTimestamp: { type: Date },
+  retrievalMethod: {
+    type: String,
+    enum: ['Undecided', 'Pickup', 'Shipping', 'Local Delivery'],
+    default: 'Undecided'
+  },
+  shippingStatus: {
+    type: String,
+    enum: ['In Queue', 'Prepared', 'Dispatched'],
+    default: 'In Queue'
+  },
+  trackingNumber: { type: String },
+  shippedAt: { type: Date },
+  isReturnProcessed: { type: Boolean, default: false },
+  cancellationReason: { type: String },
+  isShippingConfirmed: { type: Boolean, default: false },
+  hibidData: {
+    name: { type: String },
+    email: { type: String },
+    phone: { type: String },
+    phone2: { type: String },
+    address: { type: String },
+    state: { type: String },
+    zip: { type: String },
+    highBid: { type: String },
+    maxBid: { type: String },
+    bids: { type: String },
+    metadata: { type: Schema.Types.Mixed, default: {} }
+  }
+}, { timestamps: true });
 
 export default mongoose.model<IOrder>('Order', OrderSchema);

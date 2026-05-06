@@ -17,20 +17,20 @@ router.post('/batch', async (req: any, res: any) => {
   }
 });
 
-// Get notification logs for an order
-router.get('/logs/:orderId', async (req: any, res: any) => {
+// Get all notification logs (for admin overview) — MUST be before /:orderId
+router.get('/logs/all', async (req: any, res: any) => {
   try {
-    const logs = await Notification.find({ order: req.params.orderId }).sort({ createdAt: -1 });
+    const logs = await Notification.find().populate('customer').sort({ createdAt: -1 }).limit(100);
     res.json(logs);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get all notification logs (for admin overview)
-router.get('/logs/all', async (req: any, res: any) => {
+// Get notification logs for a specific order
+router.get('/logs/:orderId', async (req: any, res: any) => {
   try {
-    const logs = await Notification.find().populate('customer').sort({ createdAt: -1 }).limit(100);
+    const logs = await Notification.find({ order: req.params.orderId }).sort({ createdAt: -1 });
     res.json(logs);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

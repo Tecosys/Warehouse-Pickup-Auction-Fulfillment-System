@@ -1,178 +1,188 @@
-import { useState } from 'react';
-import { Search, Clock } from 'lucide-react';
-
-const MOCK_CHECKED_IN = [
-  { id: '1', bidderNum: '#4492', customer: 'Dominic Santoro', items: 14, total: '$1,240.00', slot: '10:15 AM', status: 'LATE', fulfillment: 'Ready', customerStatus: 'Checked In' },
-  { id: '2', bidderNum: '#9102', customer: 'Sarah McAllister', items: 3, total: '$425.00', slot: '10:45 AM', fulfillment: 'Ready', customerStatus: 'Checked In' },
-  { id: '3', bidderNum: '#2231', customer: 'Robert J. Vance', items: 32, total: '$8,910.00', slot: '11:00 AM', fulfillment: 'Ready', customerStatus: 'Checked In' },
-];
-
-const MOCK_AWAITING = [
-  { id: '4', bidderNum: '#5512', customer: 'Elena Rodriguez', items: 6, status: 'Unpaid', slot: '11:15 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-  { id: '5', bidderNum: '#3381', customer: 'Kevin O\'Shea', items: 1, status: 'Paid', slot: '11:30 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-  { id: '6', bidderNum: '#8827', customer: 'Linda Wu-Stevens', items: 19, status: 'Paid', slot: '11:30 AM', fulfillment: 'Ready', customerStatus: 'Booked' },
-];
+import { useState, useEffect } from 'react';
+import { Search, Clock, CheckCircle } from 'lucide-react';
+import { ButtonSpinner, PageLoader } from '../../shared/LoadingComponents';
 
 interface CheckInTabProps {
   onOpenRelease: (order: any) => void;
 }
 
 const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [checkedIn, setCheckedIn] = useState<any[]>([]);
+  const [awaiting, setAwaiting] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch initial lists (Checked-in today, Awaiting today)
+  const fetchLists = async () => {
+    try {
+      setLoading(true);
+      // Fetch checked-in orders
+      const ciRes = await fetch('http://localhost:5000/api/orders?customerStatus=Checked In');
+      const ciData = await ciRes.json();
+      setCheckedIn(ciData);
+
+      // Fetch booked orders (awaiting arrival)
+      const awRes = await fetch('http://localhost:5000/api/orders?customerStatus=Booked');
+      const awData = await awRes.json();
+      setAwaiting(awData);
+    } catch (error) {
+      console.error('Error fetching lists:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLists();
+  }, []);
+
+  // Search logic
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (search.length > 1) {
+        setLoading(true);
+        try {
+          const res = await fetch(`http://localhost:5000/api/orders?search=${search}`);
+          const data = await res.json();
+          setSearchResults(data);
+        } catch (error) {
+          console.error('Search error:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
+  const handleCheckIn = async (orderId: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerStatus: 'Checked In' })
+      });
+
+      if (res.ok) {
+        setSearch('');
+        fetchLists();
+      }
+    } catch (error) {
+      console.error('Check-in error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="animate-fade">
-      {/* Search Bar */}
-      <div className="card" style={{ marginBottom: '2rem', padding: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search 
-              size={20} 
-              style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} 
-            />
-            <input
-              type="text"
-              placeholder="Search by customer name, bidder number, or booking code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '1rem 1rem 1rem 3.5rem',
-                borderRadius: '0.75rem',
-                border: '1px solid var(--border-color)',
-                fontSize: '1.125rem',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={(e) => e.currentTarget.style.borderColor = 'var(--status-teal)'}
-              onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            />
-          </div>
-          <button className="btn btn-primary" style={{ padding: '0 2.5rem', borderRadius: '0.75rem', fontSize: '1.125rem' }}>
-            Search
-          </button>
-        </div>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>Customer Check-In</h2>
         
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filter By:</span>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            {['Today\'s Slot', 'Past Due Only'].map(filter => (
-              <button key={filter} className="btn" style={{ fontSize: '0.875rem', borderRadius: '2rem', padding: '0.4rem 1.25rem' }}>
-                {filter}
-              </button>
+        {/* Search Input */}
+        <div style={{ position: 'relative', marginBottom: '3rem' }}>
+          <Search size={24} style={{ position: 'absolute', left: '1.5rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Search Bidder Number or Booking Code..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="card" 
+            style={{ 
+              width: '100%', 
+              padding: '1.5rem 1.5rem 1.5rem 4rem', 
+              fontSize: '1.25rem', 
+              fontWeight: 600, 
+              border: searchResults.length > 0 ? '2px solid var(--status-teal)' : '1px solid var(--border-color)',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)'
+            }} 
+          />
+          {loading && (
+            <div style={{ position: 'absolute', right: '1.5rem', top: '50%', transform: 'translateY(-50%)' }}>
+              <ButtonSpinner />
+            </div>
+          )}
+        </div>
+
+        {/* Search Results Dropdown */}
+        {searchResults.length > 0 && (
+          <div className="card" style={{ marginTop: '-2.5rem', marginBottom: '3rem', padding: '0.5rem', borderTop: 'none', borderRadius: '0 0 1rem 1rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            {searchResults.map(result => (
+              <div 
+                key={result._id} 
+                onClick={() => handleCheckIn(result._id)}
+                style={{ padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderRadius: '0.5rem' }} 
+                className="hover-bg"
+              >
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '1.125rem' }}>#{result.bidderNumber} — {result.customer?.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {result.appointmentTime ? `Appt: ${new Date(result.appointmentTime).toLocaleString()}` : 'No Appointment'}
+                  </div>
+                </div>
+                <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>Check In</button>
+              </div>
             ))}
           </div>
-        </div>
-      </div>
+        )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        {/* Checked In Section */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ color: 'var(--status-teal)' }}>
-                <Clock size={20} />
-              </div>
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Checked-in Today</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          {/* Checked In List */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--status-teal)' }}>
+              <CheckCircle size={18} />
+              <h3 style={{ fontSize: '0.875rem', fontWeight: 800, textTransform: 'uppercase' }}>Checked-In Today ({checkedIn.length})</h3>
             </div>
-            <span className="badge badge-teal">12 ACTIVE</span>
-          </div>
-          
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bidder #</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Slot</th>
-                <th style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_CHECKED_IN.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.125rem' }}>{order.bidderNum}</td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontWeight: 600 }}>{order.customer}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.items} Items • {order.total}</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '0.25rem', 
-                      background: order.status === 'LATE' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                      color: order.status === 'LATE' ? 'var(--status-red)' : 'var(--status-green)',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      display: 'inline-block'
-                    }}>
-                      {order.slot} {order.status && `(${order.status})`}
-                    </div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {checkedIn.map(b => (
+                <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>#{b.bidderNumber} {b.customer?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status: {b.fulfillmentStatus}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', fontWeight: 900, color: 'var(--status-teal)', background: '#f0fdfa', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>ARRIVED</span>
                     <button 
-                      onClick={() => onOpenRelease(order)}
+                      onClick={() => onOpenRelease(b)}
                       className="btn" 
-                      style={{ 
-                        background: 'var(--status-teal)', 
-                        color: 'white', 
-                        border: 'none',
-                        padding: '0.5rem 1rem'
-                      }}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                     >
-                      Open Release
+                      Release
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Awaiting Arrival Section */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ color: 'var(--text-muted)' }}>
-                <Clock size={20} />
-              </div>
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Awaiting Arrival Today</h2>
             </div>
-            <span className="badge badge-gray">28 REMAINING</span>
           </div>
-          
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bidder #</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Est. Time</th>
-                <th style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_AWAITING.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)' }}>{order.bidderNum}</td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontWeight: 600 }}>{order.customer}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.items} Items • {order.status}</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{order.slot}</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                    <button className="btn" style={{ padding: '0.5rem 1.5rem' }}>
-                      Check In
-                    </button>
-                  </td>
-                </tr>
+
+          {/* Awaiting List */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>
+              <Clock size={18} />
+              <h3 style={{ fontSize: '0.875rem', fontWeight: 800, textTransform: 'uppercase' }}>Awaiting Arrival ({awaiting.length})</h3>
+            </div>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {awaiting.map(b => (
+                <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7 }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>#{b.bidderNumber} {b.customer?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Appt: {b.appointmentTime ? new Date(b.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
+                  </div>
+                  <button 
+                    onClick={() => handleCheckIn(b._id)}
+                    className="btn" 
+                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                  >
+                    Check In
+                  </button>
+                </div>
               ))}
-            </tbody>
-          </table>
-          <div style={{ padding: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--border-color)' }}>
-            <button className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-teal)', fontSize: '0.875rem' }}>
-              View All 28 Scheduled Arrivals
-            </button>
+            </div>
           </div>
         </div>
       </div>

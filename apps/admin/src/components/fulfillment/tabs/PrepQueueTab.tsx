@@ -1,11 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, ChevronRight, Clock, AlertTriangle, LayoutGrid } from 'lucide-react';
-
-const MOCK_ORDERS = [
-  { id: 'ORD-8821', bidder: '8821', customer: 'Sarah O\'Connor', status: 'In Progress', customerStatus: 'Checked In', isWalkIn: true, appointment: 'WALK-IN', lots: 12, puCount: 8, binCount: 4, storageRange: 'A2–B06', auction: 'Auction 31' },
-  { id: 'ORD-4582', bidder: '4582', customer: 'Marcus Sterling', status: 'Not Started', customerStatus: 'Booked', isWalkIn: false, appointment: 'Thu 2:30 PM', lots: 6, puCount: 4, binCount: 2, storageRange: 'C4', auction: 'Auction 31' },
-  { id: 'ORD-2102', bidder: '2102', customer: 'Katherine Chen', status: 'Ready', customerStatus: 'Checked In', isWalkIn: false, appointment: 'Thu 11:30 AM', lots: 1, puCount: 1, binCount: 0, storageRange: 'X01', auction: 'Auction 31', flagged: true },
-];
+import { PageLoader } from '../../shared/LoadingComponents';
 
 interface PrepQueueTabProps {
   onOpenOrder: (id: string) => void;
@@ -13,6 +8,60 @@ interface PrepQueueTabProps {
 
 const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
   const [filter, setFilter] = useState('All');
+  const [activeAuction, setActiveAuction] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ inQueue: 0, inProgress: 0, readyToday: 0 });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // 1. Fetch active auction
+        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+        const auction = await auctionRes.json();
+        setActiveAuction(auction);
+
+        if (auction && auction._id) {
+          // 2. Fetch orders for this auction
+          const ordersRes = await fetch(`http://localhost:5000/api/orders?auctionRunId=${auction._id}`);
+          const ordersData = await ordersRes.json();
+          
+          // Map backend orders to UI format (simulated mapping for now)
+          const mappedOrders = ordersData.map((o: any) => ({
+            id: o._id,
+            bidder: o.bidderNumber,
+            customer: o.customer?.name || 'Unknown Customer',
+            status: o.fulfillmentStatus,
+            customerStatus: o.customerStatus,
+            isWalkIn: o.customerStatus === 'Checked In' && !o.appointmentTime,
+            appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOT SET',
+            lots: 0, // In a real scenario, this would come from a count or separate fetch
+            auction: `Auction ${auction.auctionNumber}`
+          }));
+          
+          setOrders(mappedOrders);
+          
+          // Calculate stats
+          setStats({
+            inQueue: mappedOrders.filter((o: any) => o.status === 'Not Started').length,
+            inProgress: mappedOrders.filter((o: any) => o.status === 'In Progress').length,
+            readyToday: mappedOrders.filter((o: any) => o.status === 'Ready').length
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <PageLoader message="Loading active auction queue..." />;
+  }
 
   return (
     <div className="animate-fade" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -20,14 +69,13 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div style={{ background: '#e2e8f0', padding: '0.625rem 1.25rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
           <LayoutGrid size={16} />
-          Auction 31 — Modernist Estates
+          {activeAuction ? `${activeAuction.title} (#${activeAuction.auctionNumber})` : 'No Active Auction'}
         </div>
         
         <div style={{ display: 'flex', gap: '1rem' }}>
           <select className="card" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, outline: 'none' }}>
             <option>Sort by: Appointment Priority</option>
-            <option>Sort by: Source Location</option>
-            <option>Sort by: Total Lots (High-Low)</option>
+            <option>Sort by: Bidder Number</option>
           </select>
         </div>
       </div>
@@ -35,9 +83,9 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
       {/* Stats Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
-          { label: 'In Queue', val: '12', color: 'var(--text-muted)' },
-          { label: 'In Progress', val: '4', color: 'var(--status-amber)' },
-          { label: 'Ready Today', val: '28', color: 'var(--status-teal)' }
+          { label: 'In Queue', val: stats.inQueue, color: 'var(--text-muted)' },
+          { label: 'In Progress', val: stats.inProgress, color: 'var(--status-amber)' },
+          { label: 'Ready Today', val: stats.readyToday, color: 'var(--status-teal)' }
         ].map((s, i) => (
           <div key={i} className="card" style={{ padding: '0.75rem', textAlign: 'center' }}>
             <div style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{s.label}</div>
@@ -48,7 +96,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem' }} className="no-scrollbar">
-        {['All', 'Sort Only (BIN)', 'Non-Sort (PU)', 'Mixed', 'Walk-in'].map(f => (
+        {['All', 'Not Started', 'In Progress', 'Ready', 'Walk-in'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -71,8 +119,14 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
 
       {/* Order Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '1.5rem' }}>
-        {MOCK_ORDERS.length > 0 ? (
-          MOCK_ORDERS.map(order => (
+        {orders.length > 0 ? (
+          orders
+            .filter(o => {
+              if (filter === 'All') return true;
+              if (filter === 'Walk-in') return o.isWalkIn;
+              return o.status === filter;
+            })
+            .map(order => (
             <div 
               key={order.id} 
               className="card" 
@@ -101,7 +155,6 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
                   }}>
                     {order.status.toUpperCase()}
                   </span>
-                  {order.flagged && <AlertTriangle size={16} color="var(--status-red)" style={{ marginLeft: '-0.25rem' }} />}
                 </div>
               </div>
 
@@ -124,23 +177,10 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
                 )}
               </div>
 
-              {/* Row 3: Lot Badges */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              {/* Row 3: Lot Badges (simplified) */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.25rem 0.6rem', borderRadius: '0.25rem' }}>
-                  {order.lots} Lots
-                </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', background: 'rgba(99, 102, 241, 0.05)', padding: '0.25rem 0.6rem', borderRadius: '0.25rem' }}>
-                  {order.puCount} PU
-                </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--status-teal)', background: 'rgba(13, 148, 136, 0.05)', padding: '0.25rem 0.6rem', borderRadius: '0.25rem' }}>
-                  {order.binCount} BIN
-                </span>
-              </div>
-
-              {/* Row 4: Storage Range */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'monospace', textTransform: 'uppercase' }}>
-                  Storage: {order.storageRange}
+                   Live Order
                 </span>
               </div>
 

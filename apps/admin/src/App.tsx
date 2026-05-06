@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import Dashboard from './components/dashboard/Dashboard';
 import AuctionRunsPage from './components/auctions/AuctionRunsPage';
@@ -9,8 +9,25 @@ import InventoryClerkPage from './components/clerk/InventoryClerkPage';
 import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
 import ShippingPage from './components/shipping/ShippingPage';
 import FulfillmentHubPage from './components/fulfillment/FulfillmentHubPage';
-import { ShieldCheck, Menu } from 'lucide-react';
+import { ShieldCheck, Menu, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import LoginPage from './components/auth/LoginPage';
+
+// Global Toast System
+const Toast = ({ message, type, onClose }: any) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`toast ${type}`}>
+      {type === 'success' && <CheckCircle2 size={18} color="var(--status-teal)" />}
+      {type === 'error' && <AlertCircle size={18} color="var(--status-red)" />}
+      {type === 'info' && <Info size={18} color="var(--status-amber)" />}
+      <span>{message}</span>
+    </div>
+  );
+};
 
 const FooterBar = () => (
   <footer className="footer-bar">
@@ -46,6 +63,16 @@ function App() {
     return sessionStorage.getItem('bidboss_module') || 'Dashboard';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [toasts, setToasts] = useState<any[]>([]);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   const handleLogin = (userData: { role: string; name: string; title: string }) => {
     sessionStorage.setItem('bidboss_user', JSON.stringify(userData));
@@ -79,21 +106,21 @@ function App() {
       case 'Dashboard':
         return <Dashboard />;
       case 'Auction Runs':
-        return <AuctionRunsPage user={user} />;
+        return <AuctionRunsPage user={user} showToast={showToast} />;
       case 'File Import':
-        return <FileImportPage onNavigate={setCurrentModule} user={user} />;
+        return <FileImportPage onNavigate={setCurrentModule} user={user} showToast={showToast} />;
       case 'Slot Management':
-        return <SlotManagementPage user={user} />;
+        return <SlotManagementPage user={user} showToast={showToast} />;
       case 'Batch Notifications':
-        return <NotificationsPage user={user} />;
+        return <NotificationsPage user={user} showToast={showToast} />;
       case 'Inventory Clerk':
-        return <InventoryClerkPage user={user} />;
+        return <InventoryClerkPage user={user} showToast={showToast} />;
       case 'Issues / Returns':
-        return <IssuesReturnsPage user={user} />;
+        return <IssuesReturnsPage user={user} showToast={showToast} />;
       case 'Shipping':
-        return <ShippingPage user={user} />;
+        return <ShippingPage user={user} showToast={showToast} />;
       case 'Fulfillment Hub':
-        return <FulfillmentHubPage user={user} />;
+        return <FulfillmentHubPage user={user} showToast={showToast} />;
       default:
         return (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -161,6 +188,12 @@ function App() {
         </main>
 
         <FooterBar />
+      </div>
+
+      <div className="toast-container">
+        {toasts.map(t => (
+          <Toast key={t.id} {...t} onClose={() => removeToast(t.id)} />
+        ))}
       </div>
 
       <style>{`
