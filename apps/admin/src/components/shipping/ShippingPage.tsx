@@ -6,7 +6,12 @@ import DispatchedTab from './tabs/DispatchedTab';
 
 export type ShippingTab = 'In Queue' | 'Prepared for Shipping' | 'Dispatched';
 
-const ShippingPage = () => {
+interface ShippingPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const ShippingPage: React.FC<ShippingPageProps> = () => {
   const [activeTab, setActiveTab] = useState<ShippingTab>('In Queue');
 
   return (

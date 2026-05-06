@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronDown, ChevronUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 interface PartialReleaseTabProps {
@@ -12,7 +12,6 @@ interface PartialReleaseTabProps {
 const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLots, onBack, onComplete }) => {
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [showReleased, setShowReleased] = useState(false);
   const [completing, setCompleting] = useState(false);
 
   const handleReasonChange = (id: string, reason: string) => {

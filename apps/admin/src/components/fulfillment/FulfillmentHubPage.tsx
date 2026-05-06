@@ -4,7 +4,12 @@ import OrderDetailTab from './tabs/OrderDetailTab';
 
 export type FulfillmentTab = 'Queue' | 'Detail';
 
-const FulfillmentHubPage = () => {
+interface FulfillmentHubPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const FulfillmentHubPage: React.FC<FulfillmentHubPageProps> = () => {
   const [activeTab, setActiveTab] = useState<FulfillmentTab>('Queue');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 

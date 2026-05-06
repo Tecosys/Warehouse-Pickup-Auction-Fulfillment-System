@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Clock, CheckCircle } from 'lucide-react';
-import { ButtonSpinner, PageLoader } from '../../shared/LoadingComponents';
+import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 interface CheckInTabProps {
   onOpenRelease: (order: any) => void;

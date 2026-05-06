@@ -5,7 +5,6 @@ import {
   Clock, 
   MessageSquare, 
   CheckCircle2, 
-  AlertTriangle,
   RefreshCw,
   Package,
   Users,
@@ -75,13 +74,6 @@ const ActivityItem = ({ title, desc, time, icon, color }: any) => (
     </div>
   </div>
 );
-
-const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
-  1: 'Booking Link Sent', 2: 'Shipping Confirmed', 3: 'Ready for Pickup',
-  4: 'Booking Confirmed', 5: 'Appointment Reminder', 6: 'Arrival Reminder',
-  7: 'Daily Reminder', 8: 'Final Reminder', 9: 'Cancellation Notice',
-  10: 'Pickup Confirmed', 11: 'Return Received', 12: 'Review Request', 13: 'Tracking Sent'
-};
 
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
@@ -153,7 +145,7 @@ const Dashboard = () => {
           )}
           <button
             className="btn"
-            onClick={fetchStats}
+            onClick={fetchData}
             title={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}
           >
@@ -188,14 +180,14 @@ const Dashboard = () => {
               value={f?.notStarted?.toLocaleString()}
               color="var(--status-gray)"
               icon={<Clock size={20} />}
-              sub={f?.notStarted > 0 ? `${Math.round((f.notStarted / total) * 100)}% of total` : 'All processed'}
+              sub={f?.notStarted > 0 ? `${Math.round((f?.notStarted / total) * 100)}% of total` : 'All processed'}
             />
             <StatCard
               label="In Progress"
               value={f?.inProgress?.toLocaleString()}
               color="var(--status-amber)"
               icon={<TrendingUp size={20} />}
-              sub={f?.inProgress > 0 ? `${Math.round((f.inProgress / total) * 100)}% of total` : 'None active'}
+              sub={f?.inProgress > 0 ? `${Math.round((f?.inProgress / total) * 100)}% of total` : 'None active'}
             />
             <StatCard
               label="Ready"

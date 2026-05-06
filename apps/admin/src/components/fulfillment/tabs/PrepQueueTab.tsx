@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, ChevronRight, Clock, AlertTriangle, LayoutGrid } from 'lucide-react';
+import { Package, ChevronRight, Clock, LayoutGrid } from 'lucide-react';
 import { PageLoader } from '../../shared/LoadingComponents';
 
 interface PrepQueueTabProps {

@@ -40,7 +40,7 @@ const CasesTable: React.FC<CasesTableProps> = ({ filterStatus, onOpenCase, filte
     fetchCases();
   }, [filterStatus, filters]);
 
-  if (loading) return <SkeletonTable rows={5} columns={8} />;
+  if (loading) return <SkeletonTable rows={5} cols={8} />;
 
   return (
     <div className="card animate-fade" style={{ padding: 0, overflow: 'hidden' }}>

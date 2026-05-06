@@ -86,17 +86,17 @@ export const PageLoader = ({ message = 'Loading...' }: { message?: string }) => 
 
 // ─── Skeleton Card Row ─────────────────────────────────────────────────────────
 export const SkeletonRow = ({ cols = 4 }: { cols?: number }) => (
-  <tr>
+  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1.5rem', padding: '1.25rem 0', borderBottom: '1px solid var(--border-color)' }}>
     {Array.from({ length: cols }).map((_, i) => (
-      <td key={i} style={{ padding: '1.25rem 1.5rem' }}>
+      <div key={i}>
         <div className="skeleton" style={{
           height: i === 0 ? '20px' : '16px',
           width: i === 0 ? '70%' : `${50 + Math.random() * 30}%`,
           borderRadius: '0.375rem'
         }} />
-      </td>
+      </div>
     ))}
-  </tr>
+  </div>
 );
 
 // ─── Skeleton Table (rows of shimmer) ─────────────────────────────────────────
@@ -109,24 +109,22 @@ export const SkeletonTable = ({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
       padding: '0.875rem 1.5rem',
       display: 'grid',
       gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gap: '1rem'
+      gap: '1.5rem'
     }}>
       {Array.from({ length: cols }).map((_, i) => (
         <div key={i} className="skeleton" style={{ height: '12px', width: '60%', borderRadius: '0.25rem' }} />
       ))}
     </div>
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <tbody>
-        {Array.from({ length: rows }).map((_, i) => (
-          <SkeletonRow key={i} cols={cols} />
-        ))}
-      </tbody>
-    </table>
+    <div style={{ padding: '0 1.5rem' }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <SkeletonRow key={i} cols={cols} />
+      ))}
+    </div>
   </div>
 );
 
 // ─── Skeleton Card ─────────────────────────────────────────────────────────────
-export const SkeletonCard = ({ height = 120 }: { height?: number }) => (
+export const SkeletonCard = () => (
   <div className="card" style={{ padding: '1.5rem' }}>
     <div className="skeleton" style={{ height: '14px', width: '40%', marginBottom: '1rem', borderRadius: '0.375rem' }} />
     <div className="skeleton" style={{ height: '32px', width: '60%', marginBottom: '0.75rem', borderRadius: '0.5rem' }} />

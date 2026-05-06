@@ -73,7 +73,12 @@ const AuctionRunCard = ({ run, onOpen }: any) => (
   </div>
 );
 
-const AuctionRunsPage = () => {
+interface AuctionRunsPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
   const [selectedRun, setSelectedRun] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('All Runs');
   const [runs, setRuns] = useState<any[]>([]);

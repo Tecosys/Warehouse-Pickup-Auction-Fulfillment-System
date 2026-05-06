@@ -54,9 +54,6 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   const flaggedCount = lots.filter(l => l._status === 'Hold/Issue' || l._status === 'Not Found').length;
   const untouchedCount = lots.filter(l => l._status === 'Pending').length;
   const progress = lots.length > 0 ? Math.round(((readyCount + flaggedCount) / lots.length) * 100) : 0;
-  const prepStatus: 'Not Started' | 'In Progress' | 'Ready' =
-    readyCount + flaggedCount === 0 ? 'Not Started' :
-    readyCount + flaggedCount < lots.length ? 'In Progress' : 'Ready';
 
   // ── Lot Actions ───────────────────────────────────────────────────────────────
   const toggleLotSelect = (id: string) => {

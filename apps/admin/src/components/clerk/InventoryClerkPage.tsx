@@ -8,7 +8,12 @@ import ReleaseConfirmationModal from './modals/ReleaseConfirmationModal';
 
 export type TabType = 'Check-in & Search' | 'Order Release' | 'Partial Release';
 
-const InventoryClerkPage = () => {
+interface InventoryClerkPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
   const [activeTab, setActiveTab] = useState<TabType>('Check-in & Search');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [withheldLots, setWithheldLots] = useState<any[]>([]);

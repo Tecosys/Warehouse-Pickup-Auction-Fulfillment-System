@@ -192,7 +192,12 @@ const TemplateEditor = ({ template, onClose }: any) => (
   </div>
 );
 
-const NotificationsPage = () => {
+interface NotificationsPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const NotificationsPage: React.FC<NotificationsPageProps> = () => {
   const [activeTab, setActiveTab] = useState('Send Notifications');
   const [showSendModal, setShowSendModal] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState<any>(null);

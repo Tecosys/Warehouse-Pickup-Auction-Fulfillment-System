@@ -7,7 +7,12 @@ import ReturnIntakeTab from './tabs/ReturnIntakeTab';
 export type CaseStatus = 'Open' | 'In Review' | 'Resolved';
 export type CaseTab = 'All Cases' | 'Open' | 'In Review' | 'Resolved' | 'Return Intake';
 
-const IssuesReturnsPage = ({ user }: { user: any }) => {
+interface IssuesReturnsPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState<CaseTab>('All Cases');
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

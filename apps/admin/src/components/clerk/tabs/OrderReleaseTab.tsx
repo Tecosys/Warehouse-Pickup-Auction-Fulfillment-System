@@ -6,7 +6,7 @@ import QRScannerModal from '../../shared/QRScannerModal';
 
 interface OrderReleaseTabProps {
   order: any;
-  onReviewWithheld: () => void;
+  onReviewWithheld: (lots: any[]) => void;
   onBack: () => void;
   onComplete: () => void;
 }

@@ -168,7 +168,6 @@ const MonthView = ({ slots, referenceDate, onNavigate, onInitClick, onSelectWeek
   const year = d.getFullYear();
   
   const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
   
   // Grid start (Sunday of the first week)
   const startOffset = firstDay.getDay();
@@ -467,7 +466,12 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
 };
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-const SlotManagementPage = ({ user, showToast }: { user: any; showToast: any }) => {
+interface SlotManagementPageProps {
+  user: any;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast }) => {
   const [viewType, setViewType] = useState<'List' | 'Week' | 'Month'>('List');
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [slots, setSlots] = useState<any[]>([]);

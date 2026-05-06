@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Send, MessageSquare, Clock, User, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, Send, MessageSquare, Clock, User, CheckCircle2 } from 'lucide-react';
 import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 interface CaseDetailDrawerProps {

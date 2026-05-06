@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ScanLine, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 const ReturnIntakeTab = () => {
