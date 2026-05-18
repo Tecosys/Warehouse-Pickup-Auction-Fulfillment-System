@@ -454,3 +454,104 @@ tr:hover td {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ─── Premium Mobile Responsiveness for Worker and Clerk screens ─── */
+@media (max-width: 1024px) {
+  .responsive-detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .responsive-detail-grid > div:first-child {
+    position: static !important;
+    top: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .responsive-flex-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1.25rem !important;
+    text-align: left;
+  }
+  
+  .responsive-flex-header > button, 
+  .responsive-flex-header > div:last-child {
+    width: 100% !important;
+    margin-top: 0.5rem;
+  }
+
+  .responsive-grid-cols {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  .responsive-action-bar {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  .responsive-action-bar > button {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    font-size: 0.8125rem !important;
+    padding: 0.625rem 0.75rem !important;
+  }
+
+  .responsive-lot-card {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+  
+  .responsive-lot-card > input[type="checkbox"] {
+    width: 24px !important;
+    height: 24px !important;
+    margin-bottom: 0.25rem;
+  }
+
+  .responsive-lot-card > div:nth-child(3) {
+    width: 100% !important;
+  }
+
+  .responsive-partial-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  .responsive-partial-row > div:last-child {
+    width: 100% !important;
+  }
+
+  .sticky-action-bar {
+    left: 0 !important;
+    padding: 1rem !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+    text-align: center;
+  }
+
+  .sticky-action-bar button {
+    width: 100% !important;
+  }
+
+  .tabs-container {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding-bottom: 0.25rem !important;
+    gap: 1rem !important;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .tabs-container::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+
+  .tabs-container button {
+    padding: 0.75rem 0.25rem !important;
+    font-size: 0.875rem !important;
+  }
+}

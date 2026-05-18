@@ -33,7 +33,7 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
 
   return (
     <div className="inventory-clerk-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+      <div className="responsive-flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Inventory Clerk</h1>
           <p style={{ color: 'var(--text-muted)' }}>Customer check-in and order release</p>
@@ -41,7 +41,7 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
         <button 
           onClick={() => setIsWalkInModalOpen(true)}
           className="btn btn-primary" 
-          style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)' }}
+          style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
         >
           <Plus size={20} />
           Walk-in Override

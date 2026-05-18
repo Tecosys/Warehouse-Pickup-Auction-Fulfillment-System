@@ -66,14 +66,14 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
   return (
     <div className="animate-fade" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Auction Context */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="responsive-flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div style={{ background: '#e2e8f0', padding: '0.625rem 1.25rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
           <LayoutGrid size={16} />
           {activeAuction ? `${activeAuction.title} (#${activeAuction.auctionNumber})` : 'No Active Auction'}
         </div>
         
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <select className="card" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, outline: 'none' }}>
+          <select className="card" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, outline: 'none', width: '100%' }}>
             <option>Sort by: Appointment Priority</option>
             <option>Sort by: Bidder Number</option>
           </select>
@@ -118,7 +118,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
       </div>
 
       {/* Order Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
         {orders.length > 0 ? (
           orders
             .filter(o => {

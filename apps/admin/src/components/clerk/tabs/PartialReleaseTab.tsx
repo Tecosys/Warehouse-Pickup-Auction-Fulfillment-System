@@ -84,7 +84,7 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
         {withheldLots.map((lot) => (
           <div 
             key={lot._id} 
-            className="card" 
+            className="card responsive-partial-row" 
             style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 

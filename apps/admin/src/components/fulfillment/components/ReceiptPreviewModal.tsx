@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer } from 'lucide-react';
 
 interface ReceiptPreviewModalProps {
@@ -25,7 +26,7 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
 
   const isPrep = title.toLowerCase().includes('prep');
 
-  return (
+  return createPortal(
     <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
       <div className="card animate-fade" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', background: '#f8fafc' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -111,7 +112,8 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
           }
         `}</style>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

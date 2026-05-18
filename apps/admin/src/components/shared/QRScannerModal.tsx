@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { X, Camera } from 'lucide-react';
 
@@ -49,7 +50,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{ 
       position: 'fixed', 
       inset: 0, 
@@ -106,15 +107,18 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
           border-radius: 4px !important;
           cursor: pointer !important;
           font-weight: 600 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         #qr-reader__camera_selection {
           padding: 8px !important;
           border-radius: 4px !important;
           border: 1px solid var(--border-color) !important;
           margin-bottom: 10px !important;
+          width: 100%;
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };
 

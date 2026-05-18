@@ -1,4 +1,5 @@
 import { AlertTriangle, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface ModalProps {
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, children, confirmText = 'Confirm', confirmColor = 'var(--status-teal)' }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
       <div className="card animate-fade" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -26,7 +27,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, childr
           <button className="btn btn-primary" style={{ flex: 1, background: confirmColor }} onClick={onConfirm}>{confirmText}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

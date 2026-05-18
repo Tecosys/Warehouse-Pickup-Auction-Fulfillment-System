@@ -125,7 +125,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
         Back to Check-in & Search
       </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '38% 62%', gap: '2rem', alignItems: 'start' }}>
+      <div className="responsive-detail-grid" style={{ display: 'grid', gridTemplateColumns: '38% 62%', gap: '2rem', alignItems: 'start' }}>
         {/* Left Column - Order Summary */}
         <div className="card" style={{ position: 'sticky', top: '100px' }}>
           <div style={{ marginBottom: '1.5rem' }}>
@@ -184,64 +184,66 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
             </div>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-                <th style={{ width: '50px', padding: '1rem 1.5rem' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedLots.size === lots.length && lots.length > 0}
-                    onChange={selectedLots.size === lots.length ? deselectAll : selectAll}
-                    style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
-                  />
-                </th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lot #</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pickup Loc</th>
-                <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lots.map((lot) => {
-                const isSelected = selectedLots.has(lot._id);
-                return (
-                  <tr 
-                    key={lot._id} 
-                    onClick={() => toggleLot(lot._id)}
-                    style={{ 
-                      borderBottom: '1px solid var(--border-color)', 
-                      cursor: 'pointer',
-                      background: isSelected ? 'white' : 'rgba(245, 158, 11, 0.05)'
-                    }}
-                  >
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected}
-                        onChange={() => {}} // Handled by row click
-                        style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
-                      />
-                    </td>
-                    <td style={{ padding: '1rem 1.5rem', fontWeight: 700 }}>{lot.lotNumber}</td>
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      <div style={{ fontWeight: 500 }}>{lot.description}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {lot.lpn || 'N/A'}</div>
-                    </td>
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{lot.metadata?.location || 'N/A'}</span>
-                    </td>
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      {isSelected ? (
-                        <span className="badge badge-teal">Ready</span>
-                      ) : (
-                        <span className="badge badge-amber">Withheld</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
+                  <th style={{ width: '50px', padding: '1rem 1.5rem' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLots.size === lots.length && lots.length > 0}
+                      onChange={selectedLots.size === lots.length ? deselectAll : selectAll}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
+                    />
+                  </th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lot #</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pickup Loc</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lots.map((lot) => {
+                  const isSelected = selectedLots.has(lot._id);
+                  return (
+                    <tr 
+                      key={lot._id} 
+                      onClick={() => toggleLot(lot._id)}
+                      style={{ 
+                        borderBottom: '1px solid var(--border-color)', 
+                        cursor: 'pointer',
+                        background: isSelected ? 'white' : 'rgba(245, 158, 11, 0.05)'
+                      }}
+                    >
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={() => {}} // Handled by row click
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
+                        />
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem', fontWeight: 700 }}>{lot.lotNumber}</td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ fontWeight: 500 }}>{lot.description}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {lot.lpn || 'N/A'}</div>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{lot.metadata?.location || 'N/A'}</span>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        {isSelected ? (
+                          <span className="badge badge-teal">Ready</span>
+                        ) : (
+                          <span className="badge badge-amber">Withheld</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

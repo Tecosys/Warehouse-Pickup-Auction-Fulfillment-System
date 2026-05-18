@@ -209,25 +209,25 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
       </div>
 
       {/* Top Action Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', background: 'white', borderBottom: '1px solid var(--border-color)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-teal)', fontWeight: 700, cursor: 'pointer' }}>
+      <div className="responsive-flex-header" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', background: 'white', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-teal)', fontWeight: 700, cursor: 'pointer' }}>
           <ArrowLeft size={18} /> Back to Prep Queue
         </button>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn" onClick={() => setActiveModal('Cancel')} style={{ padding: '0.5rem 1rem', color: 'var(--status-red)', borderColor: 'var(--status-red)' }}>
+        <div className="responsive-action-bar" style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn" onClick={() => setActiveModal('Cancel')} style={{ padding: '0.5rem 1rem', color: 'var(--status-red)', borderColor: 'var(--status-red)', justifyContent: 'center' }}>
             Cancel Order
           </button>
-          <button className="btn" onClick={() => setActiveModal('Receipt')} style={{ padding: '0.5rem 1rem' }}>
+          <button className="btn" onClick={() => setActiveModal('Receipt')} style={{ padding: '0.5rem 1rem', justifyContent: 'center' }}>
             <Printer size={18} /> Print Prep Slip
           </button>
-          <button className="btn" onClick={() => setIsScannerOpen(true)} style={{ padding: '0.5rem 1rem', color: 'var(--status-teal)', borderColor: 'var(--status-teal)' }}>
+          <button className="btn" onClick={() => setIsScannerOpen(true)} style={{ padding: '0.5rem 1rem', color: 'var(--status-teal)', borderColor: 'var(--status-teal)', justifyContent: 'center' }}>
             <ScanLine size={18} /> Scan LPN
           </button>
           {order.fulfillmentStatus !== 'Ready' && (
             <button
               className="btn btn-primary"
               disabled={untouchedCount > 0 || saving}
-              style={{ padding: '0.5rem 1.5rem', background: 'var(--status-teal)', opacity: untouchedCount > 0 ? 0.5 : 1 }}
+              style={{ padding: '0.5rem 1.5rem', background: 'var(--status-teal)', opacity: untouchedCount > 0 ? 0.5 : 1, justifyContent: 'center' }}
               onClick={() => setActiveModal('Complete')}
             >
               Complete Preparation
@@ -236,7 +236,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
         </div>
       </div>
 
-      <div className="fulfillment-layout-grid" style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem', padding: '2rem', alignItems: 'start' }}>
+      <div className="fulfillment-layout-grid responsive-detail-grid" style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem', padding: '2rem', alignItems: 'start' }}>
         {/* Left Column */}
         <div style={{ position: 'sticky', top: '2rem' }}>
           <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -348,7 +348,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                 {lots.map(lot => (
                   <div
                     key={lot._id}
-                    className="card"
+                    className="card responsive-lot-card"
                     style={{
                       padding: '1.25rem',
                       background: activeLotId === lot._id
