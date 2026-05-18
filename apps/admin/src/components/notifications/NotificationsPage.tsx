@@ -92,14 +92,16 @@ const SendModal = ({ notification, onClose }: any) => {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '600px', padding: '2rem' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '600px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Send: {notification.name}</h3>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>Send: {notification.name}</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Transactional Notification • SMS & Email</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
@@ -157,12 +159,14 @@ const SendModal = ({ notification, onClose }: any) => {
 };
 
 const TemplateEditor = ({ template, onClose }: any) => (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
-    <div className="card animate-slide" style={{ width: '900px', padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '2rem' }} onClick={e => e.stopPropagation()}>
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }} onClick={onClose}>
+    <div className="card animate-slide" style={{ width: '950px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2.5rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Edit Template: {template.name}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'none' }}><X size={20} /></button>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>Edit Template: {template.name}</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
@@ -198,9 +202,9 @@ const TemplateEditor = ({ template, onClose }: any) => (
         </div>
       </div>
 
-      <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '2rem' }}>
-        <h4 style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-muted)' }}>VARIABLE REFERENCE</h4>
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
+      <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '2.5rem' }}>
+        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '1.25rem', color: 'var(--text-main)', letterSpacing: '0.05em' }}>VARIABLE REFERENCE</h4>
+        <div style={{ display: 'grid', gap: '1rem' }}>
           {[
             { tag: '[Auction Number]', desc: 'e.g. 043' },
             { tag: '[Link]', desc: 'Personal portal URL' },
@@ -210,9 +214,9 @@ const TemplateEditor = ({ template, onClose }: any) => (
             { tag: '[Lot Number]', desc: 'Item identifier' },
             { tag: '[Tracking Number]', desc: 'Carrier track ID' },
           ].map(v => (
-            <div key={v.tag}>
+            <div key={v.tag} style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
               <code style={{ fontSize: '0.75rem', color: 'var(--status-teal)', fontWeight: 700 }}>{v.tag}</code>
-              <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{v.desc}</p>
+              <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '2px' }}>{v.desc}</p>
             </div>
           ))}
         </div>
@@ -291,10 +295,11 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
   ];
 
   return (
-    <div className="notifications-page animate-slide">
+    <>
       {showSendModal && <SendModal notification={showSendModal} onClose={() => setShowSendModal(null)} />}
       {showEditModal && <TemplateEditor template={showEditModal} onClose={() => setShowEditModal(null)} />}
       
+      <div className="notifications-page animate-slide">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Batch Notifications</h1>
@@ -421,6 +426,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

@@ -311,11 +311,13 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '540px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 800, fontSize: '1.25rem' }}>Initialize Pickup Slots</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
+          <h3 style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-main)' }}>Initialize Pickup Slots</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
         </div>
 
         {/* Date picker */}
@@ -377,14 +379,16 @@ const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
   }, [slot._id]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '600px', padding: '2rem', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '600px', padding: '2.5rem', maxHeight: '80vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
           <div>
-            <h3 style={{ fontWeight: 800, fontSize: '1.125rem' }}>Bookings for {slot.date}</h3>
+            <h3 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>Bookings for {slot.date}</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{slot.startTime} – {slot.endTime} · {slot.currentBookings}/{slot.maxCapacity} booked</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
         </div>
         {loading ? <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading...</div>
           : orders.length === 0 ? <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No bookings in this slot yet.</div>
@@ -439,11 +443,13 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
   const availableSlots = slots.filter((s: any) => s.currentBookings < s.maxCapacity && s._id !== order.selectedSlot);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '480px', padding: '2rem' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 800 }}>Reschedule: {order.customer?.name || `Bidder #${order.bidderNumber}`}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '480px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
+          <h3 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>Reschedule: {order.customer?.name || `Bidder #${order.bidderNumber}`}</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
         </div>
         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Select New Time Slot</label>
         <select value={newSlotId} onChange={e => setNewSlotId(e.target.value)} className="card" style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem' }}>
@@ -551,7 +557,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
   const availableSlots = slots.filter(s => s.currentBookings < s.maxCapacity).length;
 
   return (
-    <div className="animate-slide">
+    <>
       {showInitModal && activeAuction && (
         <InitModal 
           auctionId={activeAuction._id} 
@@ -577,6 +583,8 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
           showToast={showToast}
         />
       )}
+
+      <div className="animate-slide">
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
@@ -636,6 +644,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
         />
       )}
     </div>
+    </>
   );
 };
 
