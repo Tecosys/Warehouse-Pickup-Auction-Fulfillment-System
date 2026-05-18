@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { CheckCircle2, Printer } from 'lucide-react';
 
 interface ReleaseConfirmationModalProps {
@@ -10,21 +11,21 @@ interface ReleaseConfirmationModalProps {
 const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isOpen, onClose, order, type }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
+      background: 'rgba(15, 23, 42, 0.4)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
-      backdropFilter: 'blur(4px)'
+      zIndex: 10000,
+      backdropFilter: 'blur(8px)'
     }}>
-      <div className="card animate-slide" style={{ width: '500px', padding: '2.5rem', textAlign: 'center' }}>
+      <div className="card animate-slide" style={{ width: '500px', padding: '2.5rem', textAlign: 'center', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ 
           width: '80px', 
           height: '80px', 
@@ -77,7 +78,8 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

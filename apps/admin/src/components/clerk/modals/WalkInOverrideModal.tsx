@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X, AlertCircle } from 'lucide-react';
 
 interface WalkInOverrideModalProps {
@@ -18,21 +19,21 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
     { id: '11', bidderNum: '#1129', customer: 'Mike Ross', items: 3 },
   ];
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
+      background: 'rgba(15, 23, 42, 0.4)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
-      backdropFilter: 'blur(4px)'
+      zIndex: 10000,
+      backdropFilter: 'blur(8px)'
     }}>
-      <div className="card animate-slide" style={{ width: '500px', padding: 0, overflow: 'hidden' }}>
+      <div className="card animate-slide" style={{ width: '500px', padding: 0, overflow: 'hidden', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Walk-in Priority Override</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -123,7 +124,8 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

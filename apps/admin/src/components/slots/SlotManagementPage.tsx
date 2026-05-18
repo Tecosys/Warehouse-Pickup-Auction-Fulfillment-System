@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, X, Trash2 } from 'lucide-react';
 import { PageLoader, ButtonSpinner } from '../shared/LoadingComponents';
 
@@ -310,7 +311,7 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
     }
   };
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
       <div className="card animate-slide" style={{ width: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
@@ -363,7 +364,8 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
           <button className="btn" style={{ flex: 1, padding: '0.875rem' }} onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -378,7 +380,7 @@ const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
       .finally(() => setLoading(false));
   }, [slot._id]);
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
       <div className="card animate-slide" style={{ width: '600px', padding: '2.5rem', maxHeight: '80vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
@@ -409,7 +411,8 @@ const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
             </div>
           ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -442,7 +445,7 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
 
   const availableSlots = slots.filter((s: any) => s.currentBookings < s.maxCapacity && s._id !== order.selectedSlot);
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
       <div className="card animate-slide" style={{ width: '480px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
@@ -467,7 +470,8 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
           <button className="btn" style={{ flex: 1, padding: '0.875rem' }} onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ChevronDown, 
   Search, 
@@ -91,7 +92,7 @@ const SendModal = ({ notification, onClose }: any) => {
     }
   };
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }} onClick={onClose}>
       <div className="card animate-slide" style={{ width: '600px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -154,11 +155,12 @@ const SendModal = ({ notification, onClose }: any) => {
           <button className="btn" style={{ flex: 1, padding: '1rem' }} onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
-const TemplateEditor = ({ template, onClose }: any) => (
+const TemplateEditor = ({ template, onClose }: any) => createPortal(
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }} onClick={onClose}>
     <div className="card animate-slide" style={{ width: '950px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2.5rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
       <div>
@@ -222,7 +224,8 @@ const TemplateEditor = ({ template, onClose }: any) => (
         </div>
       </div>
     </div>
-  </div>
+  </div>,
+  document.body
 );
 
 interface NotificationsPageProps {
