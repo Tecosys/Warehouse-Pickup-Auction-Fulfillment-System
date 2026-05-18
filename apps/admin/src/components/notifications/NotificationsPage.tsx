@@ -50,6 +50,8 @@ const NotificationCard = ({ notification, onSend }: any) => (
 
 const SendModal = ({ notification, onClose }: any) => {
   const [isSending, setIsSending] = useState(false);
+  const [recipientGroup, setRecipientGroup] = useState('All');
+  const [specificBidder, setSpecificBidder] = useState('');
 
   const handleSend = async () => {
     setIsSending(true);
@@ -59,17 +61,25 @@ const SendModal = ({ notification, onClose }: any) => {
       if (!auctionRes.ok) throw new Error('No active auction found');
       const auction = await auctionRes.json();
 
+      const payload: any = {
+        auctionRunId: auction._id,
+        type: parseInt(notification.id)
+      };
+
+      if (recipientGroup === 'Specific Bidder' && specificBidder) {
+        payload.bidderNumber = specificBidder;
+      } else if (recipientGroup === 'No Choice') {
+        payload.noChoiceOnly = true;
+      }
+
       const response = await fetch('http://localhost:5000/api/notifications/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          auctionRunId: auction._id,
-          type: parseInt(notification.id)
-        })
+        body: JSON.stringify(payload)
       });
       if (response.ok) {
         const result = await response.json();
-        alert(`Batch notification sent to ${result.count} customers!`);
+        alert(`Notification sent to ${result.count} customer(s)!`);
         onClose();
       } else {
         throw new Error('Failed to send');
@@ -94,11 +104,30 @@ const SendModal = ({ notification, onClose }: any) => {
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.75rem' }}>RECIPIENT GROUP</label>
-          <select className="card" style={{ width: '100%', padding: '0.75rem' }}>
-            <option>All customers this auction</option>
-            <option>Customers with no choice made</option>
-            <option>Specific Bidder #</option>
+          <select 
+            className="card" 
+            style={{ width: '100%', padding: '0.75rem', marginBottom: recipientGroup === 'Specific Bidder' ? '1rem' : '0' }}
+            value={recipientGroup}
+            onChange={(e) => setRecipientGroup(e.target.value)}
+          >
+            <option value="All">All customers this auction</option>
+            <option value="No Choice">Customers with no choice made</option>
+            <option value="Specific Bidder">Specific Bidder #</option>
           </select>
+
+          {recipientGroup === 'Specific Bidder' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>SPECIFIC BIDDER NUMBER</label>
+              <input 
+                type="text" 
+                placeholder="e.g. 1379" 
+                className="card" 
+                style={{ width: '100%', padding: '0.75rem' }}
+                value={specificBidder}
+                onChange={(e) => setSpecificBidder(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <div className="card" style={{ background: '#f8fafc', padding: '1.5rem', marginBottom: '2rem' }}>

@@ -36,6 +36,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Resolve order ID from either Mongoose ObjectId or Booking Code
+router.param('id', async (req: any, res: any, next, id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    try {
+      const order = await Order.findOne({ bookingCode: id });
+      if (order) {
+        req.params.id = order._id.toString();
+      }
+    } catch (err) {
+      // Pass along, will fail in the route
+    }
+  }
+  next();
+});
+
 /**
  * Get a single order with its associated lots
  */

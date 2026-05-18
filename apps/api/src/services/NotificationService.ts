@@ -2,6 +2,27 @@ import Notification from '../models/Notification';
 import Order from '../models/Order';
 import Case from '../models/Case';
 import Settings from '../models/Settings';
+import twilio from 'twilio';
+import { Resend } from 'resend';
+
+// Clients are lazy-loaded to prevent ES Module hoisting issues where process.env is not defined yet
+let twilioClient: any = null;
+const getTwilioClient = () => {
+  if (twilioClient) return twilioClient;
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  }
+  return twilioClient;
+};
+
+let resendClient: any = null;
+const getResendClient = () => {
+  if (resendClient) return resendClient;
+  if (process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+};
 
 const TEMPLATES: Record<number, string> = {
   1: "Congratulations on your winnings from Bid Boss Auction #{auctionNumber}. Please use your link to choose Pickup or Shipping: {link}",
@@ -69,6 +90,52 @@ export class NotificationService {
       await notification.save();
       console.log(`[Notification Service] Sent type ${type} to ${order.customer.name}`);
       
+      // Attempt to send via Twilio SMS
+      const activeTwilioClient = getTwilioClient();
+      if (activeTwilioClient && process.env.TWILIO_FROM_NUMBER && process.env.TWILIO_FROM_NUMBER !== 'pending') {
+        const phone = order.customer.phone;
+        if (phone) {
+          try {
+            await activeTwilioClient.messages.create({
+              body: content,
+              from: process.env.TWILIO_FROM_NUMBER,
+              to: phone
+            });
+            console.log(`[Notification Service] Twilio SMS sent to ${phone}`);
+          } catch (smsError) {
+            console.error(`[Notification Service] Twilio SMS failed to send to ${phone}:`, smsError);
+          }
+        } else {
+          console.log(`[Notification Service] Customer has no phone number, skipped Twilio SMS.`);
+        }
+      } else {
+        console.log(`[Notification Service] Twilio SMS skipped - missing client, from number, or still pending review.`);
+      }
+
+      // Attempt to send via Resend Email
+      const activeResendClient = getResendClient();
+      if (activeResendClient && process.env.RESEND_FROM_EMAIL) {
+        const email = order.customer.email;
+        if (email) {
+          try {
+            await activeResendClient.emails.send({
+              from: process.env.RESEND_FROM_EMAIL,
+              to: email,
+              subject: `Bid Boss Update - Auction #${order.auctionRun?.auctionNumber || 'N/A'}`,
+              text: content,
+              replyTo: process.env.RESEND_REPLY_TO || undefined
+            });
+            console.log(`[Notification Service] Resend Email sent to ${email}`);
+          } catch (emailError) {
+            console.error(`[Notification Service] Resend Email failed to send to ${email}:`, emailError);
+          }
+        } else {
+          console.log(`[Notification Service] Customer has no email address, skipped Resend Email.`);
+        }
+      } else {
+        console.log(`[Notification Service] Resend Email skipped - missing client or from email.`);
+      }
+
       return notification;
     } catch (error) {
       console.error('Failed to send notification:', error);
@@ -76,8 +143,18 @@ export class NotificationService {
     }
   }
 
-  static async sendBatch(auctionRunId: string, type: number) {
-    const orders = await Order.find({ auctionRun: auctionRunId });
+  static async sendBatch(auctionRunId: string, type: number, options: { bidderNumber?: string; noChoiceOnly?: boolean } = {}) {
+    const query: any = { auctionRun: auctionRunId };
+    
+    if (options.bidderNumber) {
+      query.bidderNumber = options.bidderNumber;
+    }
+    if (options.noChoiceOnly) {
+      query.customerStatus = 'Awaiting Choice';
+    }
+
+    const orders = await Order.find(query);
+    console.log(`[Notification Service] Found ${orders.length} order(s) matching query for batch. Sending...`);
     const results = [];
     for (const order of orders) {
       const res = await this.send(order._id.toString(), type);

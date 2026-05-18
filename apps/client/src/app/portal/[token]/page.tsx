@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Calendar, ChevronDown, ChevronUp, MapPin, HelpCircle, ArrowRight, CheckCircle2, Truck, Clock, ShieldCheck } from 'lucide-react';
+import { Box, Calendar, ChevronDown, ChevronUp, MapPin, HelpCircle, ArrowRight, CheckCircle2, Truck, Clock, ShieldCheck, Loader2 } from 'lucide-react';
 import BookingFlow from '@/components/portal/BookingFlow';
 
-export default function CustomerPortal({ params }: { params: { token: string } }) {
+export default function CustomerPortal({ params }: { params: any }) {
+  const resolvedParams: any = React.use(params);
+  const token = resolvedParams.token;
   const [activeView, setActiveView] = useState<'landing' | 'booking'>('landing');
   const [showLots, setShowLots] = useState(false);
   const [order, setOrder] = useState<any>(null);
@@ -15,7 +17,7 @@ export default function CustomerPortal({ params }: { params: { token: string } }
     try {
       setLoading(true);
       // Assuming token is orderId for now
-      const res = await fetch(`http://localhost:5000/api/orders/${params.token}`);
+      const res = await fetch(`http://localhost:5000/api/orders/${token}`);
       const data = await res.json();
       setOrder(data);
     } catch (error) {
@@ -27,14 +29,14 @@ export default function CustomerPortal({ params }: { params: { token: string } }
 
   useEffect(() => {
     fetchOrder();
-  }, [params.token]);
+  }, [token]);
 
   const handleConfirmShipping = async () => {
     if (!window.confirm("Confirming shipping is irreversible. You will not be able to choose pickup after this. Proceed?")) return;
     
     try {
       setShippingLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${params.token}/confirm-shipping`, {
+      const res = await fetch(`http://localhost:5000/api/orders/${token}/confirm-shipping`, {
         method: 'POST'
       });
       if (res.ok) {

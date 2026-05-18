@@ -50,6 +50,7 @@ export default function Hero() {
                 alt="BidBoss Logo"
                 width={200}
                 height={100}
+                style={{ height: 'auto' }}
                 className="w-48 h-auto object-contain"
               />
 

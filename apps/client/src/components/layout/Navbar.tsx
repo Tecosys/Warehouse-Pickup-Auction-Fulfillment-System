@@ -86,6 +86,7 @@ export default function Navbar() {
               alt="BidBoss Logo"
               width={150}
               height={50}
+              style={{ height: 'auto' }}
               className="h-10 md:h-12 w-auto object-contain"
               priority
             />
