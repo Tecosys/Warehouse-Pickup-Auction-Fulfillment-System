@@ -83,6 +83,9 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
   const [activeTab, setActiveTab] = useState('All Runs');
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [channelFilter, setChannelFilter] = useState('all');
 
   useEffect(() => {
     fetch('http://localhost:5000/api/auctions')
@@ -104,7 +107,8 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
           pickup: true,
           shipping: true,
           notifications: true,
-          importedAt: new Date(r.importedDate).toLocaleString()
+          importedAt: new Date(r.importedDate).toLocaleString(),
+          importedDate: r.importedDate
         }));
         setRuns(mapped);
       })
@@ -116,24 +120,87 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
     return <AuctionRunDetail run={selectedRun} onBack={() => setSelectedRun(null)} />;
   }
 
+  // Filter and Sort logic
+  const filteredRuns = runs
+    .filter(run => {
+      // Tab status filter
+      if (activeTab === 'Active' && run.status !== 'ACTIVE') return false;
+      if (activeTab === 'Archived' && run.status !== 'ARCHIVED') return false;
+
+      // Search Query filter (checks Run ID or Title)
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase();
+        const matchTitle = run.title?.toLowerCase().includes(query);
+        const matchId = run.id?.toLowerCase().includes(query);
+        if (!matchTitle && !matchId) return false;
+      }
+
+      // Channel filter
+      if (channelFilter === 'pickup' && !run.pickup) return false;
+      if (channelFilter === 'shipping' && !run.shipping) return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.importedDate).getTime() - new Date(a.importedDate).getTime();
+      }
+      if (sortBy === 'oldest') {
+        return new Date(a.importedDate).getTime() - new Date(b.importedDate).getTime();
+      }
+      if (sortBy === 'orders') {
+        return b.stats.orders - a.stats.orders;
+      }
+      if (sortBy === 'fulfillment') {
+        return b.stats.fulfillment - a.stats.fulfillment;
+      }
+      return 0;
+    });
+
   return (
     <div className="auction-runs">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Auction Runs</h1>
           <p style={{ color: 'var(--text-muted)' }}>All weekly auction cycles — active and archived</p>
         </div>
         
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative', width: '320px' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: '280px' }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
               placeholder="Search by Run ID or Title..." 
               className="card"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               style={{ width: '100%', padding: '0.625rem 1rem 0.625rem 2.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}
             />
           </div>
+
+          <select 
+            className="card"
+            value={channelFilter}
+            onChange={e => setChannelFilter(e.target.value)}
+            style={{ padding: '0.625rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem', outline: 'none', border: '1px solid var(--border-color)', fontWeight: 600, cursor: 'pointer', background: 'white' }}
+          >
+            <option value="all">All Channels</option>
+            <option value="pickup">Pickup Enabled</option>
+            <option value="shipping">Shipping Enabled</option>
+          </select>
+
+          <select 
+            className="card"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            style={{ padding: '0.625rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem', outline: 'none', border: '1px solid var(--border-color)', fontWeight: 600, cursor: 'pointer', background: 'white' }}
+          >
+            <option value="newest">Newest Imported</option>
+            <option value="oldest">Oldest Imported</option>
+            <option value="orders">Most Orders</option>
+            <option value="fulfillment">Highest Fulfillment %</option>
+          </select>
+
           <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} />
             Create New Auction Run
@@ -164,13 +231,11 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
       <div className="runs-list">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Loading auction runs...</div>
-        ) : runs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No auction runs found. Import your first run using File Import.</div>
-        ) : runs
-          .filter(run => activeTab === 'All Runs' || (activeTab === 'Active' && run.status === 'ACTIVE') || (activeTab === 'Archived' && run.status === 'ARCHIVED'))
-          .map(run => (
-            <AuctionRunCard key={run._id} run={run} onOpen={setSelectedRun} />
-          ))}
+        ) : filteredRuns.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No matching auction runs found. Try adjusting your filters.</div>
+        ) : filteredRuns.map(run => (
+          <AuctionRunCard key={run._id} run={run} onOpen={setSelectedRun} />
+        ))}
       </div>
     </div>
   );
