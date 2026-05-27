@@ -22,6 +22,14 @@ export interface ICustomer extends Document {
   billTo: IAddress;
   shipTo: IAddress;
   isShippingRequested: boolean;
+  verifiedStatus: boolean;
+  verifiedBy?: string;
+  verifiedAt?: Date;
+  riskTier: 'Green' | 'Gold' | 'Amber' | 'Red';
+  riskNotes?: string;
+  manualHold: boolean;
+  creditBalance: number;
+  notes?: string;
   metadata: Record<string, any>;
 }
 
@@ -47,6 +55,14 @@ const CustomerSchema: Schema = new Schema({
   billTo: { type: AddressSchema, default: () => ({}) },
   shipTo: { type: AddressSchema, default: () => ({}) },
   isShippingRequested: { type: Boolean, default: false },
+  verifiedStatus: { type: Boolean, default: false },
+  verifiedBy: { type: String },
+  verifiedAt: { type: Date },
+  riskTier: { type: String, enum: ['Green', 'Gold', 'Amber', 'Red'], default: 'Green' },
+  riskNotes: { type: String },
+  manualHold: { type: Boolean, default: false },
+  creditBalance: { type: Number, default: 0 },
+  notes: { type: String },
   metadata: { type: Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 

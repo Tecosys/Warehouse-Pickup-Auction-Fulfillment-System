@@ -2,19 +2,26 @@ import { useState, useEffect, Fragment } from 'react';
 import { Download, ChevronDown, ChevronUp, CheckCircle2, Package } from 'lucide-react';
 import { PageLoader } from '../../shared/LoadingComponents';
 
-const DispatchedTab = () => {
+interface DispatchedTabProps {
+  selectedAuction?: any;
+}
+
+const DispatchedTab: React.FC<DispatchedTabProps> = ({ selectedAuction }) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDispatchedOrders();
-  }, []);
+  }, [selectedAuction?._id]);
 
   const fetchDispatchedOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/shipping/dispatched');
+      const url = selectedAuction?._id 
+        ? `http://localhost:5000/api/shipping/dispatched?auctionRunId=${selectedAuction._id}`
+        : 'http://localhost:5000/api/shipping/dispatched';
+      const res = await fetch(url);
       const data = await res.json();
       setOrders(data);
     } catch (error) {

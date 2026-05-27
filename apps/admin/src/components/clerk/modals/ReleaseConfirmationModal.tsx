@@ -11,6 +11,14 @@ interface ReleaseConfirmationModalProps {
 const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isOpen, onClose, order, type }) => {
   if (!isOpen) return null;
 
+  const customerName = order?.customer?.name || order?.customer || 'Unknown Customer';
+  const bidderNum = order?.bidderNumber || order?.bidderNum || 'N/A';
+  const auctionLabel = order?.auctionRun?.title || 'Active Auction';
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return createPortal(
     <div style={{
       position: 'fixed',
@@ -25,6 +33,26 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
       zIndex: 10000,
       backdropFilter: 'blur(8px)'
     }}>
+      {/* Hidden print slip for 80mm receipt */}
+      <div className="print-slip">
+        <h1>BIDBOSS RELEASE RECEIPT</h1>
+        <div style={{ marginBottom: '10px' }}>
+          <div>Auction: {auctionLabel}</div>
+          <div>Bidder: #{bidderNum}</div>
+          <div>Customer: {customerName}</div>
+          <div>Booking Code: {order?.bookingCode || 'N/A'}</div>
+          <div>Type: {type === 'full' ? 'Full Release' : 'Partial Release'}</div>
+        </div>
+        <div style={{ borderTop: '1px solid black', paddingTop: '10px' }}>
+          <strong>RELEASE STATUS:</strong>
+          <div>{type === 'full' ? 'All lots successfully released.' : 'Lots released with withheld exceptions.'}</div>
+        </div>
+        <div className="footer" style={{ marginTop: '10px', borderTop: '1px dashed black', paddingTop: '5px', textAlign: 'center', fontSize: '8pt' }}>
+          Released by: Staff<br />
+          {new Date().toLocaleString()}
+        </div>
+      </div>
+
       <div className="card animate-slide" style={{ width: '500px', padding: '2.5rem', textAlign: 'center', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ 
           width: '80px', 
@@ -45,7 +73,7 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
         </h2>
         
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.6 }}>
-          Release for <strong>{order?.customer} ({order?.bidderNum})</strong> has been recorded. 
+          Release for <strong>{customerName} ({bidderNum})</strong> has been recorded. 
           Notifications have been sent to the customer.
         </p>
 
@@ -53,7 +81,7 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Release Summary</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
             <span>Released by:</span>
-            <span style={{ fontWeight: 600 }}>Marcus Chen</span>
+            <span style={{ fontWeight: 600 }}>Staff</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Timestamp:</span>
@@ -70,6 +98,7 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
             Close
           </button>
           <button 
+            onClick={handlePrint}
             className="btn btn-primary" 
             style={{ flex: 1, padding: '0.75rem' }}
           >

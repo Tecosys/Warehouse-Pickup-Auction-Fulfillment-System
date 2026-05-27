@@ -11,6 +11,7 @@ import AuctionRun from '../models/AuctionRun';
 import Customer from '../models/Customer';
 import Order from '../models/Order';
 import Lot from '../models/Lot';
+import Settings from '../models/Settings';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -30,7 +31,9 @@ const parseCSVFile = (filePath: string): Promise<any[]> => {
 
 const parseExcelFile = (filePath: string): any[] => {
   const workbook = XLSX.readFile(filePath);
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  const sheetName = workbook.SheetNames[0] || 'Sheet1';
+  const firstSheet = workbook.Sheets[sheetName];
+  if (!firstSheet) return [];
   return XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
 };
 
@@ -65,19 +68,63 @@ router.post('/', upload.fields([
 ]), async (req: any, res: any) => {
   try {
     const { auctionNumber, auctionTitle } = req.body;
-    const files = req.files as Record<string, multer.File[]>;
+    const files = req.files as Record<string, Express.Multer.File[]>;
 
-    if (!files?.hibid || !files?.auctionflex || !files?.manyfast) {
+    const hibidFile = files.hibid?.[0];
+    const afFile = files.auctionflex?.[0];
+    const mfFile = files.manyfast?.[0];
+
+    if (!hibidFile || !afFile || !mfFile) {
       return res.status(400).json({ error: 'All 3 files are required: hibid, auctionflex, manyfast' });
     }
 
     const [hibidData, auctionflexData, manyfastData] = await Promise.all([
-      parseFile(files.hibid[0].path, files.hibid[0].originalname),
-      parseFile(files.auctionflex[0].path, files.auctionflex[0].originalname),
-      parseFile(files.manyfast[0].path, files.manyfast[0].originalname),
+      parseFile(hibidFile.path, hibidFile.originalname),
+      parseFile(afFile.path, afFile.originalname),
+      parseFile(mfFile.path, mfFile.originalname),
     ]);
 
-    const auctionRun = new AuctionRun({ auctionNumber, title: auctionTitle });
+    const validateHeaders = (rows: any[], requiredAliases: string[][], filename: string): string | null => {
+      if (!rows || rows.length === 0) {
+        return `File ${filename} is empty.`;
+      }
+      const sampleRow = rows[0];
+      const keys = Object.keys(sampleRow).map(k => k.trim());
+      
+      for (const group of requiredAliases) {
+        const match = group.some(alias => keys.includes(alias));
+        if (!match) {
+          return `Missing required column in ${filename}. Expected one of: ${group.join(', ')}`;
+        }
+      }
+      return null;
+    };
+
+    const hibidValidation = validateHeaders(hibidData, [['Lot'], ['Winning Bidder', 'Bidder', 'Bidder Number', 'BidderNumber'], ['High Bid', 'Winning Amount', 'Hammer Price', 'Hammer']], 'HiBid Results');
+    const afValidation = validateHeaders(auctionflexData, [['BidderNumber', 'Bidder Number', 'BidderNum', 'Bidder'], ['FirstName', 'First Name', 'LastName', 'Last Name', 'Name', 'Customer Name', 'FullName']], 'AuctionFlex Bidders');
+    const mfValidation = validateHeaders(manyfastData, [['Lot+Section', 'Lot', 'Lot Number', 'LotNumber'], ['Location', 'Storage Location', 'StorageLocation', 'Bin', 'Rack']], 'ManyFastScan Catalog');
+
+    if (hibidValidation || afValidation || mfValidation) {
+      const errors = [hibidValidation, afValidation, mfValidation].filter(Boolean);
+      return res.status(400).json({ error: 'Validation failed', details: errors.join('; ') });
+    }
+
+    // Fetch custom defaults from Settings collection
+    const bpSetting = await Settings.findOne({ key: 'buyer_premium' });
+    const trSetting = await Settings.findOne({ key: 'tax_rate' });
+    const buyerPremiumRate = bpSetting ? parseFloat(bpSetting.value) : 0.15;
+    const taxRate = trSetting ? parseFloat(trSetting.value) : 0.13;
+
+    const uploadedFilesList = [
+      hibidFile.originalname,
+      afFile.originalname,
+      mfFile.originalname
+    ];
+    const auctionRun = new AuctionRun({ 
+      auctionNumber, 
+      title: auctionTitle,
+      uploadedFiles: uploadedFilesList
+    });
     await auctionRun.save();
 
     // ── 1. Process AuctionFlex Bidders (Source of Truth for Identity) ─────────
@@ -184,7 +231,7 @@ router.post('/', upload.fields([
         if (!customer) continue;
 
         // Initialize retrieval method based on AuctionFlex flag
-        const initialRetrieval = customer.isShippingRequested ? 'Shipping' : 'Undecided';
+        const initialRetrieval = customer.isShippingRequested ? 'Shipping' : 'Awaiting Choice';
         const initialStatus = customer.isShippingRequested ? 'Shipping Selected' : 'Awaiting Choice';
 
         order = new Order({
@@ -194,6 +241,10 @@ router.post('/', upload.fields([
           bookingCode: `BB-${auctionNumber}-${winningBidder}`,
           retrievalMethod: initialRetrieval,
           customerStatus: initialStatus,
+          lifecycleStatus: customer.isShippingRequested ? 'Shipping' : 'Imported',
+          pickupStatus: 'Not Booked',
+          prepStatus: 'Not Started',
+          paymentStatus: 'Unknown',
           hibidData: {
             name: getField(h, 'Name'),
             email: getField(h, 'Email'),
@@ -217,6 +268,10 @@ router.post('/', upload.fields([
       const sourceLocation = manifest?.location || 'TBD';
       const type = sourceLocation.startsWith('B') ? 'Sort' : 'Non-Sort';
 
+      const hammerPrice = parseFloat(getField(h, 'High Bid', 'Winning Amount', 'Hammer Price').replace('$', '').replace(/,/g, '')) || 0;
+      const buyerPremiumPortion = Math.round(hammerPrice * buyerPremiumRate * 100) / 100;
+      const taxPortion = Math.round((hammerPrice + buyerPremiumPortion) * taxRate * 100) / 100;
+
       const lot = new Lot({
         order: order._id,
         auctionRun: auctionRun._id,
@@ -226,6 +281,9 @@ router.post('/', upload.fields([
         description: manifest?.title || getField(h, 'Title') || 'No description',
         sourceLocation,
         type,
+        hammerPrice,
+        buyerPremiumPortion,
+        taxPortion,
         retailPrice: manifest?.retailPrice || 0,
         retailerUrl: manifest?.retailerUrl || '',
         qty: manifest?.qty || 1,
@@ -234,6 +292,32 @@ router.post('/', upload.fields([
       });
       await lot.save();
       lotsCreated++;
+    }
+
+    // ── 4. Calculate Order Financial Totals ─────────────────────────────────
+    for (const order of ordersMap.values()) {
+      const orderLots = await Lot.find({ order: order._id });
+      const totalLots = orderLots.length;
+      let totalHammer = 0;
+      for (const l of orderLots) {
+        totalHammer += l.hammerPrice || 0;
+      }
+
+      // Using buyerPremiumRate and taxRate loaded from settings
+
+      const buyerPremium = Math.round(totalHammer * buyerPremiumRate * 100) / 100;
+      const taxAmount = Math.round((totalHammer + buyerPremium) * taxRate * 100) / 100;
+      const unpaidBalance = Math.round((totalHammer + buyerPremium + taxAmount) * 100) / 100;
+
+      order.totalLots = totalLots;
+      order.totalHammer = totalHammer;
+      order.buyerPremium = buyerPremium;
+      order.taxAmount = taxAmount;
+      order.unpaidBalance = unpaidBalance;
+      order.paidAmount = 0;
+      order.paymentStatus = 'Unpaid';
+      
+      await order.save();
     }
 
     // ── 4. Update Stats ──────────────────────────────────────────────────────

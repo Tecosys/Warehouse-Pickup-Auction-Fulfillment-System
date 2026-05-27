@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import Order from '../models/Order';
 import Lot from '../models/Lot';
 import Slot from '../models/Slot';
+import Case from '../models/Case';
+import Customer from '../models/Customer';
 import { NotificationService } from '../services/NotificationService';
 import { ActivityService } from '../services/ActivityService';
 
@@ -20,9 +22,15 @@ router.get('/', async (req, res) => {
     if (customerStatus) query.customerStatus = customerStatus;
     
     if (search) {
+      const customers = await Customer.find({
+        name: new RegExp(String(search), 'i')
+      }).select('_id');
+      const customerIds = customers.map(c => c._id);
+
       query.$or = [
         { bidderNumber: new RegExp(String(search), 'i') },
-        { bookingCode: new RegExp(String(search), 'i') }
+        { bookingCode: new RegExp(String(search), 'i') },
+        { customer: { $in: customerIds } }
       ];
     }
 
@@ -124,11 +132,15 @@ router.post('/:id/book', async (req: any, res: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { slotId, isAdminOverride } = req.body;
+    const { slotId, isAdminOverride, authorizedPerson } = req.body;
     const orderId = req.params.id;
 
     // 1. Check if rescheduling is allowed (2-hour rule) - Skip if Admin
     const existingOrder = await Order.findById(orderId);
+    if (existingOrder && (existingOrder.retrievalMethod === 'Shipping' || existingOrder.isShippingConfirmed)) {
+      throw new Error('This order is marked for shipping and cannot book a pickup slot.');
+    }
+
     if (existingOrder && existingOrder.appointmentTime && !isAdminOverride) {
       const now = new Date();
       const diffMs = existingOrder.appointmentTime.getTime() - now.getTime();
@@ -160,8 +172,11 @@ router.post('/:id/book', async (req: any, res: any) => {
       orderId,
       { 
         customerStatus: 'Booked',
+        pickupStatus: 'Booked',
+        lifecycleStatus: 'Awaiting Customer Action',
         appointmentTime: new Date(`${slot.date}T${slot.startTime}:00`),
-        selectedSlot: slotId
+        selectedSlot: slotId,
+        authorizedPerson: authorizedPerson || undefined
       },
       { new: true, session }
     );
@@ -198,9 +213,99 @@ router.post('/:id/confirm-shipping', async (req: any, res: any) => {
     if (!order) return res.status(404).json({ error: 'Order not found' });
     
     // Trigger shipping notification if needed
-    // await NotificationService.send(order._id.toString(), 6); // Assuming 6 is Shipping Confirmation
+    await NotificationService.send(order._id.toString(), 2);
     
     res.json(order);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Release Order with exceptions
+router.post('/:id/release', async (req: any, res: any) => {
+  try {
+    const { releasedLotIds, withheldLots } = req.body; // withheldLots: Array<{ lotId: string, lotNumber: string, reason: string, notes?: string }>
+    const orderId = req.params.id;
+
+    const order = await Order.findById(orderId).populate('customer');
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Mark released lots as Released
+    if (releasedLotIds && releasedLotIds.length > 0) {
+      await Lot.updateMany({ _id: { $in: releasedLotIds } }, { $set: { status: 'Released' } });
+    }
+
+    // Process withheld lots and trigger case creation
+    if (withheldLots && withheldLots.length > 0) {
+      for (const item of withheldLots) {
+        // Update lot status to withheld status
+        await Lot.findByIdAndUpdate(item.lotId, { $set: { status: `Withheld: ${item.reason}` } });
+
+        // Map reason to case type
+        let caseType: 'Missing at Release' | 'Refused' | 'Issue' = 'Issue';
+        if (item.reason === 'Not Found') caseType = 'Missing at Release';
+        else if (item.reason === 'Customer Refused') caseType = 'Refused';
+
+        // Auto create/update case for this order
+        const existingCase = await Case.findOne({ order: orderId, status: 'Open' });
+        if (existingCase) {
+          existingCase.lines.push({
+            lotNumber: item.lotNumber,
+            reason: item.reason,
+            status: 'Open',
+            notes: item.notes || `Lot withheld at release. Reason: ${item.reason}`
+          });
+          await existingCase.save();
+        } else {
+          const caseCount = await Case.countDocuments();
+          const caseNumber = `CAS-${10000 + caseCount + 1}`;
+          const newCase = new Case({
+            caseNumber,
+            auctionRun: order.auctionRun,
+            order: orderId,
+            customer: order.customer?._id || order.customer,
+            customerName: (order as any).customer?.name || 'Unknown',
+            bidderNumber: order.bidderNumber,
+            type: caseType,
+            status: 'Open',
+            lines: [{
+              lotNumber: item.lotNumber,
+              reason: item.reason,
+              status: 'Open',
+              notes: item.notes || `Lot withheld at release. Reason: ${item.reason}`
+            }]
+          });
+          await newCase.save();
+        }
+      }
+    }
+
+    // Update order status
+    order.customerStatus = 'Picked Up';
+    order.completeTimestamp = new Date();
+    await order.save();
+
+    // TRIGGER: Pickup Confirmation (Notification Type 10)
+    await NotificationService.send(orderId, 10, {
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString()
+    });
+
+    await ActivityService.log({
+      type: 'Release',
+      title: 'Order Released',
+      description: `Order for Bidder #${order.bidderNumber} has been released. ${withheldLots?.length || 0} exceptions created.`,
+      order: order._id,
+      auctionRun: order.auctionRun
+    });
+
+    // If no open case on order: Google Review request fires (Type 12)
+    const openCase = await Case.findOne({ order: orderId, status: { $ne: 'Resolved' } });
+    if (!openCase) {
+      await NotificationService.send(orderId, 12); // Send Google Review Request
+    }
+
+    res.json({ success: true, order });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

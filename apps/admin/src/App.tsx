@@ -9,6 +9,7 @@ import InventoryClerkPage from './components/clerk/InventoryClerkPage';
 import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
 import ShippingPage from './components/shipping/ShippingPage';
 import FulfillmentHubPage from './components/fulfillment/FulfillmentHubPage';
+import SettingsPage from './components/settings/SettingsPage';
 import { ShieldCheck, Menu, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import LoginPage from './components/auth/LoginPage';
 
@@ -29,12 +30,14 @@ const Toast = ({ message, type, onClose }: any) => {
   );
 };
 
-const FooterBar = () => (
+const FooterBar = ({ selectedAuction }: any) => (
   <footer className="footer-bar">
     <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>AUCTION STATS:</span>
-        <span style={{ fontWeight: 600, color: 'var(--status-green)' }}>Auction 31</span>
+        <span style={{ fontWeight: 600, color: 'var(--status-green)' }}>
+          {selectedAuction ? `Auction ${selectedAuction.auctionNumber}` : 'Loading...'}
+        </span>
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <span style={{ color: 'rgba(255,255,255,0.5)' }}>TOTAL VALUE:</span>
@@ -64,6 +67,37 @@ function App() {
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<any[]>([]);
+  const [auctions, setAuctions] = useState<any[]>([]);
+  const [selectedAuction, setSelectedAuction] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('http://localhost:5000/api/auctions')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAuctions(data);
+          const savedId = sessionStorage.getItem('bidboss_selected_auction_id');
+          const found = data.find((a: any) => a._id === savedId);
+          if (found) {
+            setSelectedAuction(found);
+          } else if (data.length > 0) {
+            setSelectedAuction(data[0]);
+            sessionStorage.setItem('bidboss_selected_auction_id', data[0]._id);
+          }
+        }
+      })
+      .catch(console.error);
+  }, [user]);
+
+  const handleAuctionChange = (auctionId: string) => {
+    const found = auctions.find((a: any) => a._id === auctionId);
+    if (found) {
+      setSelectedAuction(found);
+      sessionStorage.setItem('bidboss_selected_auction_id', auctionId);
+      showToast(`Switched view to ${found.title}`, 'info');
+    }
+  };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now();
@@ -72,6 +106,11 @@ function App() {
 
   const removeToast = (id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const navigateToModule = (module: string) => {
+    setCurrentModule(module);
+    sessionStorage.setItem('bidboss_module', module);
   };
 
   const handleLogin = (userData: { role: string; name: string; title: string }) => {
@@ -93,6 +132,7 @@ function App() {
   const handleLogout = () => {
     sessionStorage.removeItem('bidboss_user');
     sessionStorage.removeItem('bidboss_module');
+    sessionStorage.removeItem('bidboss_selected_auction_id');
     setUser(null);
   };
 
@@ -101,26 +141,27 @@ function App() {
   }
 
   const renderContent = () => {
-
     switch (currentModule) {
       case 'Dashboard':
-        return <Dashboard />;
+        return <Dashboard selectedAuction={selectedAuction} />;
       case 'Auction Runs':
-        return <AuctionRunsPage user={user} showToast={showToast} />;
+        return <AuctionRunsPage onNavigate={navigateToModule} user={user} showToast={showToast} />;
       case 'File Import':
-        return <FileImportPage onNavigate={setCurrentModule} user={user} showToast={showToast} />;
+        return <FileImportPage onNavigate={navigateToModule} user={user} showToast={showToast} />;
       case 'Slot Management':
-        return <SlotManagementPage user={user} showToast={showToast} />;
+        return <SlotManagementPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Batch Notifications':
-        return <NotificationsPage user={user} showToast={showToast} />;
+        return <NotificationsPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Inventory Clerk':
-        return <InventoryClerkPage user={user} showToast={showToast} />;
+        return <InventoryClerkPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Issues / Returns':
-        return <IssuesReturnsPage user={user} showToast={showToast} />;
+        return <IssuesReturnsPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Shipping':
-        return <ShippingPage user={user} showToast={showToast} />;
+        return <ShippingPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Fulfillment Hub':
-        return <FulfillmentHubPage user={user} showToast={showToast} />;
+        return <FulfillmentHubPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
+      case 'Settings':
+        return <SettingsPage user={user} showToast={showToast} />;
       default:
         return (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -167,6 +208,37 @@ function App() {
                   <div className="status-dot pulse" style={{ background: 'var(--status-green)' }}></div>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Warehouse Status: {user.role} Portal</span>
                 </div>
+                {auctions.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Auction Run:</span>
+                    <select
+                      value={selectedAuction?._id || ''}
+                      onChange={e => handleAuctionChange(e.target.value)}
+                      style={{
+                        padding: '0.4rem 2rem 0.4rem 0.75rem',
+                        borderRadius: '0.375rem',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        border: '1px solid var(--border-color)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'var(--text-main)',
+                        appearance: 'none',
+                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '1rem',
+                      }}
+                    >
+                      {auctions.map((auc: any) => (
+                        <option key={auc._id} value={auc._id} style={{ background: '#1e293b', color: 'white' }}>
+                          Run #{auc.auctionNumber} - {auc.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -187,7 +259,7 @@ function App() {
           {renderContent()}
         </main>
 
-        <FooterBar />
+        <FooterBar selectedAuction={selectedAuction} />
       </div>
 
       <div className="toast-container">

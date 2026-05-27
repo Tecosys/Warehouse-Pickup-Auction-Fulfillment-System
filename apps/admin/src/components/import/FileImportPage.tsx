@@ -82,12 +82,34 @@ const FileZone = ({ label, desc, required, file, onUpload, fieldKey }: any) => {
 
 const PostImportSuccess = ({ stats, run, orders, onReset, onNavigate }: any) => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const copyLink = (id: string) => {
     const link = `http://localhost:3001/portal/${id}`;
     navigator.clipboard.writeText(link);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const sendBatch = async () => {
+    setSending(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/notifications/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auctionRunId: run._id, type: 1 })
+      });
+      if (response.ok) {
+        setSent(true);
+      } else {
+        alert('Failed to send batch notifications.');
+      }
+    } catch (err) {
+      alert('Error sending notifications.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -130,10 +152,24 @@ const PostImportSuccess = ({ stats, run, orders, onReset, onNavigate }: any) => 
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button className="btn btn-primary" style={{ padding: '1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: 'var(--status-teal)' }}>
-              <Send size={20} /> Send Initial Customer Links
+            <button 
+              className="btn btn-primary" 
+              onClick={sendBatch}
+              disabled={sending || sent}
+              style={{ 
+                padding: '1rem', 
+                fontSize: '1rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '0.75rem', 
+                background: sent ? 'var(--status-teal)' : sending ? 'var(--text-muted)' : 'var(--status-teal)',
+                opacity: sending || sent ? 0.75 : 1
+              }}
+            >
+              <Send size={20} /> {sending ? 'Sending...' : sent ? 'Initial Links Sent! ✓' : 'Send Initial Customer Links'}
             </button>
-            <button className="btn" style={{ padding: '1rem', fontWeight: 600 }}>
+            <button className="btn" onClick={() => onNavigate('Batch Notifications')} style={{ padding: '1rem', fontWeight: 600 }}>
               Send One by One (Manual Review)
             </button>
             <button className="btn" style={{ border: 'none', color: 'var(--text-muted)', fontSize: '0.875rem' }} onClick={onReset}>

@@ -77,7 +77,7 @@ const ActivityItem = ({ title, desc, time, icon, color }: any) => (
 
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
-const Dashboard = () => {
+const Dashboard = ({ selectedAuction }: { selectedAuction?: any }) => {
   const [stats, setStats] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,8 +86,11 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const statsUrl = selectedAuction
+        ? `http://localhost:5000/api/auctions/dashboard-stats?auctionRunId=${selectedAuction._id}`
+        : 'http://localhost:5000/api/auctions/dashboard-stats';
       const [statsRes, activitiesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/auctions/dashboard-stats'),
+        fetch(statsUrl),
         fetch('http://localhost:5000/api/activities/recent?limit=10')
       ]);
       const [statsData, activitiesData] = await Promise.all([
@@ -109,7 +112,7 @@ const Dashboard = () => {
     // Auto-refresh every 60 seconds
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedAuction?._id]);
 
   // ── Derived values ────────────────────────────────────────────────────────────
   const f = stats?.fulfillment;

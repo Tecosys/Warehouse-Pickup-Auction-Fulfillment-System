@@ -35,7 +35,15 @@ router.get('/active', async (req, res) => {
  */
 router.get('/dashboard-stats', async (req: any, res: any) => {
   try {
-    const auction = await AuctionRun.findOne().sort({ importedDate: -1 });
+    const { auctionRunId } = req.query;
+    let auction;
+    
+    if (auctionRunId) {
+      auction = await AuctionRun.findById(auctionRunId);
+    } else {
+      auction = await AuctionRun.findOne().sort({ importedDate: -1 });
+    }
+    
     if (!auction) return res.json({ empty: true });
 
     const runId = auction._id;

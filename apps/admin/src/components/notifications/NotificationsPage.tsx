@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  ChevronDown, 
   Search, 
-  Filter, 
   Download, 
   CheckCircle2, 
   Clock, 
@@ -49,7 +47,7 @@ const NotificationCard = ({ notification, onSend }: any) => (
   </div>
 );
 
-const SendModal = ({ notification, onClose }: any) => {
+const SendModal = ({ notification, onClose, selectedAuction }: any) => {
   const [isSending, setIsSending] = useState(false);
   const [recipientGroup, setRecipientGroup] = useState('All');
   const [specificBidder, setSpecificBidder] = useState('');
@@ -57,10 +55,13 @@ const SendModal = ({ notification, onClose }: any) => {
   const handleSend = async () => {
     setIsSending(true);
     try {
-      // Fetch the active auction run ID dynamically
-      const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
-      if (!auctionRes.ok) throw new Error('No active auction found');
-      const auction = await auctionRes.json();
+      let auction = selectedAuction;
+      if (!auction) {
+        // Fetch the active auction run ID dynamically
+        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+        if (!auctionRes.ok) throw new Error('No active auction found');
+        auction = await auctionRes.json();
+      }
 
       const payload: any = {
         auctionRunId: auction._id,
@@ -231,27 +232,35 @@ const TemplateEditor = ({ template, onClose }: any) => createPortal(
 interface NotificationsPageProps {
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  selectedAuction?: any;
 }
 
-const NotificationsPage: React.FC<NotificationsPageProps> = () => {
+const NotificationsPage: React.FC<NotificationsPageProps> = ({ selectedAuction }) => {
   const [activeTab, setActiveTab] = useState('Send Notifications');
   const [showSendModal, setShowSendModal] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterType, setFilterType] = useState('All');
 
   useEffect(() => {
     if (activeTab === 'Notification Log') {
       fetchLogs();
     }
-  }, [activeTab]);
+  }, [activeTab, searchQuery, filterStatus, filterType, selectedAuction?._id]);
 
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      // In a real app, we'd filter by auction run
-      const response = await fetch('http://localhost:5000/api/notifications/logs/all'); 
-      // Note: I'll need to add an "all logs" endpoint or mock this for the demo
+      const queryParams = new URLSearchParams();
+      if (searchQuery.trim()) queryParams.append('search', searchQuery);
+      if (filterStatus !== 'All') queryParams.append('status', filterStatus);
+      if (filterType !== 'All') queryParams.append('type', filterType);
+      if (selectedAuction?._id) queryParams.append('auctionRunId', selectedAuction._id);
+      
+      const response = await fetch(`http://localhost:5000/api/notifications/logs/all?${queryParams}`); 
       if (response.ok) {
         const data = await response.json();
         setLogs(data);
@@ -261,6 +270,35 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
     } finally {
       setIsLoadingLogs(false);
     }
+  };
+
+  const handleExportLogs = () => {
+    if (logs.length === 0) {
+      alert('No logs to export');
+      return;
+    }
+    const headers = ['SENT AT', 'TYPE', 'CUSTOMER', 'BIDDER #', 'STATUS'];
+    const rows = logs.map(log => [
+      new Date(log.createdAt).toLocaleString(),
+      `Type #${log.type}`,
+      log.customer?.name || 'Unknown',
+      log.customer?.bidderNumber || 'N/A',
+      log.status
+    ]);
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `notification_log_export_${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const notifications = [
@@ -299,7 +337,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
 
   return (
     <>
-      {showSendModal && <SendModal notification={showSendModal} onClose={() => setShowSendModal(null)} />}
+      {showSendModal && <SendModal notification={showSendModal} onClose={() => setShowSendModal(null)} selectedAuction={selectedAuction} />}
       {showEditModal && <TemplateEditor template={showEditModal} onClose={() => setShowEditModal(null)} />}
       
       <div className="notifications-page animate-slide">
@@ -311,8 +349,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid var(--border-color)', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
              <span style={{ color: 'var(--text-muted)' }}>Auction:</span>
-             <span>Spring Estate #043</span>
-             <ChevronDown size={16} />
+             <span>{selectedAuction ? selectedAuction.title : 'Loading...'}</span>
           </div>
         </div>
       </div>
@@ -353,15 +390,48 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
 
       {activeTab === 'Notification Log' && (
         <div className="card animate-fade">
-           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
-             <div style={{ display: 'flex', gap: '1rem' }}>
-               <div style={{ position: 'relative', width: '300px' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
+             <div style={{ display: 'flex', gap: '1rem', flex: 1, flexWrap: 'wrap' }}>
+               <div style={{ position: 'relative', width: '260px' }}>
                  <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                 <input type="text" placeholder="Search by name, bidder #..." className="card" style={{ width: '100%', padding: '0.5rem 1rem 0.5rem 2.25rem' }} />
+                 <input 
+                   type="text" 
+                   placeholder="Search by customer, bidder #..." 
+                   value={searchQuery}
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                   className="card" 
+                   style={{ width: '100%', padding: '0.5rem 1rem 0.5rem 2.25rem', outline: 'none' }} 
+                 />
                </div>
-               <button className="btn"><Filter size={16} /> Filters</button>
+               <select
+                 value={filterStatus}
+                 onChange={(e) => setFilterStatus(e.target.value)}
+                 className="card"
+                 style={{ padding: '0.5rem 1rem', outline: 'none', fontWeight: 600 }}
+               >
+                 <option value="All">All Statuses</option>
+                 <option value="Sent">Sent</option>
+                 <option value="Failed">Failed</option>
+               </select>
+               <select
+                 value={filterType}
+                 onChange={(e) => setFilterType(e.target.value)}
+                 className="card"
+                 style={{ padding: '0.5rem 1rem', outline: 'none', fontWeight: 600, maxWidth: '240px' }}
+               >
+                 <option value="All">All Types</option>
+                 {notifications.map(n => (
+                   <option key={n.id} value={parseInt(n.id).toString()}>{n.id}: {n.name}</option>
+                 ))}
+               </select>
              </div>
-             <button className="btn"><Download size={16} /> Export Log</button>
+             <button 
+               className="btn" 
+               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '38px' }}
+               onClick={handleExportLogs}
+             >
+               <Download size={16} /> Export Log
+             </button>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>

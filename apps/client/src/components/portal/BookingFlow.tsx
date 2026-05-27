@@ -17,6 +17,8 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
   const [bookingLoading, setBookingLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [orderData, setOrderData] = useState<any>(null);
+  const [hasAuthorizedPerson, setHasAuthorizedPerson] = useState(false);
+  const [authPerson, setAuthPerson] = useState({ name: '', phone: '', email: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,7 +58,10 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
       const res = await fetch(`http://localhost:5000/api/orders/${orderId}/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slotId: selectedSlotId })
+        body: JSON.stringify({ 
+          slotId: selectedSlotId,
+          authorizedPerson: hasAuthorizedPerson ? authPerson : undefined
+        })
       });
 
       if (res.ok) {
@@ -169,7 +174,7 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
         </div>
 
         {/* Time Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-32">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
           {filteredSlots.map((slot) => {
             const isFull = slot.currentBookings >= slot.maxCapacity;
             const isNearFull = slot.currentBookings >= slot.maxCapacity * 0.8;
@@ -206,6 +211,60 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
             );
           })}
         </div>
+
+        {/* Authorized Pickup Person Details */}
+        {selectedSlotId && (
+          <div className="bg-gray-50 rounded-3xl p-6 mb-32 border border-gray-100 max-w-xl animate-fade">
+            <label className="flex items-center gap-3 cursor-pointer mb-2">
+              <input 
+                type="checkbox"
+                checked={hasAuthorizedPerson}
+                onChange={(e) => setHasAuthorizedPerson(e.target.checked)}
+                className="w-5 h-5 rounded text-teal-600 focus:ring-teal-500 border-gray-300"
+              />
+              <span className="font-bold text-gray-900">Someone else will pick up my order</span>
+            </label>
+
+            {hasAuthorizedPerson && (
+              <div className="space-y-4 mt-4 animate-fade">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Authorized Person's Full Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. John Doe"
+                    value={authPerson.name}
+                    onChange={(e) => setAuthPerson({ ...authPerson, name: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 font-bold"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
+                    <input 
+                      type="tel" 
+                      placeholder="e.g. 416-555-0199"
+                      value={authPerson.phone}
+                      onChange={(e) => setAuthPerson({ ...authPerson, phone: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 font-bold"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
+                    <input 
+                      type="email" 
+                      placeholder="e.g. john@example.com"
+                      value={authPerson.email}
+                      onChange={(e) => setAuthPerson({ ...authPerson, email: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sticky Confirm Bar */}

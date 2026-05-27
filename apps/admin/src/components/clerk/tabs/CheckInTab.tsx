@@ -167,21 +167,29 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               <h3 style={{ fontSize: '0.875rem', fontWeight: 800, textTransform: 'uppercase' }}>Awaiting Arrival ({awaiting.length})</h3>
             </div>
             <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {awaiting.map(b => (
-                <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7 }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>#{b.bidderNumber} {b.customer?.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Appt: {b.appointmentTime ? new Date(b.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
+              {awaiting.map(b => {
+                const isLate = b.appointmentTime && new Date() > new Date(b.appointmentTime);
+                return (
+                  <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7, borderLeft: isLate ? '4px solid var(--status-red)' : '1px solid var(--border-color)' }}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>
+                        #{b.bidderNumber} {b.customer?.name}
+                        {isLate && (
+                          <span style={{ fontSize: '0.625rem', fontWeight: 900, color: 'var(--status-red)', background: '#fee2e2', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', marginLeft: '0.5rem' }}>LATE</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Appt: {b.appointmentTime ? new Date(b.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
+                    </div>
+                    <button 
+                      onClick={() => handleCheckIn(b._id)}
+                      className="btn" 
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Check In
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => handleCheckIn(b._id)}
-                    className="btn" 
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                  >
-                    Check In
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

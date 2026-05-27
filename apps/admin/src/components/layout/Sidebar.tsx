@@ -3,6 +3,7 @@ import {
   Gavel, 
   FileUp, 
   Settings2, 
+  Sliders,
   Bell, 
   ClipboardList, 
   Truck, 
@@ -23,6 +24,7 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose, user
     { icon: <ClipboardList size={20} />, label: 'Inventory Clerk', roles: ['Admin', 'Clerk'] },
     { icon: <Truck size={20} />, label: 'Shipping', roles: ['Admin'] },
     { icon: <AlertCircle size={20} />, label: 'Issues / Returns', roles: ['Admin', 'Clerk'] },
+    { icon: <Sliders size={20} />, label: 'Settings', roles: ['Admin'] },
   ];
 
   const menuItems = allMenuItems.filter(item => item.roles.includes(user?.role || ''));

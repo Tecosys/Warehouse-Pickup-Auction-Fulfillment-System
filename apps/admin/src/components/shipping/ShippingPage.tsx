@@ -7,12 +7,20 @@ import DispatchedTab from './tabs/DispatchedTab';
 export type ShippingTab = 'In Queue' | 'Prepared for Shipping' | 'Dispatched';
 
 interface ShippingPageProps {
+  selectedAuction?: any;
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const ShippingPage: React.FC<ShippingPageProps> = () => {
+const ShippingPage: React.FC<ShippingPageProps> = ({ selectedAuction }) => {
   const [activeTab, setActiveTab] = useState<ShippingTab>('In Queue');
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [prepareTrigger, setPrepareTrigger] = useState(0);
+
+  const handleTabChange = (tab: ShippingTab) => {
+    setActiveTab(tab);
+    setSelectedOrders(new Set());
+  };
 
   return (
     <div className="shipping-container">
@@ -27,14 +35,29 @@ const ShippingPage: React.FC<ShippingPageProps> = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Auction Run</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              Estate Sale #412 - Main St
+              {selectedAuction ? `Run #${selectedAuction.auctionNumber} - ${selectedAuction.title}` : 'No Auction Selected'}
               <ChevronDown size={16} />
             </div>
           </div>
-          <button className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', background: 'var(--status-teal)' }}>
-            <CheckCircle2 size={18} />
-            Mark as Prepared
-          </button>
+          {activeTab === 'In Queue' && (
+            <button 
+              className="btn btn-primary" 
+              disabled={selectedOrders.size === 0}
+              onClick={() => setPrepareTrigger(prev => prev + 1)}
+              style={{ 
+                padding: '0.75rem 1.5rem', 
+                background: 'var(--status-teal)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                opacity: selectedOrders.size === 0 ? 0.6 : 1,
+                cursor: selectedOrders.size === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <CheckCircle2 size={18} />
+              Mark as Prepared {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
+            </button>
+          )}
         </div>
       </div>
 
@@ -71,7 +94,7 @@ const ShippingPage: React.FC<ShippingPageProps> = () => {
         {(['In Queue', 'Prepared for Shipping', 'Dispatched'] as ShippingTab[]).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             style={{
               padding: '1rem 0.5rem',
               border: 'none',
@@ -82,6 +105,7 @@ const ShippingPage: React.FC<ShippingPageProps> = () => {
               color: activeTab === tab ? 'var(--status-teal)' : 'var(--text-muted)',
               borderBottom: activeTab === tab ? '3px solid var(--status-teal)' : '3px solid transparent',
               transition: 'all 0.2s',
+              marginRight: '0.5rem',
               marginBottom: '-1px'
             }}
           >
@@ -91,9 +115,16 @@ const ShippingPage: React.FC<ShippingPageProps> = () => {
       </div>
 
       <div className="tab-content animate-slide">
-        {activeTab === 'In Queue' && <InQueueTab />}
-        {activeTab === 'Prepared for Shipping' && <PreparedTab />}
-        {activeTab === 'Dispatched' && <DispatchedTab />}
+        {activeTab === 'In Queue' && (
+          <InQueueTab 
+            selectedAuction={selectedAuction}
+            selectedOrders={selectedOrders} 
+            setSelectedOrders={setSelectedOrders} 
+            triggerPrepare={prepareTrigger} 
+          />
+        )}
+        {activeTab === 'Prepared for Shipping' && <PreparedTab selectedAuction={selectedAuction} />}
+        {activeTab === 'Dispatched' && <DispatchedTab selectedAuction={selectedAuction} />}
       </div>
 
       <style>{`

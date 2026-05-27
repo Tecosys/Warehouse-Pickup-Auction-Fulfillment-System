@@ -369,6 +369,128 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
   );
 };
 
+// ─── Clone Slots Modal ──────────────────────────────────────────────────────────
+const CloneModal = ({ auctionId, onClose, onSuccess, showToast }: any) => {
+  const [auctions, setAuctions] = useState<any[]>([]);
+  const [fromAuctionId, setFromAuctionId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // Generate next 14 days as date options
+  const dateOptions = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set([]));
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/auctions')
+      .then(r => r.json())
+      .then(data => {
+        setAuctions(data);
+        const previous = data.find((a: any) => a._id !== auctionId);
+        if (previous) {
+          setFromAuctionId(previous._id);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [auctionId]);
+
+  const toggleDate = (d: string) => {
+    const next = new Set(selectedDates);
+    next.has(d) ? next.delete(d) : next.add(d);
+    setSelectedDates(next);
+  };
+
+  const handleSubmit = async () => {
+    if (!fromAuctionId) return showToast('Select a source auction run to clone from', 'error');
+    if (selectedDates.size === 0) return showToast('Select at least one date', 'error');
+    setSaving(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/slots/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          fromAuctionRunId: fromAuctionId, 
+          toAuctionRunId: auctionId, 
+          newDates: Array.from(selectedDates).sort() 
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Cloned slots successfully!`);
+        onSuccess();
+        onClose();
+      } else throw new Error(data.error);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to clone slots', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
+      <div className="card animate-slide" style={{ width: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
+          <h3 style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-main)' }}>Copy Last Run Settings</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
+            <X size={18} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading auctions...</div>
+        ) : (
+          <>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Source Auction Run</label>
+              <select 
+                value={fromAuctionId} 
+                onChange={e => setFromAuctionId(e.target.value)} 
+                className="card" 
+                style={{ width: '100%', padding: '0.75rem' }}
+              >
+                <option value="">-- Select Source Auction --</option>
+                {auctions.map((a: any) => (
+                  <option key={a._id} value={a._id} disabled={a._id === auctionId}>
+                    {a.title || `Auction #${a.auctionNumber}`} {a._id === auctionId ? '(Current)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date picker */}
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.75rem', color: 'var(--text-muted)' }}>Select Target Dates</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '2rem' }}>
+              {dateOptions.map(d => (
+                <button key={d} onClick={() => toggleDate(d)} style={{
+                  padding: '0.5rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '0.5rem', border: '2px solid',
+                  borderColor: selectedDates.has(d) ? 'var(--status-teal)' : 'var(--border-color)',
+                  background: selectedDates.has(d) ? 'rgba(13,148,136,0.08)' : 'white',
+                  color: selectedDates.has(d) ? 'var(--status-teal)' : 'var(--text-muted)',
+                  cursor: 'pointer'
+                }}>
+                  {new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="btn btn-primary" style={{ flex: 1, padding: '0.875rem' }} onClick={handleSubmit} disabled={saving || !fromAuctionId || selectedDates.size === 0}>
+                {saving ? <><ButtonSpinner /> Cloning...</> : `Clone Settings (${selectedDates.size} date${selectedDates.size !== 1 ? 's' : ''})`}
+              </button>
+              <button className="btn" style={{ flex: 1, padding: '0.875rem' }} onClick={onClose}>Cancel</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 // ─── Bookings Modal (who is in this slot) ─────────────────────────────────────
 const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
   const [orders, setOrders] = useState<any[]>([]);
@@ -479,15 +601,17 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
 interface SlotManagementPageProps {
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  selectedAuction?: any;
 }
 
-const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast }) => {
+const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast, selectedAuction }) => {
   const [viewType, setViewType] = useState<'List' | 'Week' | 'Month'>('List');
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [slots, setSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showInitModal, setShowInitModal] = useState(false);
+  const [showCloneModal, setShowCloneModal] = useState(false);
   const [initDate, setInitDate] = useState<string | null>(null);
   const [viewingSlot, setViewingSlot] = useState<any>(null);
   const [reschedulingOrder, setReschedulingOrder] = useState<any>(null);
@@ -525,14 +649,21 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
   const fetchData = async () => {
     try {
       setLoading(true);
-      const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
-      if (!auctionRes.ok) throw new Error('No active auction');
-      const auction = await auctionRes.json();
+      let auction = selectedAuction;
+      if (!auction) {
+        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+        if (!auctionRes.ok) throw new Error('No active auction');
+        auction = await auctionRes.json();
+      }
       setActiveAuction(auction);
 
-      const slotsRes = await fetch(`http://localhost:5000/api/slots/all/${auction._id}`);
-      const slotsData = await slotsRes.json();
-      setSlots(Array.isArray(slotsData) ? slotsData : []);
+      if (auction && auction._id) {
+        const slotsRes = await fetch(`http://localhost:5000/api/slots/all/${auction._id}`);
+        const slotsData = await slotsRes.json();
+        setSlots(Array.isArray(slotsData) ? slotsData : []);
+      } else {
+        setSlots([]);
+      }
     } catch (error) {
       console.error('Error fetching slots:', error);
     } finally {
@@ -540,7 +671,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [selectedAuction?._id]);
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!confirm('Delete this slot? This cannot be undone.')) return;
@@ -569,6 +700,14 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
           onClose={() => { setShowInitModal(false); setInitDate(null); }} 
           onSuccess={fetchData} 
           showToast={showToast} 
+        />
+      )}
+      {showCloneModal && activeAuction && (
+        <CloneModal
+          auctionId={activeAuction._id}
+          onClose={() => setShowCloneModal(false)}
+          onSuccess={fetchData}
+          showToast={showToast}
         />
       )}
       {viewingSlot && (
@@ -605,9 +744,14 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
             ))}
           </div>
           {isAdmin && (
-            <button className="btn btn-primary" onClick={() => setShowInitModal(true)}>
-              <Plus size={18} /> Initialize Slots
-            </button>
+            <>
+              <button className="btn" style={{ background: 'white', borderColor: 'var(--border-color)', color: 'var(--text-main)' }} onClick={() => setShowCloneModal(true)}>
+                Copy Last Run Settings
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowInitModal(true)}>
+                <Plus size={18} /> Initialize Slots
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -4,10 +4,12 @@ import { PageLoader } from '../../shared/LoadingComponents';
 
 interface PrepQueueTabProps {
   onOpenOrder: (id: string) => void;
+  selectedAuction?: any;
 }
 
-const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
+const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuction }) => {
   const [filter, setFilter] = useState('All');
+  const [sortBy, setSortBy] = useState<'appointment' | 'bidder'>('appointment');
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,9 +19,12 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Fetch active auction
-        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
-        const auction = await auctionRes.json();
+        let auction = selectedAuction;
+        if (!auction) {
+          // 1. Fetch active auction
+          const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+          auction = await auctionRes.json();
+        }
         setActiveAuction(auction);
 
         if (auction && auction._id) {
@@ -36,7 +41,8 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
             customerStatus: o.customerStatus,
             isWalkIn: o.customerStatus === 'Checked In' && !o.appointmentTime,
             appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOT SET',
-            lots: 0, // In a real scenario, this would come from a count or separate fetch
+            appointmentRaw: o.appointmentTime,
+            lots: o.totalLots || 0,
             auction: `Auction ${auction.auctionNumber}`
           }));
           
@@ -57,7 +63,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
     };
 
     fetchData();
-  }, []);
+  }, [selectedAuction?._id]);
 
   if (loading) {
     return <PageLoader message="Loading active auction queue..." />;
@@ -73,9 +79,14 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
         </div>
         
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <select className="card" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, outline: 'none', width: '100%' }}>
-            <option>Sort by: Appointment Priority</option>
-            <option>Sort by: Bidder Number</option>
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="card" 
+            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, outline: 'none', width: '100%' }}
+          >
+            <option value="appointment">Sort by: Appointment Priority</option>
+            <option value="bidder">Sort by: Bidder Number</option>
           </select>
         </div>
       </div>
@@ -125,6 +136,31 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
               if (filter === 'All') return true;
               if (filter === 'Walk-in') return o.isWalkIn;
               return o.status === filter;
+            })
+            .sort((a, b) => {
+              if (sortBy === 'bidder') {
+                return parseInt(a.bidder, 10) - parseInt(b.bidder, 10);
+              } else {
+                // 1. Checked in first
+                const aChecked = a.customerStatus === 'Checked In';
+                const bChecked = b.customerStatus === 'Checked In';
+                if (aChecked && !bChecked) return -1;
+                if (!aChecked && bChecked) return 1;
+                
+                // If both are checked in, or both are not checked in
+                // Check appointment time
+                const aTime = a.appointmentRaw ? new Date(a.appointmentRaw).getTime() : null;
+                const bTime = b.appointmentRaw ? new Date(b.appointmentRaw).getTime() : null;
+                
+                if (aTime && !bTime) return -1;
+                if (!aTime && bTime) return 1;
+                if (aTime && bTime && aTime !== bTime) {
+                  return aTime - bTime;
+                }
+                
+                // Otherwise sort by bidder number
+                return parseInt(a.bidder, 10) - parseInt(b.bidder, 10);
+              }
             })
             .map(order => (
             <div 
@@ -179,6 +215,9 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder }) => {
 
               {/* Row 3: Lot Badges (simplified) */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.25rem 0.6rem', borderRadius: '0.25rem' }}>
+                   {order.lots} Lot{order.lots !== 1 ? 's' : ''}
+                </span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.25rem 0.6rem', borderRadius: '0.25rem' }}>
                    Live Order
                 </span>

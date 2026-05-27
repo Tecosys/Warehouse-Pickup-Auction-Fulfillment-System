@@ -76,9 +76,10 @@ const AuctionRunCard = ({ run, onOpen }: any) => (
 interface AuctionRunsPageProps {
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onNavigate?: (module: string) => void;
 }
 
-const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
+const AuctionRunsPage: React.FC<AuctionRunsPageProps> = ({ onNavigate }) => {
   const [selectedRun, setSelectedRun] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('All Runs');
   const [runs, setRuns] = useState<any[]>([]);
@@ -201,7 +202,11 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = () => {
             <option value="fulfillment">Highest Fulfillment %</option>
           </select>
 
-          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button 
+            className="btn btn-primary" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            onClick={() => onNavigate?.('File Import')}
+          >
             <Plus size={18} />
             Create New Auction Run
           </button>

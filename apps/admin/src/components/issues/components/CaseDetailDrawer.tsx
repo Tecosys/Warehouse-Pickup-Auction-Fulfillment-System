@@ -1,20 +1,59 @@
-import { useState } from 'react';
-import { X, Send, MessageSquare, Clock, User, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, MessageSquare, Clock, CheckCircle2, DollarSign, Image as ImageIcon, Video as VideoIcon, ExternalLink, FileText } from 'lucide-react';
 import { ButtonSpinner } from '../../shared/LoadingComponents';
 
 interface CaseDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   caseData: any;
-  user: any;
+  user?: any;
   onUpdate: () => void;
 }
 
-const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData, user, onUpdate }) => {
+const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData, onUpdate }) => {
+  const [caseDetails, setCaseDetails] = useState<any>(null);
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [savingResolution, setSavingResolution] = useState(false);
 
-  if (!caseData) return null;
+  // Editable resolution fields
+  const [refundStatus, setRefundStatus] = useState<'None' | 'Requested' | 'Authorized' | 'Applied'>('None');
+  const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [refundMethod, setRefundMethod] = useState<string>('');
+  const [caseStatus, setCaseStatus] = useState<'Open' | 'In Review' | 'Resolved'>('Open');
+
+  useEffect(() => {
+    if (isOpen && caseData?._id) {
+      fetchCaseDetails();
+    } else {
+      setCaseDetails(null);
+    }
+  }, [isOpen, caseData]);
+
+  useEffect(() => {
+    if (caseDetails) {
+      setRefundStatus(caseDetails.refundStatus || 'None');
+      setRefundAmount(caseDetails.refundAmount || 0);
+      setRefundMethod(caseDetails.refundMethod || '');
+      setCaseStatus(caseDetails.status || 'Open');
+    }
+  }, [caseDetails]);
+
+  const fetchCaseDetails = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCaseDetails(data);
+      } else {
+        setCaseDetails(caseData);
+      }
+    } catch (err) {
+      console.error('Error fetching case details:', err);
+      setCaseDetails(caseData);
+    }
+  };
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
@@ -26,8 +65,11 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
       });
       
       if (res.ok) {
+        await fetchCaseDetails();
         onUpdate();
-        onClose();
+        if (newStatus === 'Resolved') {
+          onClose();
+        }
       }
     } catch (error) {
       console.error('Error updating case status:', error);
@@ -36,15 +78,83 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
     }
   };
 
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNote.trim()) return;
+
+    try {
+      setNotesLoading(true);
+      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: newNote, status: caseStatus })
+      });
+      
+      if (res.ok) {
+        setNewNote('');
+        await fetchCaseDetails();
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error adding case note:', error);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const handleSaveResolution = async () => {
+    try {
+      setSavingResolution(true);
+      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refundStatus,
+          refundAmount,
+          refundMethod,
+          status: caseStatus
+        })
+      });
+      
+      if (res.ok) {
+        alert('Resolution details saved successfully!');
+        await fetchCaseDetails();
+        onUpdate();
+      } else {
+        alert('Failed to save resolution details.');
+      }
+    } catch (error) {
+      console.error('Error saving resolution:', error);
+    } finally {
+      setSavingResolution(false);
+    }
+  };
+
+  if (!isOpen || !caseData) return null;
+
+  const currentCase = caseDetails || caseData;
+
+  const getMediaUrl = (pathStr: string) => {
+    if (!pathStr) return '';
+    if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) return pathStr;
+    if (pathStr.startsWith('/uploads')) return `http://localhost:5000${pathStr}`;
+    return `http://localhost:5000/uploads/cases/${pathStr}`;
+  };
+
+  const isVideo = (pathStr: string) => {
+    const ext = pathStr.split('.').pop()?.toLowerCase();
+    return ext ? ['mp4', 'mov', 'webm', 'avi', 'm4v'].includes(ext) : false;
+  };
+
   return (
     <div style={{
       position: 'fixed',
       top: 0,
-      right: isOpen ? 0 : '-600px',
-      width: '600px',
+      right: isOpen ? 0 : '-650px',
+      width: '650px',
       height: '100vh',
       background: 'white',
-      boxShadow: '-10px 0 30px rgba(0,0,0,0.1)',
+      boxShadow: '-10px 0 30px rgba(0,0,0,0.15)',
       transition: 'right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 1000,
       display: 'flex',
@@ -54,7 +164,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
       <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace' }}>{caseData.caseNumber}</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace', color: 'var(--text-main)' }}>{currentCase.caseNumber}</h2>
             <span style={{ 
               fontSize: '0.625rem', 
               fontWeight: 900, 
@@ -65,20 +175,20 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
               border: '1px solid currentColor',
               textTransform: 'uppercase'
             }}>
-              {caseData.type}
+              {currentCase.type}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem' }}>
               <div style={{ 
                 width: '8px', 
                 height: '8px', 
                 borderRadius: '50%', 
-                background: caseData.status === 'Open' ? 'var(--status-amber)' : caseData.status === 'In Review' ? 'var(--status-blue)' : 'var(--status-green)' 
+                background: currentCase.status === 'Open' ? 'var(--status-amber)' : currentCase.status === 'In Review' ? 'var(--status-blue)' : 'var(--status-green)' 
               }} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{caseData.status}</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{currentCase.status}</span>
             </div>
           </div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            {caseData.auctionRun?.title} | Bidder #{caseData.bidderNumber}
+            {currentCase.auctionRun?.title || `Auction #${currentCase.auctionRun?.auctionNumber}`}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -86,58 +196,84 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
         </button>
       </div>
 
+      {/* Main Scrollable Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
-        {/* Info Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="card" style={{ padding: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Created By</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={14} color="var(--text-muted)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{caseData.createdBy || 'System'}</span>
+        {/* Customer & Order Card */}
+        <div className="card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+          <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.025em' }}>
+            Order & Bidder Details
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.875rem' }}>
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Customer Name</div>
+              <div style={{ fontWeight: 700 }}>{currentCase.customerName}</div>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {new Date(caseData.createdAt).toLocaleString()}
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Bidder Number</div>
+              <div style={{ fontWeight: 700 }}>#{currentCase.bidderNumber}</div>
             </div>
-          </div>
-          <div className="card" style={{ padding: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Last Update</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Clock size={14} color="var(--text-muted)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                {caseData.status === 'Resolved' ? 'Case Resolved' : 'Awaiting Action'}
-              </span>
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Order Link</div>
+              <div style={{ fontWeight: 700, color: 'var(--status-teal)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <FileText size={14} />
+                <span>{currentCase.order?.bookingCode || 'Booking Details'}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
+                  ({currentCase.order?.fulfillmentStatus || 'Paid'})
+                </span>
+              </div>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {new Date(caseData.updatedAt).toLocaleString()}
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Case Creator</div>
+              <div style={{ fontWeight: 700 }}>{currentCase.createdBy || 'System'}</div>
             </div>
           </div>
         </div>
 
-        {/* Lot Details */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Lot Items</h3>
+        {/* Timestamps */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="card" style={{ padding: '1rem', background: '#f8fafc', border: 'none', boxShadow: 'none' }}>
+            <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Opened On</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+              <Clock size={14} color="var(--text-muted)" />
+              <span>{new Date(currentCase.createdAt).toLocaleString()}</span>
+            </div>
           </div>
+          <div className="card" style={{ padding: '1rem', background: '#f8fafc', border: 'none', boxShadow: 'none' }}>
+            <label style={{ display: 'block', fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Last Activity</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+              <Clock size={14} color="var(--text-muted)" />
+              <span>{new Date(currentCase.updatedAt).toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Disputed Lot details */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Disputed Lots</h3>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Lot #</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)', width: '80px' }}>Lot #</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Reason</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Notes</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Notes / Details</th>
                 </tr>
               </thead>
               <tbody>
-                {caseData.lines?.map((line: any, idx: number) => (
+                {currentCase.lines?.filter((l: any) => l.lotNumber !== 'GENERAL').map((line: any, idx: number) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>{line.lotNumber}</td>
-                    <td style={{ padding: '0.75rem 1rem' }}>{line.reason}</td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>{line.notes || 'No notes'}</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Lot {line.lotNumber}</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <span style={{ padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', fontSize: '0.75rem', fontWeight: 700 }}>
+                        {line.reason}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{line.notes || 'No details'}</td>
                   </tr>
                 ))}
-                {(!caseData.lines || caseData.lines.length === 0) && (
+                {(!currentCase.lines || currentCase.lines.filter((l: any) => l.lotNumber !== 'GENERAL').length === 0) && (
                   <tr>
-                    <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No specific lots linked.</td>
+                    <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No specific lot records listed.</td>
                   </tr>
                 )}
               </tbody>
@@ -145,45 +281,225 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
           </div>
         </div>
 
-        {/* Notes Placeholder */}
+        {/* Evidence Attachments */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            Evidence & Uploaded Proof ({currentCase.evidence?.length || 0})
+          </h3>
+          {(!currentCase.evidence || currentCase.evidence.length === 0) ? (
+            <div style={{ border: '1.5px dashed var(--border-color)', borderRadius: '0.5rem', padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              No photo/video evidence uploaded by client.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+              {currentCase.evidence.map((path: string, i: number) => {
+                const url = getMediaUrl(path);
+                const isVid = isVideo(path);
+                return (
+                  <div 
+                    key={i} 
+                    onClick={() => window.open(url, '_blank')}
+                    style={{
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '0.375rem',
+                      height: '110px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      background: '#0f172a',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Click to view full size"
+                  >
+                    {isVid ? (
+                      <>
+                        <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', padding: '2px', borderRadius: '4px', color: 'white', display: 'flex', alignItems: 'center' }}>
+                          <VideoIcon size={12} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img src={url} alt={`Evidence ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => {
+                          // fallback
+                          (e.target as HTMLElement).style.display = 'none';
+                        }} />
+                        <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', padding: '2px', borderRadius: '4px', color: 'white', display: 'flex', alignItems: 'center' }}>
+                          <ImageIcon size={12} />
+                        </div>
+                      </>
+                    )}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(0,0,0,0.4)',
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                    >
+                      <ExternalLink size={16} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Resolution Fields Panel */}
+        <div className="card animate-fade" style={{ padding: '1.25rem', border: '1px solid var(--border-color)', marginBottom: '1.5rem', background: '#fdfefe' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <DollarSign size={18} style={{ color: 'var(--status-teal)' }} />
+            Resolution & Refund Processing
+          </h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Case Status</label>
+              <select 
+                value={caseStatus}
+                onChange={(e) => setCaseStatus(e.target.value as any)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}
+              >
+                <option value="Open">Open</option>
+                <option value="In Review">In Review</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Refund Status</label>
+              <select 
+                value={refundStatus}
+                onChange={(e) => setRefundStatus(e.target.value as any)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}
+              >
+                <option value="None">None</option>
+                <option value="Requested">Requested</option>
+                <option value="Authorized">Authorized</option>
+                <option value="Applied">Applied</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Refund Amount ($)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={refundAmount || ''}
+                onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Refund Method</label>
+              <input 
+                type="text" 
+                value={refundMethod}
+                onChange={(e) => setRefundMethod(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}
+                placeholder="e.g. Credit Card, Store Credit"
+              />
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            onClick={handleSaveResolution}
+            disabled={savingResolution}
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '0.625rem', background: 'var(--status-teal)', color: 'white', border: 'none', fontWeight: 700 }}
+          >
+            {savingResolution ? <ButtonSpinner /> : 'Save Resolution & Refund Details'}
+          </button>
+        </div>
+
+        {/* Case Notes & Timeline History */}
         <div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Case Timeline</h3>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
-            Case activity history will appear here.
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            Case Timeline Logs
+          </h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {currentCase.lines?.map((line: any, idx: number) => {
+              const isStaff = line.lotNumber === 'GENERAL' || line.reason === 'Staff Update';
+              return (
+                <div 
+                  key={idx} 
+                  style={{
+                    background: isStaff ? '#f0fdfa' : '#f8fafc',
+                    border: '1px solid var(--border-color)',
+                    borderLeft: isStaff ? '4px solid var(--status-teal)' : '4px solid var(--status-blue)',
+                    borderRadius: '0.375rem',
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.8125rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    <span style={{ color: isStaff ? 'var(--status-teal)' : 'var(--text-main)' }}>
+                      {isStaff ? 'Staff Activity Note' : `Lot ${line.lotNumber} Record`}
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      {isStaff ? `Action: ${line.reason}` : `Type: ${line.reason}`}
+                    </span>
+                  </div>
+                  <div style={{ color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
+                    {line.notes || 'No description provided.'}
+                  </div>
+                </div>
+              );
+            })}
+            {(!currentCase.lines || currentCase.lines.length === 0) && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+                No events recorded in this case yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Footer Actions */}
+      {/* Footer Add Note Action */}
       <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid var(--border-color)', background: 'white' }}>
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <textarea 
-            placeholder="Add a case note..." 
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', minHeight: '80px', resize: 'none' }}
-          />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: (user?.role === 'Admin' && caseData.status !== 'Resolved') ? '1fr 1.2fr 1fr' : '1fr 1fr', gap: '1rem' }}>
-          <button className="btn" style={{ padding: '0.625rem' }} onClick={() => handleUpdateStatus('In Review')}>
-            <MessageSquare size={16} /> Mark In Review
-          </button>
-          
-          {user?.role === 'Admin' && caseData.status !== 'Resolved' && (
+        <form onSubmit={handleAddNote}>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+            <textarea 
+              placeholder="Add a case note or client resolution updates..." 
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              style={{ flex: 1, padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', minHeight: '60px', resize: 'none', fontSize: '0.875rem' }}
+              required
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <button 
-              className="btn" 
-              style={{ padding: '0.625rem', color: 'var(--status-green)', borderColor: 'var(--status-green)' }}
+              type="submit" 
+              className="btn btn-primary"
+              style={{ padding: '0.625rem', background: 'var(--status-blue)', color: 'white', border: 'none' }}
+              disabled={notesLoading}
+            >
+              {notesLoading ? <ButtonSpinner /> : <><MessageSquare size={16} /> Add Internal Note</>}
+            </button>
+            <button 
+              type="button"
+              className="btn"
+              style={{ padding: '0.625rem', borderColor: 'var(--border-color)' }}
               onClick={() => handleUpdateStatus('Resolved')}
-              disabled={loading}
+              disabled={loading || currentCase.status === 'Resolved'}
             >
               {loading ? <ButtonSpinner /> : <><CheckCircle2 size={16} /> Resolve Case</>}
             </button>
-          )}
-          
-          <button className="btn btn-primary" style={{ padding: '0.625rem' }}>
-            <Send size={16} /> Update Client
-          </button>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );

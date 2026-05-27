@@ -61,15 +61,14 @@ const ReturnIntakeTab = () => {
       });
 
       if (res.ok) {
-        alert('Return processed successfully!');
-        // Reset
-        setStep(1);
-        setSearchQuery('');
-        setLots([]);
-        setSelectedLot(null);
+        setStep(4);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to process return.');
       }
     } catch (error) {
       console.error('Return processing failed:', error);
+      alert('Network error while processing return.');
     } finally {
       setIsProcessing(false);
     }
@@ -81,6 +80,26 @@ const ReturnIntakeTab = () => {
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Return Intake</h2>
         <p style={{ color: 'var(--text-muted)' }}>Scan or search for items being returned by customers.</p>
       </div>
+
+      {/* Hidden print slip for 80mm Return receipt */}
+      {selectedLot && (
+        <div className="print-slip">
+          <h1>BIDBOSS RETURN RECEIPT</h1>
+          <div style={{ marginBottom: '10px' }}>
+            <div>Auction: {selectedLot.auctionRun?.title || 'Active Auction'}</div>
+            <div>Bidder: #{selectedLot.bidderNumber}</div>
+            <div>Lot Number: {selectedLot.lotNumber}</div>
+            <div>Description: {selectedLot.description}</div>
+            <div>Reason: {reason}</div>
+            <div>Condition: {condition}</div>
+            <div>Notes: {notes || 'N/A'}</div>
+          </div>
+          <div className="footer" style={{ marginTop: '10px', borderTop: '1px dashed black', paddingTop: '5px', textAlign: 'center', fontSize: '8pt' }}>
+            Processed by: Staff<br />
+            {new Date().toLocaleString()}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
         <div style={{ width: '240px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -240,6 +259,49 @@ const ReturnIntakeTab = () => {
                 <button onClick={() => setStep(1)} className="btn" disabled={isProcessing}>Cancel</button>
                 <button className="btn btn-primary" style={{ padding: '0.75rem 3rem' }} onClick={handleProcessReturn} disabled={isProcessing}>
                   {isProcessing ? <ButtonSpinner /> : 'Mark as Return Received'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="card animate-fade" style={{ padding: '2rem', textAlign: 'center' }}>
+              <div style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: '50%', 
+                background: 'rgba(34, 197, 94, 0.1)', 
+                color: 'var(--status-green)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem auto'
+              }}>
+                <CheckCircle2 size={48} />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Return Processed</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+                Item has been marked as Return Received.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => {
+                    setStep(1);
+                    setSearchQuery('');
+                    setLots([]);
+                    setSelectedLot(null);
+                    setNotes('');
+                  }} 
+                  className="btn"
+                >
+                  Process Another Return
+                </button>
+                <button 
+                  onClick={() => window.print()} 
+                  className="btn btn-primary"
+                  style={{ background: 'var(--status-teal)', padding: '0.75rem 2rem' }}
+                >
+                  Print Return Receipt
                 </button>
               </div>
             </div>

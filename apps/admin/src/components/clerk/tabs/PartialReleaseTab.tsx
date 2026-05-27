@@ -30,12 +30,19 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
         status: 'Open'
       }));
 
+      let overallType = 'Issue';
+      if (withheldLots.some(lot => reasons[lot._id] === 'Missing at Release')) {
+        overallType = 'Missing at Release';
+      } else if (withheldLots.some(lot => reasons[lot._id] === 'Customer Refused')) {
+        overallType = 'Refused';
+      }
+
       const caseRes = await fetch('http://localhost:5000/api/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: order._id,
-          type: 'Issue',
+          type: overallType,
           lines: caseLines
         })
       });
@@ -47,8 +54,9 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          customerStatus: 'Partially Picked Up',
-          fulfillmentStatus: 'Partial Release'
+          customerStatus: 'Picked Up',
+          lifecycleStatus: 'Partially Released',
+          pickupStatus: 'Partially Released'
         })
       });
 

@@ -150,6 +150,15 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
               <span className="badge badge-blue">{order.customerStatus}</span>
             </div>
 
+            {order.authorizedPerson && order.authorizedPerson.name && (
+              <div style={{ padding: '1rem', background: 'rgba(13, 148, 136, 0.05)', border: '1px solid rgba(13, 148, 136, 0.2)', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Authorized Pick Up Person</label>
+                <div style={{ fontWeight: 700, color: 'var(--status-teal)' }}>{order.authorizedPerson.name}</div>
+                {order.authorizedPerson.phone && <div style={{ fontSize: '0.8125rem', color: 'var(--text-main)' }}>Phone: {order.authorizedPerson.phone}</div>}
+                {order.authorizedPerson.email && <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Email: {order.authorizedPerson.email}</div>}
+              </div>
+            )}
+
             {lots.some(l => l.metadata?.flagged) && (
               <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '0.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <AlertTriangle size={20} color="var(--status-red)" />

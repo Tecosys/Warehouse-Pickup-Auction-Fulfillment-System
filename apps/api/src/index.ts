@@ -16,6 +16,8 @@ import slotRouter from './routes/slots';
 import shippingRouter from './routes/shipping';
 import caseRouter from './routes/cases';
 import activityRouter from './routes/activity';
+import creditsRouter from './routes/credits';
+import settingsRouter from './routes/settings';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +26,7 @@ const MONGODB_URI = process.env.DB_URI;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/auctions', auctionRouter);
 app.use('/api/import', importRouter);
@@ -34,6 +37,8 @@ app.use('/api/slots', slotRouter);
 app.use('/api/shipping', shippingRouter);
 app.use('/api/cases', caseRouter);
 app.use('/api/activities', activityRouter);
+app.use('/api/credits', creditsRouter);
+app.use('/api/settings', settingsRouter);
 
 app.get('/', (req, res) => {
   res.send('Warehouse Pickup API is running');

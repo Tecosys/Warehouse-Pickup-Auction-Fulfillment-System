@@ -1,6 +1,7 @@
 import express from 'express';
 import { NotificationService } from '../services/NotificationService';
 import Notification from '../models/Notification';
+import Customer from '../models/Customer';
 
 const router = express.Router();
 
@@ -20,7 +21,39 @@ router.post('/batch', async (req: any, res: any) => {
 // Get all notification logs (for admin overview) — MUST be before /:orderId
 router.get('/logs/all', async (req: any, res: any) => {
   try {
-    const logs = await Notification.find().populate('customer').sort({ createdAt: -1 }).limit(100);
+    const { search, status, type, auctionRunId } = req.query;
+    const query: any = {};
+
+    if (auctionRunId) {
+      query.auctionRun = auctionRunId;
+    }
+
+    if (status && status !== 'All') {
+      query.status = status;
+    }
+
+    if (type && type !== 'All') {
+      query.type = parseInt(type, 10);
+    }
+
+    if (search) {
+      const customers = await Customer.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { bidderNumber: { $regex: search, $options: 'i' } }
+        ]
+      });
+      const customerIds = customers.map(c => c._id);
+      query.$or = [
+        { customer: { $in: customerIds } },
+        { name: { $regex: search, $options: 'i' } } // Fallback for general matches
+      ];
+    }
+
+    const logs = await Notification.find(query)
+      .populate('customer')
+      .sort({ createdAt: -1 })
+      .limit(100);
     res.json(logs);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

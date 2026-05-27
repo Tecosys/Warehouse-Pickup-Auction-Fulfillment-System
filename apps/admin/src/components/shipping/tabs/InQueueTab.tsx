@@ -1,21 +1,39 @@
 import { useState, useEffect } from 'react';
 import { Search, Package } from 'lucide-react';
 import { PageLoader } from '../../shared/LoadingComponents';
+import OrderShippingModal from '../OrderShippingModal';
 
-const InQueueTab = () => {
+interface InQueueTabProps {
+  selectedAuction?: any;
+  selectedOrders: Set<string>;
+  setSelectedOrders: (s: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
+  triggerPrepare: number;
+}
+
+const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders, setSelectedOrders, triggerPrepare }) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchShippingOrders();
-  }, []);
+  }, [selectedAuction?._id]);
+
+  useEffect(() => {
+    if (triggerPrepare > 0 && selectedOrders.size > 0) {
+      markAsPrepared();
+    }
+  }, [triggerPrepare]);
 
   const fetchShippingOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/shipping/queue');
+      const url = selectedAuction?._id 
+        ? `http://localhost:5000/api/shipping/queue?auctionRunId=${selectedAuction._id}`
+        : 'http://localhost:5000/api/shipping/queue';
+      const res = await fetch(url);
       const data = await res.json();
       setOrders(data);
     } catch (error) {
@@ -23,6 +41,11 @@ const InQueueTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openShippingModal = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsModalOpen(true);
   };
 
   const toggleSelect = (id: string) => {
@@ -116,8 +139,18 @@ const InQueueTab = () => {
                 </td>
               </tr>
             ) : filtered.map((order: any) => (
-              <tr key={order._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '1rem 1.5rem' }}>
+              <tr 
+                key={order._id} 
+                style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName !== 'INPUT') {
+                    openShippingModal(order._id);
+                  }
+                }}
+                className="hover-row"
+              >
+                <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                   <input 
                     type="checkbox" 
                     checked={selectedOrders.has(order._id)}
@@ -140,7 +173,7 @@ const InQueueTab = () => {
                 </td>
                 <td style={{ padding: '1.25rem 1.5rem' }}>
                   <span style={{ padding: '4px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, background: '#f0fdfa', color: 'var(--status-teal)' }}>
-                    {order.customerStatus}
+                    {order.shippingStatus || order.customerStatus}
                   </span>
                 </td>
               </tr>
@@ -148,6 +181,15 @@ const InQueueTab = () => {
           </tbody>
         </table>
       </div>
+
+      {isModalOpen && selectedOrderId && (
+        <OrderShippingModal 
+          orderId={selectedOrderId} 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onRefresh={fetchShippingOrders}
+        />
+      )}
     </div>
   );
 };

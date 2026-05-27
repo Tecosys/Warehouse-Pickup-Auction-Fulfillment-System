@@ -1,22 +1,32 @@
 import { useState, useEffect } from 'react';
 import { Search, Send, ExternalLink, Package } from 'lucide-react';
 import { PageLoader, ButtonSpinner } from '../../shared/LoadingComponents';
+import OrderShippingModal from '../OrderShippingModal';
 
-const PreparedTab = () => {
+interface PreparedTabProps {
+  selectedAuction?: any;
+}
+
+const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trackings, setTrackings] = useState<Record<string, string>>({});
   const [isSending, setIsSending] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPreparedOrders();
-  }, []);
+  }, [selectedAuction?._id]);
 
   const fetchPreparedOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/shipping/prepared');
+      const url = selectedAuction?._id 
+        ? `http://localhost:5000/api/shipping/prepared?auctionRunId=${selectedAuction._id}`
+        : 'http://localhost:5000/api/shipping/prepared';
+      const res = await fetch(url);
       const data = await res.json();
       setOrders(data);
     } catch (error) {
@@ -24,6 +34,11 @@ const PreparedTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openShippingModal = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsModalOpen(true);
   };
 
   const handleTrackingChange = (id: string, value: string) => {
@@ -84,6 +99,7 @@ const PreparedTab = () => {
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Booking Code</th>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Customer</th>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Prepared</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tracking Number</th>
               <th style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
             </tr>
@@ -91,13 +107,23 @@ const PreparedTab = () => {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   <Package size={32} style={{ margin: '0 auto 1rem' }} />
                   No shipments ready for dispatch
                 </td>
               </tr>
             ) : filtered.map((order) => (
-              <tr key={order._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <tr 
+                key={order._id} 
+                style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName !== 'INPUT' && !target.closest('button')) {
+                    openShippingModal(order._id);
+                  }
+                }}
+                className="hover-row"
+              >
                 <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, color: 'var(--status-teal)', fontFamily: 'monospace' }}>{order.bookingCode}</td>
                 <td style={{ padding: '1.25rem 1.5rem' }}>
                   <div style={{ fontWeight: 600 }}>{order.customer?.name || 'Unknown'}</div>
@@ -105,6 +131,18 @@ const PreparedTab = () => {
                 </td>
                 <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>{new Date(order.updatedAt).toLocaleDateString()}</td>
                 <td style={{ padding: '1.25rem 1.5rem' }}>
+                  <span style={{ 
+                    padding: '4px 10px', 
+                    borderRadius: '9999px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: 700, 
+                    background: order.shippingStatus === 'Ready for Rating' ? '#f0fdf4' : order.shippingStatus === 'Awaiting Payment' ? '#eff6ff' : '#fff7ed', 
+                    color: order.shippingStatus === 'Ready for Rating' ? 'var(--status-teal)' : order.shippingStatus === 'Awaiting Payment' ? 'var(--status-blue)' : 'var(--status-amber)' 
+                  }}>
+                    {order.shippingStatus}
+                  </span>
+                </td>
+                <td style={{ padding: '1.25rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                   <div style={{ position: 'relative', width: '240px' }}>
                     <input 
                       type="text" 
@@ -127,7 +165,7 @@ const PreparedTab = () => {
                     )}
                   </div>
                 </td>
-                <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
                   <button 
                     disabled={!trackings[order._id] || isSending === order._id}
                     onClick={() => handleSendTracking(order._id)}
@@ -149,6 +187,15 @@ const PreparedTab = () => {
           </tbody>
         </table>
       </div>
+
+      {isModalOpen && selectedOrderId && (
+        <OrderShippingModal 
+          orderId={selectedOrderId} 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onRefresh={fetchPreparedOrders}
+        />
+      )}
     </div>
   );
 };

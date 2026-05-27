@@ -7,9 +7,10 @@ export type FulfillmentTab = 'Queue' | 'Detail';
 interface FulfillmentHubPageProps {
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  selectedAuction?: any;
 }
 
-const FulfillmentHubPage: React.FC<FulfillmentHubPageProps> = () => {
+const FulfillmentHubPage: React.FC<FulfillmentHubPageProps> = ({ selectedAuction }) => {
   const [activeTab, setActiveTab] = useState<FulfillmentTab>('Queue');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
@@ -26,7 +27,7 @@ const FulfillmentHubPage: React.FC<FulfillmentHubPageProps> = () => {
   return (
     <div className="fulfillment-hub" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {activeTab === 'Queue' ? (
-        <PrepQueueTab onOpenOrder={handleOpenOrder} />
+        <PrepQueueTab onOpenOrder={handleOpenOrder} selectedAuction={selectedAuction} />
       ) : (
         <OrderDetailTab orderId={selectedOrderId} onBack={handleBackToQueue} />
       )}

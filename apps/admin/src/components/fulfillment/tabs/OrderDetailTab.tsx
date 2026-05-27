@@ -24,6 +24,19 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [activeLotId, setActiveLotId] = useState<string | null>(null);
 
+  // ── Added Functional States ────────────────────────────────────────────────────
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [lotTypeFilter, setLotTypeFilter] = useState<'All' | 'Non-Sort' | 'Sort'>('All');
+  const [activeLotMenuId, setActiveLotMenuId] = useState<string | null>(null);
+  const [selectedLotForAction, setSelectedLotForAction] = useState<any>(null);
+
+  // Dropdown outside click handler
+  useEffect(() => {
+    const handleWindowClick = () => setActiveLotMenuId(null);
+    window.addEventListener('click', handleWindowClick);
+    return () => window.removeEventListener('click', handleWindowClick);
+  }, []);
+
   // ── Fetch Order ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!orderId) return;
@@ -47,13 +60,74 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
       }
     };
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, reloadTrigger]);
 
   // ── Derived Stats ─────────────────────────────────────────────────────────────
   const readyCount = lots.filter(l => l._status === 'Ready').length;
-  const flaggedCount = lots.filter(l => l._status === 'Hold/Issue' || l._status === 'Not Found').length;
+  const flaggedCount = lots.filter(l => l._status === 'Hold/Issue' || l._status === 'Not Found' || l._status === 'Not Found in Prep').length;
   const untouchedCount = lots.filter(l => l._status === 'Pending').length;
   const progress = lots.length > 0 ? Math.round(((readyCount + flaggedCount) / lots.length) * 100) : 0;
+
+  const filteredLots = lots.filter(l => {
+    if (lotTypeFilter === 'All') return true;
+    return l.type === lotTypeFilter;
+  });
+
+  const sortedLots = [...filteredLots].sort((a, b) => {
+    const locA = a.sourceLocation || '';
+    const locB = b.sourceLocation || '';
+    return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  const handleNotFoundConfirm = async (notes: string) => {
+    if (!selectedLotForAction) return;
+    const lotId = selectedLotForAction._id;
+    try {
+      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Not Found in Prep', notes })
+      });
+      setReloadTrigger(prev => prev + 1);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveModal(null);
+      setSelectedLotForAction(null);
+    }
+  };
+
+  const handleIssueConfirm = async ({ reason, notes }: { reason: string, notes: string }) => {
+    if (!selectedLotForAction) return;
+    const lotId = selectedLotForAction._id;
+    try {
+      const fullNotes = `[${reason}] ${notes}`;
+      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Hold/Issue', notes: fullNotes })
+      });
+      setReloadTrigger(prev => prev + 1);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveModal(null);
+      setSelectedLotForAction(null);
+    }
+  };
+
+  const handleResetLotStatus = async (lotId: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Pending' })
+      });
+      setReloadTrigger(prev => prev + 1);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // ── Lot Actions ───────────────────────────────────────────────────────────────
   const toggleLotSelect = (id: string) => {
@@ -110,12 +184,22 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
   const handleCompletePrep = async () => {
     setSaving(true);
+    const finalPrepStatus = flaggedCount > 0 ? 'Ready with Flag' : 'Ready';
     await fetch(`http://localhost:5000/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fulfillmentStatus: 'Ready' })
+      body: JSON.stringify({ 
+        fulfillmentStatus: 'Ready',
+        prepStatus: finalPrepStatus,
+        lifecycleStatus: 'Ready'
+      })
     }).catch(console.error);
-    setOrder((prev: any) => ({ ...prev, fulfillmentStatus: 'Ready' }));
+    setOrder((prev: any) => ({ 
+      ...prev, 
+      fulfillmentStatus: 'Ready',
+      prepStatus: finalPrepStatus,
+      lifecycleStatus: 'Ready'
+    }));
     setSaving(false);
     setActiveModal(null);
     onBack();
@@ -195,7 +279,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
         </div>
         <div style={{ borderTop: '1px solid black', paddingTop: '10px' }}>
           <strong>LOTS (Source Order):</strong>
-          {lots.map(l => (
+          {[...lots].sort((a, b) => (a.sourceLocation || '').localeCompare(b.sourceLocation || '', undefined, { numeric: true })).map(l => (
             <div key={l._id} className="lot-line">
               <span>[{l.sourceLocation}] Lot #{l.lotNumber}</span>
               <span>{l.description?.substring(0, 20)}...</span>
@@ -282,7 +366,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
               </div>
             )}
 
-            {order.fulfillmentStatus === 'Not Started' && (
+            {order.fulfillmentStatus === 'Not Started' ? (
               <button
                 onClick={handleStartPrep}
                 disabled={saving}
@@ -291,6 +375,19 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
               >
                 {saving ? 'Starting...' : 'Start Preparation'}
               </button>
+            ) : order.fulfillmentStatus === 'In Progress' ? (
+              <button
+                onClick={() => setActiveModal('Complete')}
+                disabled={untouchedCount > 0 || saving}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '1rem', background: 'var(--status-teal)', fontSize: '1rem', opacity: untouchedCount > 0 ? 0.5 : 1 }}
+              >
+                Complete Preparation
+              </button>
+            ) : (
+              <div className="bg-teal-50 text-[#0d9488] border border-teal-100 p-4 rounded-xl text-center font-bold">
+                ✓ Preparation Completed
+              </div>
             )}
           </div>
 
@@ -330,8 +427,23 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
             <div style={{ display: 'flex', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: '#f8fafc', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '2rem' }}>
-                {['All Lots', 'Non-Sort', 'Sort'].map(t => (
-                  <button key={t} style={{ background: 'none', border: 'none', fontSize: '0.875rem', fontWeight: 700, color: t === 'All Lots' ? 'var(--status-teal)' : 'var(--text-muted)', borderBottom: t === 'All Lots' ? '2px solid var(--status-teal)' : 'none', paddingBottom: '0.5rem', cursor: 'pointer' }}>{t}</button>
+                {['All', 'Non-Sort', 'Sort'].map(t => (
+                  <button 
+                    key={t} 
+                    onClick={() => setLotTypeFilter(t as any)}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 700, 
+                      color: (t === 'All' ? lotTypeFilter === 'All' : lotTypeFilter === t) ? 'var(--status-teal)' : 'var(--text-muted)', 
+                      borderBottom: (t === 'All' ? lotTypeFilter === 'All' : lotTypeFilter === t) ? '2px solid var(--status-teal)' : 'none', 
+                      paddingBottom: '0.5rem', 
+                      cursor: 'pointer' 
+                    }}
+                  >
+                    {t === 'All' ? 'All Lots' : t}
+                  </button>
                 ))}
               </div>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -339,13 +451,13 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
               </div>
             </div>
 
-            {lots.length === 0 ? (
+            {sortedLots.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                No lots found for this order.
+                No lots found matching this filter.
               </div>
             ) : (
               <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {lots.map(lot => (
+                {sortedLots.map(lot => (
                   <div
                     key={lot._id}
                     className="card responsive-lot-card"
@@ -354,7 +466,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                       background: activeLotId === lot._id
                         ? 'rgba(13,148,136,0.08)'
                         : lot._status === 'Ready' ? '#f0fdfa'
-                        : lot._status === 'Not Found' ? 'rgba(245,158,11,0.05)'
+                        : (lot._status === 'Not Found' || lot._status === 'Not Found in Prep') ? 'rgba(245,158,11,0.05)'
                         : lot._status === 'Hold/Issue' ? 'rgba(239,68,68,0.05)' : 'white',
                       border: activeLotId === lot._id
                         ? '2px solid var(--status-teal)'
@@ -379,7 +491,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                         <span style={{ fontSize: '1.125rem', fontWeight: 800 }}>Lot {lot.lotNumber}</span>
                         {lot._status === 'Ready' && <CheckCircle2 size={18} color="var(--status-teal)" />}
-                        {lot._status === 'Not Found' && <X size={18} color="var(--status-amber)" />}
+                        {(lot._status === 'Not Found' || lot._status === 'Not Found in Prep') && <X size={18} color="var(--status-amber)" />}
                         {lot._status === 'Hold/Issue' && <Flag size={18} color="var(--status-red)" />}
                       </div>
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{lot.description || 'No description'}</div>
@@ -415,10 +527,99 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                       />
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ cursor: 'pointer' }} onClick={() => { setActiveModal('NotFound'); }}>
+                    <div style={{ textAlign: 'right', position: 'relative' }}>
+                      <div 
+                        style={{ cursor: 'pointer', padding: '0.25rem' }} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveLotMenuId(activeLotMenuId === lot._id ? null : lot._id);
+                        }}
+                      >
                         <MoreVertical size={20} color="var(--text-muted)" />
                       </div>
+                      {activeLotMenuId === lot._id && (
+                        <div 
+                          className="card"
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: '100%',
+                            zIndex: 100,
+                            minWidth: '160px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            padding: '0.5rem 0',
+                            background: 'white',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '0.5rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'stretch'
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: 'none',
+                              border: 'none',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              fontSize: '0.8125rem',
+                              fontWeight: 600,
+                              color: 'var(--status-amber)'
+                            }}
+                            className="hover-bg"
+                            onClick={() => {
+                              setSelectedLotForAction(lot);
+                              setActiveModal('NotFound');
+                              setActiveLotMenuId(null);
+                            }}
+                          >
+                            Mark as Not Found
+                          </button>
+                          <button
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: 'none',
+                              border: 'none',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              fontSize: '0.8125rem',
+                              fontWeight: 600,
+                              color: 'var(--status-red)'
+                            }}
+                            className="hover-bg"
+                            onClick={() => {
+                              setSelectedLotForAction(lot);
+                              setActiveModal('Issue');
+                              setActiveLotMenuId(null);
+                            }}
+                          >
+                            Mark as Hold/Issue
+                          </button>
+                          {lot._status !== 'Pending' && (
+                            <button
+                              style={{
+                                padding: '0.5rem 1rem',
+                                background: 'none',
+                                border: 'none',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                fontSize: '0.8125rem',
+                                fontWeight: 600,
+                                color: 'var(--text-muted)'
+                              }}
+                              className="hover-bg"
+                              onClick={() => {
+                                handleResetLotStatus(lot._id);
+                                setActiveLotMenuId(null);
+                              }}
+                            >
+                              Reset to Pending
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -457,8 +658,8 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
       )}
 
       {/* Modals */}
-      <NotFoundModal isOpen={activeModal === 'NotFound'} onClose={() => setActiveModal(null)} onConfirm={() => setActiveModal(null)} />
-      <IssueModal isOpen={activeModal === 'Issue'} onClose={() => setActiveModal(null)} onConfirm={() => setActiveModal(null)} />
+      <NotFoundModal isOpen={activeModal === 'NotFound'} onClose={() => { setActiveModal(null); setSelectedLotForAction(null); }} onConfirm={handleNotFoundConfirm} />
+      <IssueModal isOpen={activeModal === 'Issue'} onClose={() => { setActiveModal(null); setSelectedLotForAction(null); }} onConfirm={handleIssueConfirm} />
       <CompletionModal isOpen={activeModal === 'Complete'} onClose={() => setActiveModal(null)} onConfirm={handleCompletePrep} flaggedCount={flaggedCount} />
       <CancellationModal isOpen={activeModal === 'Cancel'} onClose={() => setActiveModal(null)} onConfirm={handleCancelOrder} />
     </div>

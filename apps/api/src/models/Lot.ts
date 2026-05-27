@@ -7,11 +7,17 @@ export interface ILot extends Document {
   lotNumber: string;
   section: string;
   manifestItemId: string;
+  title?: string;
   description: string;
+  hammerPrice?: number;
+  buyerPremiumPortion?: number;
+  taxPortion?: number;
   sourceLocation: string;
   finalPickupLocation: string;
-  status: 'Pending' | 'Ready' | 'Not Found in Prep' | 'Hold/Issue';
+  status: 'Pending' | 'Ready' | 'Not Found in Prep' | 'Hold/Issue' | 'Return Received';
   type: 'Sort' | 'Non-Sort';
+  releaseStatus: 'Unreleased' | 'Released' | 'Refused' | 'Not Found';
+  condition?: string;
   lpn?: string;
   retailPrice?: number;
   retailerUrl?: string;
@@ -28,15 +34,25 @@ const LotSchema: Schema = new Schema({
   lotNumber: { type: String, required: true },
   section: { type: String, default: '' },
   manifestItemId: { type: String, default: '' }, // ManyFast Manifest Item ID (QR/internal ID)
+  title: { type: String },
   description: { type: String },
+  hammerPrice: { type: Number, default: 0 },
+  buyerPremiumPortion: { type: Number, default: 0 },
+  taxPortion: { type: Number, default: 0 },
   sourceLocation: { type: String },
   finalPickupLocation: { type: String, default: '' },
   status: { 
     type: String, 
-    enum: ['Pending', 'Ready', 'Not Found in Prep', 'Hold/Issue'], 
+    enum: ['Pending', 'Ready', 'Not Found in Prep', 'Hold/Issue', 'Return Received'], 
     default: 'Pending' 
   },
   type: { type: String, enum: ['Sort', 'Non-Sort'], required: true },
+  releaseStatus: {
+    type: String,
+    enum: ['Unreleased', 'Released', 'Refused', 'Not Found'],
+    default: 'Unreleased'
+  },
+  condition: { type: String, default: '' },
   lpn: { type: String },
   retailPrice: { type: Number },
   retailerUrl: { type: String },

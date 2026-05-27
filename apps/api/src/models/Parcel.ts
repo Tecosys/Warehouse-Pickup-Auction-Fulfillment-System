@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IRate {
   id: string;
+  _id?: any;
   provider: 'Stallion' | 'Freightcom';
   carrier: string;
   serviceName: string;
@@ -11,18 +12,26 @@ export interface IRate {
 }
 
 export interface IParcel extends Document {
+  shipment?: mongoose.Types.ObjectId;
   order: mongoose.Types.ObjectId;
   lots: mongoose.Types.ObjectId[];
-  status: 'In Queue' | 'Preparing' | 'Awaiting Payment' | 'Dispatched';
+  sequenceNumber: number;
+  unitLetter?: string;
+  unitType?: 'Parcel' | 'Mailer' | 'Pallet' | 'Freight Piece';
+  status: 'In Queue' | 'Preparing' | 'Awaiting Payment' | 'Label Ready' | 'Dispatched';
   dimensions: {
     length: number;
     width: number;
     height: number;
     weight: number;
   };
+  packingDetails?: string;
   rates: IRate[];
   selectedRateId?: string;
   trackingNumber?: string;
+  internalLabelPrinted?: boolean;
+  customsRequired?: boolean;
+  customsRecordReference?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,11 +47,19 @@ const RateSchema = new Schema({
 });
 
 const ParcelSchema: Schema = new Schema({
+  shipment: { type: Schema.Types.ObjectId, ref: 'Shipment' },
   order: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
   lots: [{ type: Schema.Types.ObjectId, ref: 'Lot' }],
+  sequenceNumber: { type: Number, default: 1 },
+  unitLetter: { type: String },
+  unitType: { 
+    type: String, 
+    enum: ['Parcel', 'Mailer', 'Pallet', 'Freight Piece'],
+    default: 'Parcel'
+  },
   status: { 
     type: String, 
-    enum: ['In Queue', 'Preparing', 'Awaiting Payment', 'Dispatched'], 
+    enum: ['In Queue', 'Preparing', 'Awaiting Payment', 'Label Ready', 'Dispatched'], 
     default: 'In Queue' 
   },
   dimensions: {
@@ -51,9 +68,13 @@ const ParcelSchema: Schema = new Schema({
     height: { type: Number, default: 0 },
     weight: { type: Number, default: 0 }
   },
+  packingDetails: { type: String, default: '' },
   rates: [RateSchema],
   selectedRateId: { type: String },
-  trackingNumber: { type: String }
+  trackingNumber: { type: String },
+  internalLabelPrinted: { type: Boolean, default: false },
+  customsRequired: { type: Boolean, default: false },
+  customsRecordReference: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model<IParcel>('Parcel', ParcelSchema);

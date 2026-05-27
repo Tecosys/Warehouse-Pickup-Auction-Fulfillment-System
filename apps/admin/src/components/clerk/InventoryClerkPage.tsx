@@ -9,6 +9,7 @@ import ReleaseConfirmationModal from './modals/ReleaseConfirmationModal';
 export type TabType = 'Check-in & Search' | 'Order Release' | 'Partial Release';
 
 interface InventoryClerkPageProps {
+  selectedAuction?: any;
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }

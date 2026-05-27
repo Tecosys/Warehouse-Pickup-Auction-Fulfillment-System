@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Activity from '../models/Activity';
 
 export class ActivityService {
@@ -5,8 +6,8 @@ export class ActivityService {
     type: 'Import' | 'Notification' | 'Preparation' | 'Release' | 'Return' | 'System';
     title: string;
     description: string;
-    auctionRun?: string;
-    order?: string;
+    auctionRun?: string | mongoose.Types.ObjectId;
+    order?: string | mongoose.Types.ObjectId;
     user?: string;
     metadata?: Record<string, any>;
   }) {

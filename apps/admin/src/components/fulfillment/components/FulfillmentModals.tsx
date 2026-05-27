@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -32,37 +33,67 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, childr
   );
 };
 
-export const NotFoundModal = ({ isOpen, onClose, onConfirm }: any) => (
-  <Modal isOpen={isOpen} onClose={onClose} onConfirm={onConfirm} title="Mark as Not Found" confirmColor="var(--status-amber)">
-    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-      This lot will be flagged and an internal case will be created automatically.
-    </p>
-    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Add a note (optional):</label>
-    <textarea 
-      placeholder="Where did you check?" 
-      style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '80px', outline: 'none' }}
-    />
-  </Modal>
-);
+export const NotFoundModal = ({ isOpen, onClose, onConfirm }: any) => {
+  const [notes, setNotes] = useState('');
 
-export const IssueModal = ({ isOpen, onClose, onConfirm }: any) => (
-  <Modal isOpen={isOpen} onClose={onClose} onConfirm={onConfirm} title="Report Issue" confirmColor="var(--status-red)">
-    <div style={{ marginBottom: '1rem' }}>
-      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Reason</label>
-      <select style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}>
-        <option>Damaged</option>
-        <option>Suspicious</option>
-        <option>Missing Parts</option>
-        <option>Other</option>
-      </select>
-    </div>
-    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Note</label>
-    <textarea 
-      placeholder="Describe the issue..." 
-      style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '80px', outline: 'none' }}
-    />
-  </Modal>
-);
+  useEffect(() => {
+    if (isOpen) {
+      setNotes('');
+    }
+  }, [isOpen]);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} onConfirm={() => onConfirm(notes)} title="Mark as Not Found" confirmColor="var(--status-amber)">
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+        This lot will be flagged and an internal case will be created automatically.
+      </p>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Add a note (optional):</label>
+      <textarea 
+        placeholder="Where did you check?" 
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '80px', outline: 'none' }}
+      />
+    </Modal>
+  );
+};
+
+export const IssueModal = ({ isOpen, onClose, onConfirm }: any) => {
+  const [reason, setReason] = useState('Damaged');
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setReason('Damaged');
+      setNotes('');
+    }
+  }, [isOpen]);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} onConfirm={() => onConfirm({ reason, notes })} title="Report Issue" confirmColor="var(--status-red)">
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Reason</label>
+        <select 
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          style={{ width: '100%', padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none' }}
+        >
+          <option>Damaged</option>
+          <option>Suspicious</option>
+          <option>Missing Parts</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Note</label>
+      <textarea 
+        placeholder="Describe the issue..." 
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '80px', outline: 'none' }}
+      />
+    </Modal>
+  );
+};
 
 export const CompletionModal = ({ isOpen, onClose, onConfirm, flaggedCount }: any) => (
   <Modal 

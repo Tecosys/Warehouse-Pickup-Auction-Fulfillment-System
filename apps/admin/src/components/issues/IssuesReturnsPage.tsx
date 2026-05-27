@@ -3,24 +3,28 @@ import { Search, Filter, AlertTriangle, Plus } from 'lucide-react';
 import CasesTable from './components/CasesTable';
 import CaseDetailDrawer from './components/CaseDetailDrawer';
 import ReturnIntakeTab from './tabs/ReturnIntakeTab';
+import CreditsLedgerTab from './tabs/CreditsLedgerTab';
+import { OpenCaseModal } from './components/OpenCaseModal';
 
 export type CaseStatus = 'Open' | 'In Review' | 'Resolved';
-export type CaseTab = 'All Cases' | 'Open' | 'In Review' | 'Resolved' | 'Return Intake';
+export type CaseTab = 'All Cases' | 'Open' | 'In Review' | 'Resolved' | 'Return Intake' | 'Store Credits';
 
 interface IssuesReturnsPageProps {
+  selectedAuction?: any;
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
+const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, user }) => {
   const [activeTab, setActiveTab] = useState<CaseTab>('All Cases');
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isNewCaseModalOpen, setIsNewCaseModalOpen] = useState(false);
   
   const [filters, setFilters] = useState({
     search: '',
     type: 'All Types',
-    auctionId: 'All Auctions'
+    auctionId: selectedAuction?._id || 'All Auctions'
   });
 
   const [auctions, setAuctions] = useState<any[]>([]);
@@ -40,6 +44,13 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      auctionId: selectedAuction?._id || 'All Auctions'
+    }));
+  }, [selectedAuction?._id]);
+
   const handleOpenCase = (caseData: any) => {
     setSelectedCase(caseData);
     setIsDrawerOpen(true);
@@ -56,14 +67,18 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Issues / Returns</h1>
           <p style={{ color: 'var(--text-muted)' }}>Internal case management and return intake</p>
         </div>
-        <button className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)' }}>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => setIsNewCaseModalOpen(true)}
+          style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           <Plus size={20} />
           Open New Case
         </button>
       </div>
 
       <div className="tabs-container" style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-        {(['All Cases', 'Open', 'In Review', 'Resolved', 'Return Intake'] as CaseTab[]).map((tab) => (
+        {(['All Cases', 'Open', 'In Review', 'Resolved', 'Return Intake', 'Store Credits'] as CaseTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -86,7 +101,11 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
       </div>
 
       <div className="tab-content animate-slide">
-        {activeTab !== 'Return Intake' ? (
+        {activeTab === 'Store Credits' ? (
+          <CreditsLedgerTab />
+        ) : activeTab === 'Return Intake' ? (
+          <ReturnIntakeTab />
+        ) : (
           <>
             {/* Filter Bar */}
             <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
@@ -133,7 +152,11 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
                     ))}
                   </select>
                 </div>
-                <button className="btn btn-primary" style={{ height: '42px', width: '100%' }} onClick={() => {}}>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ height: '42px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
+                  onClick={() => setFilters({ search: '', type: 'All Types', auctionId: selectedAuction?._id || 'All Auctions' })}
+                >
                   <Filter size={16} />
                   Reset Filters
                 </button>
@@ -166,13 +189,11 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
 
             {/* Main Table */}
             <CasesTable 
-              filterStatus={activeTab === 'All Cases' ? undefined : activeTab as CaseStatus} 
+              filterStatus={['All Cases', 'Return Intake', 'Store Credits'].includes(activeTab) ? undefined : activeTab as any} 
               onOpenCase={handleOpenCase}
               filters={filters}
             />
           </>
-        ) : (
-          <ReturnIntakeTab />
         )}
       </div>
 
@@ -185,6 +206,12 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ user }) => {
           // Trigger refresh if needed
           setFilters({...filters});
         }}
+      />
+
+      <OpenCaseModal
+        isOpen={isNewCaseModalOpen}
+        onClose={() => setIsNewCaseModalOpen(false)}
+        onSave={() => setFilters({ ...filters })}
       />
 
       <style>{`

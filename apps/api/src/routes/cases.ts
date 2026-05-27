@@ -1,12 +1,36 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import Case from '../models/Case';
 import AuctionRun from '../models/AuctionRun';
 import Order from '../models/Order';
 import Lot from '../models/Lot';
+import Credit from '../models/Credit';
+import Customer from '../models/Customer';
+import Settings from '../models/Settings';
 import { NotificationService } from '../services/NotificationService';
 import { ActivityService } from '../services/ActivityService';
 
 const router = express.Router();
+
+// Multer config for file uploads (photos/videos)
+const uploadDir = path.join(__dirname, '../../uploads/cases');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 // Get all cases with filters
 router.get('/', async (req, res) => {
@@ -28,10 +52,35 @@ router.get('/', async (req, res) => {
 
     const cases = await Case.find(query)
       .populate('auctionRun', 'title auctionNumber')
-      .populate('order', 'bidderNumber fulfillmentStatus')
+      .populate('order', 'bidderNumber fulfillmentStatus bookingCode')
       .sort({ createdAt: -1 });
     
     res.json(cases);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get cases by Order ID
+router.get('/orders/:orderId', async (req, res) => {
+  try {
+    const cases = await Case.find({ order: req.params.orderId })
+      .populate('auctionRun', 'title auctionNumber')
+      .sort({ createdAt: -1 });
+    res.json(cases);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload evidence file
+router.post('/upload-evidence', upload.single('file'), (req: any, res: any) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded.' });
+    }
+    const filePath = `/uploads/cases/${req.file.filename}`;
+    res.json({ filePath });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -58,7 +107,7 @@ router.get('/stats/aging', async (req, res) => {
 // Create a new case
 router.post('/', async (req, res) => {
   try {
-    const { orderId, type, lines, notes } = req.body;
+    const { orderId, type, lines, evidence, refundStatus, refundAmount, refundMethod } = req.body;
     
     const order = await Order.findById(orderId).populate('customer');
     if (!order) return res.status(404).json({ error: 'Order not found' });
@@ -70,27 +119,59 @@ router.post('/', async (req, res) => {
       caseNumber,
       auctionRun: order.auctionRun,
       order: orderId,
+      customer: order.customer?._id || order.customer,
       customerName: (order as any).customer?.name || 'Unknown',
       bidderNumber: order.bidderNumber,
       type,
-      lines,
+      lines: lines || [],
+      evidence: evidence || [],
+      refundStatus: refundStatus || 'None',
+      refundAmount: refundAmount || 0,
+      refundMethod: refundMethod || '',
       status: 'Open'
     });
 
     await newCase.save();
+
+    await ActivityService.log({
+      type: 'Return',
+      title: 'Case Created',
+      description: `Case ${caseNumber} (${type}) created for Bidder #${order.bidderNumber}.`,
+      order: order._id,
+      auctionRun: order.auctionRun
+    });
+
     res.status(201).json(newCase);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update case status or notes
+// Update case details, status, refund, etc.
 router.patch('/:id', async (req, res) => {
   try {
-    const { status, note } = req.body;
+    const { status, refundStatus, refundAmount, refundMethod, note, lines } = req.body;
     const update: any = {};
-    if (status) update.status = status;
+    if (status !== undefined) update.status = status;
+    if (refundStatus !== undefined) update.refundStatus = refundStatus;
+    if (refundAmount !== undefined) update.refundAmount = refundAmount;
+    if (refundMethod !== undefined) update.refundMethod = refundMethod;
     
+    const originalCase = await Case.findById(req.params.id);
+    if (!originalCase) return res.status(404).json({ error: 'Case not found' });
+
+    if (note) {
+      // Append note as a case line or resolution update
+      update.lines = [...originalCase.lines, {
+        lotNumber: 'GENERAL',
+        reason: 'Staff Update',
+        status: status || originalCase.status,
+        notes: note
+      }];
+    } else if (lines) {
+      update.lines = lines;
+    }
+
     const updatedCase = await Case.findByIdAndUpdate(
       req.params.id,
       { $set: update },
@@ -98,6 +179,44 @@ router.patch('/:id', async (req, res) => {
     );
 
     if (!updatedCase) return res.status(404).json({ error: 'Case not found' });
+
+    // Check if case just resolved with Store Credit refund and has not issued credit yet
+    const isStoreCredit = (refundMethod === 'Store Credit' || (refundMethod === undefined && originalCase.refundMethod === 'Store Credit'));
+    const isResolved = (status === 'Resolved' || (status === undefined && originalCase.status === 'Resolved'));
+    const wasAlreadyResolved = originalCase.status === 'Resolved';
+    
+    if (isResolved && !wasAlreadyResolved && isStoreCredit && (refundAmount > 0 || (refundAmount === undefined && originalCase.refundAmount > 0)) && !originalCase.creditGenerated) {
+      const finalRefundAmt = refundAmount !== undefined ? refundAmount : originalCase.refundAmount;
+      
+      const newCredit = new Credit({
+        customer: updatedCase.customer,
+        sourceCase: updatedCase._id,
+        sourceOrder: updatedCase.order,
+        amount: finalRefundAmt,
+        reason: `Case Resolution: ${updatedCase.caseNumber}`,
+        remainingBalance: finalRefundAmt,
+        createdBy: 'Staff'
+      });
+      await newCredit.save();
+
+      // Update case to link generated credit
+      updatedCase.creditGenerated = newCredit._id;
+      await updatedCase.save();
+
+      // Update Customer's credit balance
+      await Customer.findByIdAndUpdate(updatedCase.customer, {
+        $inc: { creditBalance: finalRefundAmt }
+      });
+    }
+
+    await ActivityService.log({
+      type: 'Return',
+      title: 'Case Updated',
+      description: `Case ${updatedCase.caseNumber} status updated to ${updatedCase.status}, refund status: ${updatedCase.refundStatus}.`,
+      order: updatedCase.order,
+      auctionRun: updatedCase.auctionRun
+    });
+
     res.json(updatedCase);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -109,11 +228,44 @@ router.post('/return-intake', async (req, res) => {
   try {
     const { lotId, reason, condition, notes, existingCaseId } = req.body;
     
-    const lot = await Lot.findById(lotId).populate('order');
+    const lot = await Lot.findById(lotId).populate({ path: 'order', populate: { path: 'customer' } });
     if (!lot) return res.status(404).json({ error: 'Lot not found' });
     
     const order = lot.order as any;
     if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // 1. Check Grade Eligibility (Grade A & B only)
+    const grade = (lot.condition || '').toUpperCase().trim();
+    const isEligibleGrade = !lot.condition || 
+      grade.startsWith('A') || 
+      grade.startsWith('B') || 
+      grade.includes('GRADE A') || 
+      grade.includes('GRADE B');
+
+    if (!isEligibleGrade) {
+      return res.status(400).json({ 
+        error: `Item is not eligible for return. Grade is "${lot.condition}" (Only Grade A & B are returnable).` 
+      });
+    }
+
+    // 2. Check dynamic dispute window
+    if (!order.completeTimestamp) {
+      return res.status(400).json({ 
+        error: 'Order has not been released yet. Returns can only be processed after pickup.' 
+      });
+    }
+
+    const dwSetting = await Settings.findOne({ key: 'dispute_window_hours' });
+    const disputeWindowHours = dwSetting ? parseInt(dwSetting.value, 10) : 24;
+
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(order.completeTimestamp).getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    if (diffHours > disputeWindowHours) {
+      return res.status(400).json({ 
+        error: `Return window expired. Item was picked up ${Math.round(diffHours)} hours ago (${disputeWindowHours}-hour limit).` 
+      });
+    }
 
     let caseToUpdate;
 
@@ -124,6 +276,7 @@ router.post('/return-intake', async (req, res) => {
         caseToUpdate.lines.push({
           lotNumber: lot.lotNumber,
           reason: `Return: ${reason}`,
+          status: 'Returned',
           notes: `Condition: ${condition}. ${notes}`
         });
         await caseToUpdate.save();
@@ -137,13 +290,15 @@ router.post('/return-intake', async (req, res) => {
         caseNumber,
         auctionRun: lot.auctionRun,
         order: order._id,
-        customerName: order.customerName || 'Unknown',
-        bidderNumber: lot.bidderNumber,
+        customer: order.customer?._id || order.customer,
+        customerName: order.customer?.name || 'Unknown',
+        bidderNumber: order.bidderNumber,
         type: 'Return',
         status: 'Open',
         lines: [{
           lotNumber: lot.lotNumber,
           reason,
+          status: 'Returned',
           notes: `Condition: ${condition}. ${notes}`
         }]
       });
@@ -163,13 +318,26 @@ router.post('/return-intake', async (req, res) => {
     await ActivityService.log({
       type: 'Return',
       title: 'Return Received',
-      description: `Lot ${lot.lotNumber} (Bidder #${lot.bidderNumber}) received back.`,
+      description: `Lot ${lot.lotNumber} (Bidder #${order.bidderNumber}) received back.`,
       order: order._id,
       auctionRun: lot.auctionRun,
       metadata: { lotId, reason, condition }
     });
 
     res.json({ success: true, case: caseToUpdate });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a single case by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const caseData = await Case.findById(req.params.id)
+      .populate('auctionRun', 'title auctionNumber')
+      .populate('order', 'bidderNumber fulfillmentStatus bookingCode');
+    if (!caseData) return res.status(404).json({ error: 'Case not found' });
+    res.json(caseData);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
