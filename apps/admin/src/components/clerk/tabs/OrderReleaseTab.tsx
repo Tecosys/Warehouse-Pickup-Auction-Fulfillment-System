@@ -198,7 +198,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
                   <th style={{ width: '50px', padding: '1rem 1.5rem' }}>

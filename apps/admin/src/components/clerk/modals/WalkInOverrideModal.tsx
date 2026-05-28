@@ -77,7 +77,8 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 10000,
-      backdropFilter: 'blur(8px)'
+      backdropFilter: 'blur(8px)',
+      padding: '1rem'
     }}>
       <div className="card animate-slide" style={{ width: '100%', maxWidth: '500px', padding: 0, overflow: 'hidden', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -31,7 +31,8 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 10000,
-      backdropFilter: 'blur(8px)'
+      backdropFilter: 'blur(8px)',
+      padding: '1rem'
     }}>
       {/* Hidden print slip for 80mm receipt */}
       <div className="print-slip">

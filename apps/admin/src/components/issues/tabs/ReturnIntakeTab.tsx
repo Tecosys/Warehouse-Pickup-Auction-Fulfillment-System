@@ -104,8 +104,8 @@ const ReturnIntakeTab = () => {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-        <div style={{ width: '240px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="responsive-steps-container" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+        <div className="responsive-steps-sidebar" style={{ width: '240px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {[
             { n: 1, label: 'Find Order/Lot' },
             { n: 2, label: 'Case Selection' },
@@ -147,7 +147,7 @@ const ReturnIntakeTab = () => {
         <div style={{ flex: 1 }}>
           {step === 1 && (
             <div className="card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+              <div className="responsive-search-row" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <Search size={20} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
@@ -167,7 +167,7 @@ const ReturnIntakeTab = () => {
               {lots.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {lots.map(lot => (
-                    <div key={lot._id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem' }}>
+                    <div key={lot._id} className="card responsive-result-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
                           <span style={{ fontWeight: 800, fontSize: '1.125rem' }}>Lot {lot.lotNumber}</span>
@@ -299,7 +299,7 @@ const ReturnIntakeTab = () => {
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                <div className="responsive-grid-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Return Reason</label>
                     <select value={reason} onChange={(e) => setReason(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>

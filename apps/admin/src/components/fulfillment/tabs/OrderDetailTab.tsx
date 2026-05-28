@@ -631,8 +631,10 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
       {/* Bulk Action Bar */}
       {selectedLots.size > 0 && (
-        <div style={{
-          position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+        <div 
+          className="responsive-bulk-bar"
+          style={{
+            position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
           width: 'calc(100% - 4rem)', maxWidth: '1336px',
           background: '#1e293b', color: 'white',
           padding: '1.25rem 2rem', borderRadius: '1rem',

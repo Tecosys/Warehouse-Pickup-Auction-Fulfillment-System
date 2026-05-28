@@ -566,6 +566,8 @@ tr:hover td {
   }
 
   .tabs-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
     overflow-x: auto !important;
     white-space: nowrap !important;
     padding-bottom: 0.25rem !important;
@@ -580,7 +582,213 @@ tr:hover td {
   .tabs-container button {
     padding: 0.75rem 0.25rem !important;
     font-size: 0.875rem !important;
+    flex-shrink: 0 !important;
   }
+
+  .sticky-action-bar > div:first-child {
+    justify-content: center !important;
+  }
+
+  /* Responsive table card transformation */
+  .responsive-table, 
+  .responsive-table thead, 
+  .responsive-table tbody, 
+  .responsive-table th, 
+  .responsive-table td, 
+  .responsive-table tr { 
+    display: block !important; 
+  }
+  
+  .responsive-table thead {
+    display: none !important; /* Hide headers on mobile */
+  }
+  
+  .responsive-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  .responsive-table tr {
+    background: white !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    display: grid !important;
+    grid-template-columns: 40px 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+  }
+
+  /* Checkbox td */
+  .responsive-table tr td:nth-child(1) {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Lot Number td */
+  .responsive-table tr td:nth-child(2) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    padding: 0 !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Description td */
+  .responsive-table tr td:nth-child(3) {
+    grid-column: 2 / span 2 !important;
+    grid-row: 2 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Pickup Loc td */
+  .responsive-table tr td:nth-child(4) {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    text-align: right !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Status td */
+  .responsive-table tr td:nth-child(5) {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    text-align: right !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Check-in rows mobile */
+  .responsive-checkin-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+  .responsive-checkin-row > div:last-child {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
+  }
+  .responsive-checkin-row button {
+    flex: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Return Intake Step navigation mobile */
+  .responsive-steps-container {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+  
+  .responsive-steps-sidebar {
+    width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    scrollbar-width: none;
+  }
+  .responsive-steps-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .responsive-steps-sidebar > div {
+    flex: 1 0 auto !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .responsive-search-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+  .responsive-search-row button {
+    width: 100% !important;
+    padding: 0.75rem !important;
+  }
+
+  .responsive-result-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+  .responsive-result-row button {
+    width: 100% !important;
+  }
+
+  /* Bulk action bar responsive */
+  .responsive-bulk-bar {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    width: calc(100% - 2rem) !important;
+    padding: 1rem !important;
+    bottom: 1rem !important;
+    border-radius: 0.75rem !important;
+  }
+  
+  .responsive-bulk-bar > span {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .responsive-bulk-bar > svg {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  .responsive-bulk-bar > div {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+  }
+  
+  .responsive-bulk-bar > button {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    width: auto !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    height: 100% !important;
+  }
+}
+
+/* Scrollbar hiding helpers */
+.no-scrollbar {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;  /* IE and Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
 }
 
 /* Scrollable tabs container for desktop and mobile */

@@ -140,7 +140,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
             </div>
             <div style={{ display: 'grid', gap: '0.75rem' }}>
               {checkedIn.map(b => (
-                <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={b._id} className="card responsive-checkin-row" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 700 }}>#{b.bidderNumber} {b.customer?.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status: {b.fulfillmentStatus}</div>
@@ -170,7 +170,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
               {awaiting.map(b => {
                 const isLate = b.appointmentTime && new Date() > new Date(b.appointmentTime);
                 return (
-                  <div key={b._id} className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7, borderLeft: isLate ? '4px solid var(--status-red)' : '1px solid var(--border-color)' }}>
+                  <div key={b._id} className="card responsive-checkin-row" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7, borderLeft: isLate ? '4px solid var(--status-red)' : '1px solid var(--border-color)' }}>
                     <div>
                       <div style={{ fontWeight: 700 }}>
                         #{b.bidderNumber} {b.customer?.name}

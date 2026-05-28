@@ -354,7 +354,18 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
         </div>
 
         {/* Sub-Tabs Selector */}
-        <div className="scrollable-tabs" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+        <div className="scrollable-tabs no-scrollbar" style={{ 
+          borderBottom: '1px solid var(--border-color)', 
+          paddingBottom: '0.5rem',
+          display: 'flex',
+          gap: '1rem',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          WebkitOverflowScrolling: 'touch'
+        }}>
           {[
             { id: 'Overview', label: 'Overview' },
             { id: 'PaidUnpaid', label: 'Paid/Unpaid' },
@@ -379,7 +390,8 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
                 fontWeight: 600,
                 fontSize: '0.8125rem',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.15s'
+                transition: 'all 0.15s',
+                flexShrink: 0
               }}
             >
               {t.label}
