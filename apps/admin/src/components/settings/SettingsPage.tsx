@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Settings, ShieldAlert, Mail, MessageSquare, Info, ShieldCheck, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import { Save, Settings, ShieldAlert, Mail, MessageSquare, Info, ShieldCheck, Calendar, Clock } from 'lucide-react';
 
 interface SettingsPageProps {
   user: any;
