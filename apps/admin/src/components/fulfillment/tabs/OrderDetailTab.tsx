@@ -425,7 +425,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
         {/* Right Column — Lot List */}
         <div>
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: '#f8fafc', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="responsive-flex-header" style={{ display: 'flex', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: '#f8fafc', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '2rem' }}>
                 {['All', 'Non-Sort', 'Sort'].map(t => (
                   <button 

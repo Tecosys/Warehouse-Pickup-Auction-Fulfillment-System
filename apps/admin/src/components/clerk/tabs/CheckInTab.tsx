@@ -81,7 +81,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
 
   return (
     <div className="animate-fade">
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem' }}>
+      <div className="responsive-container" style={{ maxWidth: '900px', margin: '0 auto' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>Customer Check-In</h2>
         
         {/* Search Input */}

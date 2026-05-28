@@ -186,7 +186,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
         </div>
 
         <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--status-teal)', boxShadow: '0 4px 6px -1px rgba(13, 148, 136, 0.1)' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdfa' }}>
+          <div className="responsive-flex-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdfa' }}>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>
               {lots.length} Lots — <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span> — <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'inherit' }}>{withheldCount} Withheld</span>
             </h2>

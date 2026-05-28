@@ -70,7 +70,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
   }
 
   return (
-    <div className="animate-fade" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="animate-fade responsive-container" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Auction Context */}
       <div className="responsive-flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div style={{ background: '#e2e8f0', padding: '0.625rem 1.25rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>

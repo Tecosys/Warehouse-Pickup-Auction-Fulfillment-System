@@ -99,7 +99,7 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '300px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '300px', maxWidth: '100%' }}>
               <select 
                 value={reasons[lot._id] || ''} 
                 onChange={(e) => handleReasonChange(lot._id, e.target.value)}
