@@ -173,7 +173,7 @@ export class NotificationService {
       const interpolate = (text: string) => {
         return text
           .replace(/{auctionNumber}/g, order.auctionRun?.auctionNumber || 'N/A')
-          .replace(/{link}/g, `https://portal.bidboss.ca/order/${order.bookingCode}`)
+          .replace(/{link}/g, `https://warehouse-pickup-auction-fulfillmen-mocha.vercel.app/order/${order.bookingCode}`)
           .replace(/{date}/g, extraData.date || '')
           .replace(/{time}/g, extraData.time || '')
           .replace(/{code}/g, order.bookingCode || '')

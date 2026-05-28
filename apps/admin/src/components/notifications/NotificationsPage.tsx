@@ -140,7 +140,7 @@ const SendModal = ({ notification, onClose, selectedAuction }: any) => {
             <span style={{ fontSize: '0.625rem', fontWeight: 700, padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px' }}>SMS</span>
           </div>
           <p style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>
-            "Congratulations on your winnings from Bid Boss Auction #043. Please use your link to choose Pickup or Shipping: https://portal.bidboss.ca/order/ABC-123"
+            "Congratulations on your winnings from Bid Boss Auction #043. Please use your link to choose Pickup or Shipping: https://warehouse-pickup-auction-fulfillmen-mocha.vercel.app/order/ABC-123"
           </p>
         </div>
 
