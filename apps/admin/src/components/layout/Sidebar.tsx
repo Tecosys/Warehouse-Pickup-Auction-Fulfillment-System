@@ -11,7 +11,7 @@ import {
   X
 } from 'lucide-react';
 
-const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose, user }: any) => {
+const Sidebar = ({ activeModule, onModuleChange, isOpen, onClose, user }: any) => {
   const allMenuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['Admin', 'Support'] },
     { icon: <Gavel size={20} />, label: 'Auction Runs', roles: ['Admin'] },
