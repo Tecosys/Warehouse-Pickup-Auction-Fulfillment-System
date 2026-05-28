@@ -18,6 +18,7 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
   const [activeTab, setActiveTab] = useState<TabType>('Check-in & Search');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [withheldLots, setWithheldLots] = useState<any[]>([]);
+  const [orderLots, setOrderLots] = useState<any[]>([]);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmType, setConfirmType] = useState<'full' | 'partial'>('full');
@@ -27,8 +28,9 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
     setActiveTab('Order Release');
   };
 
-  const handleReviewWithheld = (lots: any[]) => {
-    setWithheldLots(lots);
+  const handleReviewWithheld = (withheld: any[], allLots: any[]) => {
+    setWithheldLots(withheld);
+    setOrderLots(allLots);
     setActiveTab('Partial Release');
   };
 
@@ -89,6 +91,7 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
           <PartialReleaseTab 
             order={selectedOrder} 
             withheldLots={withheldLots}
+            orderLots={orderLots}
             onBack={() => setActiveTab('Order Release')}
             onComplete={() => {
               setConfirmType('partial');

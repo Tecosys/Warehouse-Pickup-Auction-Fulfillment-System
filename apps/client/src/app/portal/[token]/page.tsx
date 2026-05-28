@@ -182,14 +182,27 @@ export default function CustomerPortal({ params }: { params: any }) {
     }
   };
 
-  const getDisputeCountdown = (createdAtStr: string) => {
-    const createdDate = new Date(createdAtStr);
-    const deadline = new Date(createdDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days window
+  const getDisputeCountdown = () => {
+    if (!order.completeTimestamp) {
+      return { eligible: false, text: 'Awaiting Pickup Release' };
+    }
+    if (!order.disputeDeadline) {
+      return { eligible: false, text: 'No dispute deadline' };
+    }
+    const deadline = new Date(order.disputeDeadline);
     const now = new Date();
     const diffTime = deadline.getTime() - now.getTime();
     
     if (diffTime <= 0) {
       return { eligible: false, text: 'Dispute window closed' };
+    }
+    
+    const diffHoursTotal = Math.ceil(diffTime / (1000 * 60 * 60));
+    if (diffHoursTotal < 24) {
+      return {
+        eligible: true,
+        text: `${diffHoursTotal}h remaining`
+      };
     }
     
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -535,7 +548,18 @@ export default function CustomerPortal({ params }: { params: any }) {
                   <h3 className="text-lg font-extrabold mb-4">Won Items dispute eligibility</h3>
                   <div className="grid gap-4">
                     {order.lots?.map((lot: any) => {
-                      const countdown = getDisputeCountdown(order.createdAt);
+                      const countdown = getDisputeCountdown();
+                      const grade = (lot.condition || '').toUpperCase().trim();
+                      const isEligibleGrade = !lot.condition || 
+                        grade.startsWith('A') || 
+                        grade.startsWith('B') || 
+                        grade.includes('GRADE A') || 
+                        grade.includes('GRADE B');
+                      
+                      const canDispute = countdown.eligible && isEligibleGrade;
+                      const eligibilityText = !isEligibleGrade 
+                        ? 'Not eligible due to grade' 
+                        : countdown.text;
                       return (
                         <div key={lot._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                           <div>
@@ -544,13 +568,16 @@ export default function CustomerPortal({ params }: { params: any }) {
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">
                               <Clock size={12} />
                               <span>Dispute status: </span>
-                              <span className={`font-bold ${countdown.eligible ? 'text-teal-600' : 'text-rose-500'}`}>
-                                {countdown.text}
+                              <span className={`font-bold ${canDispute ? 'text-teal-600' : 'text-rose-500'}`}>
+                                {eligibilityText}
                               </span>
                             </div>
+                            {lot.condition && (
+                              <div className="text-xs text-gray-400 mt-1">Grade: <span className="font-bold">{lot.condition}</span></div>
+                            )}
                           </div>
                           <div>
-                            {countdown.eligible ? (
+                            {canDispute ? (
                               <button 
                                 onClick={() => setSelectedLotForDispute(lot)}
                                 className="w-full sm:w-auto bg-[#0d9488] hover:bg-[#0f766e] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all"
@@ -559,7 +586,7 @@ export default function CustomerPortal({ params }: { params: any }) {
                               </button>
                             ) : (
                               <span className="text-xs text-gray-400 font-bold bg-gray-50 px-3 py-2 rounded-xl block text-center">
-                                Dispute Closed
+                                Dispute Unavailable
                               </span>
                             )}
                           </div>

@@ -75,7 +75,7 @@ router.get('/orders/:orderId/parcels', async (req, res) => {
 // Create a parcel for an order
 router.post('/orders/:orderId/parcels', async (req, res) => {
   try {
-    const { lots, dimensions, packingDetails, sequenceNumber } = req.body;
+    const { lots, dimensions, packingDetails, sequenceNumber, unitType } = req.body;
     const orderId = req.params.orderId;
 
     const order = await Order.findById(orderId);
@@ -93,13 +93,14 @@ router.post('/orders/:orderId/parcels', async (req, res) => {
       dimensions: dimensions || { length: 0, width: 0, height: 0, weight: 0 },
       packingDetails: packingDetails || '',
       sequenceNumber: sequenceNumber || 1,
+      unitType: unitType || 'Parcel',
       status: 'In Queue'
     });
 
     await parcel.save();
 
     // Trigger mock rate retrieval immediately
-    const mockRates = await ShippingService.getAllRates(parcel.dimensions);
+    const mockRates = await ShippingService.getAllRates(parcel.dimensions, parcel.unitType);
     parcel.rates = mockRates;
     await parcel.save();
 
@@ -123,7 +124,7 @@ router.get('/parcels/:parcelId/rates', async (req, res) => {
     const parcel = await Parcel.findById(req.params.parcelId);
     if (!parcel) return res.status(404).json({ error: 'Parcel not found' });
 
-    const mockRates = await ShippingService.getAllRates(parcel.dimensions);
+    const mockRates = await ShippingService.getAllRates(parcel.dimensions, parcel.unitType);
     parcel.rates = mockRates;
     await parcel.save();
 

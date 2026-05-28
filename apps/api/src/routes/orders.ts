@@ -1,12 +1,13 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import Order from '../models/Order';
-import Lot from '../models/Lot';
-import Slot from '../models/Slot';
-import Case from '../models/Case';
-import Customer from '../models/Customer';
-import { NotificationService } from '../services/NotificationService';
-import { ActivityService } from '../services/ActivityService';
+import Order from '../models/Order.js';
+import Lot from '../models/Lot.js';
+import Slot from '../models/Slot.js';
+import Case from '../models/Case.js';
+import Customer from '../models/Customer.js';
+import Settings from '../models/Settings.js';
+import { NotificationService } from '../services/NotificationService.js';
+import { ActivityService } from '../services/ActivityService.js';
 
 const router = express.Router();
 
@@ -68,10 +69,19 @@ router.get('/:id', async (req, res) => {
     if (!order) return res.status(404).json({ error: 'Order not found' });
     
     const lots = await Lot.find({ order: order._id });
+
+    const dwSetting = await Settings.findOne({ key: 'dispute_window_hours' });
+    const disputeWindowHours = dwSetting ? parseInt(dwSetting.value, 10) : 24;
+
+    const disputeDeadline = order.completeTimestamp 
+      ? new Date(order.completeTimestamp.getTime() + disputeWindowHours * 60 * 60 * 1000)
+      : null;
     
     res.json({
       ...order.toObject(),
-      lots
+      lots,
+      disputeWindowHours,
+      disputeDeadline
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to fetch order', details: error.message });
@@ -101,7 +111,11 @@ router.patch('/:id', async (req: any, res: any) => {
         title: 'Order Ready',
         description: `Order for Bidder #${order.bidderNumber} marked as Ready for Pickup.`,
         order: order._id,
-        auctionRun: order.auctionRun
+        customer: order.customer,
+        auctionRun: order.auctionRun,
+        statusBefore: oldOrder.fulfillmentStatus,
+        statusAfter: 'Ready',
+        user: req.headers['x-user-name'] || req.body.staffUser || 'System'
       });
     }
 
@@ -117,7 +131,11 @@ router.patch('/:id', async (req: any, res: any) => {
         title: 'Order Released',
         description: `Order for Bidder #${order.bidderNumber} has been released to customer.`,
         order: order._id,
-        auctionRun: order.auctionRun
+        customer: order.customer,
+        auctionRun: order.auctionRun,
+        statusBefore: oldOrder.customerStatus,
+        statusAfter: 'Picked Up',
+        user: req.headers['x-user-name'] || req.body.staffUser || 'System'
       });
     }
 
@@ -132,7 +150,7 @@ router.post('/:id/book', async (req: any, res: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { slotId, isAdminOverride, authorizedPerson } = req.body;
+    const { slotId, isAdminOverride, authorizedPerson, staffUser } = req.body;
     const orderId = req.params.id;
 
     // 1. Check if rescheduling is allowed (2-hour rule) - Skip if Admin
@@ -181,9 +199,26 @@ router.post('/:id/book', async (req: any, res: any) => {
       { new: true, session }
     );
 
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
     await session.commitTransaction();
 
-    // 3. Trigger Notification (Type 4: Booking Confirmation)
+    // 3. Log Activity
+    await ActivityService.log({
+      type: 'Preparation',
+      title: 'Order Pickup Booked',
+      description: `Appointment scheduled for Bidder #${order.bidderNumber} on ${slot.date} at ${slot.startTime}.`,
+      order: order._id,
+      customer: order.customer,
+      auctionRun: order.auctionRun,
+      statusBefore: existingOrder?.customerStatus || 'Awaiting Choice',
+      statusAfter: 'Booked',
+      user: req.headers['x-user-name'] || staffUser || 'Customer'
+    });
+
+    // 4. Trigger Notification (Type 4: Booking Confirmation)
     await NotificationService.send(orderId, 4, {
       date: slot.date,
       time: slot.startTime
@@ -201,6 +236,10 @@ router.post('/:id/book', async (req: any, res: any) => {
 // Confirm Shipping Choice (Irreversible)
 router.post('/:id/confirm-shipping', async (req: any, res: any) => {
   try {
+    const { staffUser } = req.body;
+    const oldOrder = await Order.findById(req.params.id);
+    if (!oldOrder) return res.status(404).json({ error: 'Order not found' });
+
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { 
@@ -212,6 +251,19 @@ router.post('/:id/confirm-shipping', async (req: any, res: any) => {
     );
     if (!order) return res.status(404).json({ error: 'Order not found' });
     
+    // Log Activity
+    await ActivityService.log({
+      type: 'Preparation',
+      title: 'Shipping Option Selected',
+      description: `Customer confirmed Shipping retrieval method for Bidder #${order.bidderNumber}.`,
+      order: order._id,
+      customer: order.customer,
+      auctionRun: order.auctionRun,
+      statusBefore: oldOrder.customerStatus,
+      statusAfter: 'Shipping Selected',
+      user: req.headers['x-user-name'] || staffUser || 'Customer'
+    });
+
     // Trigger shipping notification if needed
     await NotificationService.send(order._id.toString(), 2);
     
@@ -232,18 +284,60 @@ router.post('/:id/release', async (req: any, res: any) => {
 
     // Mark released lots as Released
     if (releasedLotIds && releasedLotIds.length > 0) {
-      await Lot.updateMany({ _id: { $in: releasedLotIds } }, { $set: { status: 'Released' } });
+      await Lot.updateMany(
+        { _id: { $in: releasedLotIds } },
+        { $set: { status: 'Ready', releaseStatus: 'Released' } }
+      );
+
+      for (const lotId of releasedLotIds) {
+        await ActivityService.log({
+          type: 'Release',
+          title: 'Lot Released',
+          description: `Lot ID ${lotId} has been successfully released.`,
+          order: order._id,
+          customer: order.customer?._id || order.customer,
+          lot: lotId,
+          auctionRun: order.auctionRun,
+          statusBefore: 'Unreleased',
+          statusAfter: 'Released',
+          user: req.headers['x-user-name'] || req.body.staffUser || 'System'
+        });
+      }
     }
 
     // Process withheld lots and trigger case creation
     if (withheldLots && withheldLots.length > 0) {
       for (const item of withheldLots) {
+        let rStatus = 'Unreleased';
+        if (item.reason === 'Not Found' || item.reason === 'Missing at Release') rStatus = 'Not Found';
+        else if (item.reason === 'Customer Refused') rStatus = 'Refused';
+        else if (item.reason === 'Issue') rStatus = 'Refused';
+
         // Update lot status to withheld status
-        await Lot.findByIdAndUpdate(item.lotId, { $set: { status: `Withheld: ${item.reason}` } });
+        await Lot.findByIdAndUpdate(item.lotId, {
+          $set: {
+            status: item.reason === 'Not Found' ? 'Not Found in Prep' : 'Hold/Issue',
+            releaseStatus: rStatus
+          }
+        });
+
+        await ActivityService.log({
+          type: 'Release',
+          title: 'Lot Withheld',
+          description: `Lot ${item.lotNumber} withheld at release. Reason: ${item.reason}`,
+          order: order._id,
+          customer: order.customer?._id || order.customer,
+          lot: item.lotId,
+          auctionRun: order.auctionRun,
+          statusBefore: 'Unreleased',
+          statusAfter: rStatus,
+          notes: item.notes || `Reason: ${item.reason}`,
+          user: req.headers['x-user-name'] || req.body.staffUser || 'System'
+        });
 
         // Map reason to case type
         let caseType: 'Missing at Release' | 'Refused' | 'Issue' = 'Issue';
-        if (item.reason === 'Not Found') caseType = 'Missing at Release';
+        if (item.reason === 'Not Found' || item.reason === 'Missing at Release') caseType = 'Missing at Release';
         else if (item.reason === 'Customer Refused') caseType = 'Refused';
 
         // Auto create/update case for this order
@@ -283,6 +377,14 @@ router.post('/:id/release', async (req: any, res: any) => {
     // Update order status
     order.customerStatus = 'Picked Up';
     order.completeTimestamp = new Date();
+    // Set appropriate lifecycle status
+    if (withheldLots && withheldLots.length > 0) {
+      order.pickupStatus = 'Partially Released';
+      order.lifecycleStatus = 'Partially Released';
+    } else {
+      order.pickupStatus = 'Released';
+      order.lifecycleStatus = 'Released';
+    }
     await order.save();
 
     // TRIGGER: Pickup Confirmation (Notification Type 10)
@@ -293,10 +395,14 @@ router.post('/:id/release', async (req: any, res: any) => {
 
     await ActivityService.log({
       type: 'Release',
-      title: 'Order Released',
+      title: withheldLots && withheldLots.length > 0 ? 'Order Partially Released' : 'Order Released',
       description: `Order for Bidder #${order.bidderNumber} has been released. ${withheldLots?.length || 0} exceptions created.`,
       order: order._id,
-      auctionRun: order.auctionRun
+      customer: order.customer?._id || order.customer,
+      auctionRun: order.auctionRun,
+      statusBefore: 'Booked', // Or checked in / ready
+      statusAfter: 'Picked Up',
+      user: req.headers['x-user-name'] || req.body.staffUser || 'System'
     });
 
     // If no open case on order: Google Review request fires (Type 12)

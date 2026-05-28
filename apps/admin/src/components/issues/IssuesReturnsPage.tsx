@@ -16,7 +16,9 @@ interface IssuesReturnsPageProps {
 }
 
 const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, user }) => {
-  const [activeTab, setActiveTab] = useState<CaseTab>('All Cases');
+  const [activeTab, setActiveTab] = useState<CaseTab>(() => {
+    return user?.role === 'Clerk' ? 'Return Intake' : 'All Cases';
+  });
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isNewCaseModalOpen, setIsNewCaseModalOpen] = useState(false);
@@ -60,6 +62,10 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, 
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const tabs = user?.role === 'Clerk'
+    ? (['Return Intake'] as CaseTab[])
+    : (['All Cases', 'Open', 'In Review', 'Resolved', 'Return Intake', 'Store Credits'] as CaseTab[]);
+
   return (
     <div className="issues-returns-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
@@ -67,18 +73,20 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, 
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Issues / Returns</h1>
           <p style={{ color: 'var(--text-muted)' }}>Internal case management and return intake</p>
         </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => setIsNewCaseModalOpen(true)}
-          style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <Plus size={20} />
-          Open New Case
-        </button>
+        {user?.role !== 'Clerk' && (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setIsNewCaseModalOpen(true)}
+            style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', background: 'var(--status-teal)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Plus size={20} />
+            Open New Case
+          </button>
+        )}
       </div>
 
       <div className="tabs-container" style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-        {(['All Cases', 'Open', 'In Review', 'Resolved', 'Return Intake', 'Store Credits'] as CaseTab[]).map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

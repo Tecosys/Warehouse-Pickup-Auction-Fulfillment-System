@@ -15,6 +15,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     'admin': { pass: 'admin123', role: 'Admin', name: 'Marcus V.', title: 'Floor Manager' },
     'worker': { pass: 'worker123', role: 'Worker', name: 'Sarah J.', title: 'Fulfillment Specialist' },
     'clerk': { pass: 'clerk123', role: 'Clerk', name: 'David M.', title: 'Inventory Clerk' },
+    'support': { pass: 'support123', role: 'Support', name: 'Grace L.', title: 'Customer Support Lead' },
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -114,7 +115,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Demo Passwords: <span style={{ fontWeight: 600 }}>admin123, worker123, clerk123</span>
+            Demo Passwords: <span style={{ fontWeight: 600 }}>admin123, worker123, clerk123, support123</span>
           </p>
         </div>
       </div>

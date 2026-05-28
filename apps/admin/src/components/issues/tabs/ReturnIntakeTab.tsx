@@ -10,6 +10,7 @@ const ReturnIntakeTab = () => {
   const [selectedLot, setSelectedLot] = useState<any>(null);
   const [existingCases, setExistingCases] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [managerOverride, setManagerOverride] = useState(false);
 
   // Form state
   const [reason, setReason] = useState('Customer Refused');
@@ -33,6 +34,7 @@ const ReturnIntakeTab = () => {
 
   const handleSelectLot = async (lot: any) => {
     setSelectedLot(lot);
+    setManagerOverride(false); // Reset override checkbox
     // Check for existing cases for this order/bidder
     try {
       const res = await fetch(`http://localhost:5000/api/cases?search=${lot.bidderNumber}`);
@@ -56,7 +58,8 @@ const ReturnIntakeTab = () => {
           reason,
           condition,
           notes,
-          existingCaseId: useExistingCase
+          existingCaseId: useExistingCase,
+          override: managerOverride
         })
       });
 
@@ -222,47 +225,130 @@ const ReturnIntakeTab = () => {
             </div>
           )}
 
-          {step === 3 && (
-            <div className="card animate-fade" style={{ padding: '2rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Return Reason</label>
-                  <select value={reason} onChange={(e) => setReason(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>
-                    <option value="Customer Refused">Customer Refused</option>
-                    <option value="Functionality Issue">Functionality Issue</option>
-                    <option value="Wrong Item">Wrong Item</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Condition on Return</label>
-                  <select value={condition} onChange={(e) => setCondition(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>
-                    <option value="As Sold">As Sold</option>
-                    <option value="Damaged">Damaged</option>
-                    <option value="Missing Parts">Missing Parts</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
+          {step === 3 && (() => {
+            const lotGrade = (selectedLot?.condition || '').toUpperCase().trim();
+            const isGradeEligible = !selectedLot?.condition || 
+              lotGrade.startsWith('A') || 
+              lotGrade.startsWith('B') || 
+              lotGrade.includes('GRADE A') || 
+              lotGrade.includes('GRADE B');
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Internal Notes</label>
-                <textarea 
-                  placeholder="Additional details about the return condition..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '120px', outline: 'none' }}
-                />
-              </div>
+            const completeTime = selectedLot?.order?.completeTimestamp ? new Date(selectedLot.order.completeTimestamp) : null;
+            const elapsedHours = completeTime ? (new Date().getTime() - completeTime.getTime()) / (1000 * 60 * 60) : 0;
+            const disputeWindowHours = selectedLot?.order?.disputeWindowHours || 24;
+            const isWindowEligible = completeTime ? elapsedHours <= disputeWindowHours : false;
+            
+            const isEligible = isGradeEligible && isWindowEligible;
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                <button onClick={() => setStep(1)} className="btn" disabled={isProcessing}>Cancel</button>
-                <button className="btn btn-primary" style={{ padding: '0.75rem 3rem' }} onClick={handleProcessReturn} disabled={isProcessing}>
-                  {isProcessing ? <ButtonSpinner /> : 'Mark as Return Received'}
-                </button>
+            return (
+              <div className="card animate-fade" style={{ padding: '2rem' }}>
+                {/* Eligibility checklist panel */}
+                <div style={{ 
+                  background: isEligible ? 'rgba(13, 148, 136, 0.03)' : 'rgba(239, 68, 68, 0.03)',
+                  border: '1px solid',
+                  borderColor: isEligible ? 'rgba(13, 148, 136, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                  borderRadius: '0.75rem',
+                  padding: '1.5rem',
+                  marginBottom: '2rem'
+                }}>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '1rem', color: isEligible ? 'var(--status-teal)' : 'var(--status-red)' }}>
+                    Return Eligibility Checklist
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Item Grade: <strong>{selectedLot?.condition || 'Grade A/B default'}</strong></span>
+                      <span style={{ fontWeight: 700, color: isGradeEligible ? 'var(--status-teal)' : 'var(--status-red)' }}>
+                        {isGradeEligible ? '✓ Eligible' : '✗ Grade Ineligible (Grade A/B only)'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Dispute Window (Released: {completeTime ? completeTime.toLocaleDateString() : 'N/A'}):</span>
+                      <span style={{ fontWeight: 700, color: isWindowEligible ? 'var(--status-teal)' : 'var(--status-red)' }}>
+                        {completeTime 
+                          ? (isWindowEligible 
+                            ? `✓ Eligible (${elapsedHours.toFixed(1)}h elapsed / ${disputeWindowHours}h limit)` 
+                            : `✗ Expired (${elapsedHours.toFixed(1)}h elapsed / ${disputeWindowHours}h limit)`)
+                          : '✗ Order not released'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!isEligible && (
+                    <div style={{ 
+                      marginTop: '1.5rem', 
+                      paddingTop: '1rem', 
+                      borderTop: '1px solid rgba(239, 68, 68, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', color: 'var(--status-amber)', fontSize: '0.875rem', fontWeight: 600 }}>
+                        <AlertCircle size={18} />
+                        <span>Warning: Out of Policy Return.</span>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}>
+                        <input 
+                          type="checkbox" 
+                          checked={managerOverride}
+                          onChange={(e) => setManagerOverride(e.target.checked)}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
+                        />
+                        <span>Confirm Manager Override Approved</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Return Reason</label>
+                    <select value={reason} onChange={(e) => setReason(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>
+                      <option value="Customer Refused">Customer Refused</option>
+                      <option value="Functionality Issue">Functionality Issue</option>
+                      <option value="Wrong Item">Wrong Item</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Condition on Return</label>
+                    <select value={condition} onChange={(e) => setCondition(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}>
+                      <option value="As Sold">As Sold</option>
+                      <option value="Damaged">Damaged</option>
+                      <option value="Missing Parts">Missing Parts</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Internal Notes</label>
+                  <textarea 
+                    placeholder="Additional details about the return condition..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '120px', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                  <button onClick={() => setStep(1)} className="btn" disabled={isProcessing}>Cancel</button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ 
+                      padding: '0.75rem 3rem',
+                      background: (isEligible || managerOverride) ? 'var(--status-teal)' : 'var(--status-gray)',
+                      cursor: (isEligible || managerOverride) ? 'pointer' : 'not-allowed',
+                      opacity: (isEligible || managerOverride) ? 1 : 0.6
+                    }} 
+                    onClick={handleProcessReturn} 
+                    disabled={isProcessing || (!isEligible && !managerOverride)}
+                  >
+                    {isProcessing ? <ButtonSpinner /> : 'Mark as Return Received'}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {step === 4 && (
             <div className="card animate-fade" style={{ padding: '2rem', textAlign: 'center' }}>

@@ -5,11 +5,12 @@ import { ButtonSpinner } from '../../shared/LoadingComponents';
 interface PartialReleaseTabProps {
   order: any;
   withheldLots: any[];
+  orderLots: any[];
   onBack: () => void;
   onComplete: () => void;
 }
 
-const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLots, onBack, onComplete }) => {
+const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLots, orderLots, onBack, onComplete }) => {
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [completing, setCompleting] = useState(false);
@@ -22,50 +23,35 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
     try {
       setCompleting(true);
 
-      // 1. Create a Case in the backend for the withheld lots
-      const caseLines = withheldLots.map(lot => ({
+      const releasedLotIds = orderLots
+        .filter(lot => !withheldLots.some(wl => wl._id === lot._id))
+        .map(lot => lot._id);
+
+      const caseWithheldLots = withheldLots.map(lot => ({
+        lotId: lot._id,
         lotNumber: lot.lotNumber,
         reason: reasons[lot._id],
-        notes: notes[lot._id] || '',
-        status: 'Open'
+        notes: notes[lot._id] || ''
       }));
 
-      let overallType = 'Issue';
-      if (withheldLots.some(lot => reasons[lot._id] === 'Missing at Release')) {
-        overallType = 'Missing at Release';
-      } else if (withheldLots.some(lot => reasons[lot._id] === 'Customer Refused')) {
-        overallType = 'Refused';
-      }
-
-      const caseRes = await fetch('http://localhost:5000/api/cases', {
+      const res = await fetch(`http://localhost:5000/api/orders/${order._id}/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId: order._id,
-          type: overallType,
-          lines: caseLines
+          releasedLotIds,
+          withheldLots: caseWithheldLots
         })
       });
 
-      if (!caseRes.ok) throw new Error('Failed to create case');
-
-      // 2. Update order status
-      const orderRes = await fetch(`http://localhost:5000/api/orders/${order._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          customerStatus: 'Picked Up',
-          lifecycleStatus: 'Partially Released',
-          pickupStatus: 'Partially Released'
-        })
-      });
-
-      if (orderRes.ok) {
+      if (res.ok) {
         onComplete();
+      } else {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to complete partial release');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing partial release:', error);
-      alert('Failed to complete partial release. Please try again.');
+      alert(error.message || 'Failed to complete partial release. Please try again.');
     } finally {
       setCompleting(false);
     }

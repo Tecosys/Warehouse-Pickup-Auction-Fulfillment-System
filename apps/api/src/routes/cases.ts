@@ -138,7 +138,11 @@ router.post('/', async (req, res) => {
       title: 'Case Created',
       description: `Case ${caseNumber} (${type}) created for Bidder #${order.bidderNumber}.`,
       order: order._id,
-      auctionRun: order.auctionRun
+      customer: order.customer?._id || order.customer,
+      auctionRun: order.auctionRun,
+      statusBefore: 'None',
+      statusAfter: 'Open',
+      user: req.headers['x-user-name'] || req.body.staffUser || 'System'
     });
 
     res.status(201).json(newCase);
@@ -214,7 +218,12 @@ router.patch('/:id', async (req, res) => {
       title: 'Case Updated',
       description: `Case ${updatedCase.caseNumber} status updated to ${updatedCase.status}, refund status: ${updatedCase.refundStatus}.`,
       order: updatedCase.order,
-      auctionRun: updatedCase.auctionRun
+      customer: updatedCase.customer?._id || updatedCase.customer,
+      auctionRun: updatedCase.auctionRun,
+      statusBefore: originalCase.status,
+      statusAfter: updatedCase.status,
+      notes: note || `Refund Status: ${updatedCase.refundStatus}`,
+      user: req.headers['x-user-name'] || req.body.staffUser || 'System'
     });
 
     res.json(updatedCase);
@@ -226,7 +235,7 @@ router.patch('/:id', async (req, res) => {
 // Process return intake
 router.post('/return-intake', async (req, res) => {
   try {
-    const { lotId, reason, condition, notes, existingCaseId } = req.body;
+    const { lotId, reason, condition, notes, existingCaseId, override } = req.body;
     
     const lot = await Lot.findById(lotId).populate({ path: 'order', populate: { path: 'customer' } });
     if (!lot) return res.status(404).json({ error: 'Lot not found' });
@@ -242,14 +251,14 @@ router.post('/return-intake', async (req, res) => {
       grade.includes('GRADE A') || 
       grade.includes('GRADE B');
 
-    if (!isEligibleGrade) {
+    if (!isEligibleGrade && !override) {
       return res.status(400).json({ 
         error: `Item is not eligible for return. Grade is "${lot.condition}" (Only Grade A & B are returnable).` 
       });
     }
 
     // 2. Check dynamic dispute window
-    if (!order.completeTimestamp) {
+    if (!order.completeTimestamp && !override) {
       return res.status(400).json({ 
         error: 'Order has not been released yet. Returns can only be processed after pickup.' 
       });
@@ -259,9 +268,9 @@ router.post('/return-intake', async (req, res) => {
     const disputeWindowHours = dwSetting ? parseInt(dwSetting.value, 10) : 24;
 
     const now = new Date();
-    const diffMs = now.getTime() - new Date(order.completeTimestamp).getTime();
+    const diffMs = now.getTime() - new Date(order.completeTimestamp || now).getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
-    if (diffHours > disputeWindowHours) {
+    if (diffHours > disputeWindowHours && !override) {
       return res.status(400).json({ 
         error: `Return window expired. Item was picked up ${Math.round(diffHours)} hours ago (${disputeWindowHours}-hour limit).` 
       });
@@ -320,7 +329,13 @@ router.post('/return-intake', async (req, res) => {
       title: 'Return Received',
       description: `Lot ${lot.lotNumber} (Bidder #${order.bidderNumber}) received back.`,
       order: order._id,
+      customer: order.customer?._id || order.customer,
+      lot: lot._id,
       auctionRun: lot.auctionRun,
+      statusBefore: 'Released',
+      statusAfter: 'Return Received',
+      notes: `Condition: ${condition}. Reason: ${reason}. Notes: ${notes || ''}`,
+      user: req.headers['x-user-name'] || req.body.staffUser || 'System',
       metadata: { lotId, reason, condition }
     });
 

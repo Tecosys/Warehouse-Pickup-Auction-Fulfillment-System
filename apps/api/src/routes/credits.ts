@@ -23,9 +23,9 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/credits — Issue credit manually
-router.post('/', async (req, res) => {
+router.post('/', async (req: any, res: any) => {
   try {
-    const { bidderNumber, amount, reason, expiryDate } = req.body;
+    const { bidderNumber, amount, reason, expiryDate, staffUser } = req.body;
     
     const customer = await Customer.findOne({ bidderNumber });
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
@@ -43,6 +43,19 @@ router.post('/', async (req, res) => {
     // Increment customer balance
     customer.creditBalance = (customer.creditBalance || 0) + amount;
     await customer.save();
+
+    // Log Activity
+    const { ActivityService } = await import('../services/ActivityService.js');
+    await ActivityService.log({
+      type: 'System',
+      title: 'Credit Issued',
+      description: `Store credit of $${amount} manually issued to customer ${customer.name}.`,
+      customer: customer._id,
+      statusBefore: 'None',
+      statusAfter: 'Active',
+      notes: reason,
+      user: req.headers['x-user-name'] || staffUser || 'System'
+    });
 
     res.status(201).json(newCredit);
   } catch (error: any) {

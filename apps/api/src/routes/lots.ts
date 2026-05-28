@@ -16,7 +16,10 @@ router.get('/search', async (req, res) => {
         { lotNumber: q },
         { bidderNumber: q }
       ]
-    }).populate('auctionRun').limit(10);
+    })
+    .populate('auctionRun')
+    .populate({ path: 'order', populate: { path: 'customer' } })
+    .limit(10);
     
     res.json(lots);
   } catch (error: any) {
@@ -64,7 +67,7 @@ async function autoCreateOrUpdateCase(orderId: string, type: 'Missing in Prep' |
 // PATCH /api/lots/:id — Update lot status and/or pickup location
 router.patch('/:id', async (req: any, res: any) => {
   try {
-    const { status, finalPickupLocation, notes } = req.body;
+    const { status, finalPickupLocation, notes, staffUser } = req.body;
     const update: any = {};
     if (status !== undefined) update.status = status;
     if (finalPickupLocation !== undefined) update.finalPickupLocation = finalPickupLocation;
@@ -90,6 +93,22 @@ router.patch('/:id', async (req: any, res: any) => {
         notes || 'Item placed on hold due to quality or verification requirements.'
       );
     }
+
+    // Log Activity
+    const { ActivityService } = await import('../services/ActivityService.js');
+    const order = lot.order as any;
+    await ActivityService.log({
+      type: 'Preparation',
+      title: 'Lot Status Updated',
+      description: `Lot ${lot.lotNumber} status changed to ${status || lot.status}.`,
+      order: order._id,
+      customer: order.customer,
+      lot: lot._id,
+      auctionRun: lot.auctionRun,
+      statusBefore: 'Pending',
+      statusAfter: status || lot.status,
+      user: req.headers['x-user-name'] || staffUser || 'System'
+    });
 
     res.json(lot);
   } catch (error: any) {

@@ -141,9 +141,33 @@ function App() {
   }
 
   const renderContent = () => {
+    const moduleGating: Record<string, string[]> = {
+      'Dashboard': ['Admin', 'Support'],
+      'Auction Runs': ['Admin'],
+      'File Import': ['Admin'],
+      'Fulfillment Hub': ['Admin', 'Worker', 'Support'],
+      'Slot Management': ['Admin', 'Clerk'],
+      'Batch Notifications': ['Admin', 'Support'],
+      'Inventory Clerk': ['Admin', 'Clerk'],
+      'Shipping': ['Admin', 'Support'],
+      'Issues / Returns': ['Admin', 'Clerk', 'Support'],
+      'Settings': ['Admin']
+    };
+
+    const allowedRoles = moduleGating[currentModule];
+    if (allowedRoles && !allowedRoles.includes(user?.role || '')) {
+      return (
+        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--status-red)' }}>
+          <ShieldCheck size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.8, display: 'block' }} />
+          <h2>Access Denied</h2>
+          <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>You do not have permission to view the {currentModule} module.</p>
+        </div>
+      );
+    }
+
     switch (currentModule) {
       case 'Dashboard':
-        return <Dashboard selectedAuction={selectedAuction} />;
+        return <Dashboard selectedAuction={selectedAuction} user={user} />;
       case 'Auction Runs':
         return <AuctionRunsPage onNavigate={navigateToModule} user={user} showToast={showToast} />;
       case 'File Import':

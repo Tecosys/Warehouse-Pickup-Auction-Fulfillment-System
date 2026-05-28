@@ -8,6 +8,12 @@ export class ActivityService {
     description: string;
     auctionRun?: string | mongoose.Types.ObjectId;
     order?: string | mongoose.Types.ObjectId;
+    customer?: string | mongoose.Types.ObjectId;
+    lot?: string | mongoose.Types.ObjectId;
+    shipmentUnit?: string | mongoose.Types.ObjectId;
+    statusBefore?: string;
+    statusAfter?: string;
+    notes?: string;
     user?: string;
     metadata?: Record<string, any>;
   }) {

@@ -1,7 +1,8 @@
 import express from 'express';
-import { NotificationService } from '../services/NotificationService';
-import Notification from '../models/Notification';
-import Customer from '../models/Customer';
+import { NotificationService } from '../services/NotificationService.js';
+import Notification from '../models/Notification.js';
+import Customer from '../models/Customer.js';
+import NotificationTemplate from '../models/NotificationTemplate.js';
 
 const router = express.Router();
 
@@ -65,6 +66,45 @@ router.get('/logs/:orderId', async (req: any, res: any) => {
   try {
     const logs = await Notification.find({ order: req.params.orderId }).sort({ createdAt: -1 });
     res.json(logs);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get editable templates list
+router.get('/templates', async (req: any, res: any) => {
+  try {
+    const templates = [];
+    for (let i = 1; i <= 13; i++) {
+      const t = await NotificationService.getTemplate(i);
+      if (t) templates.push(t);
+    }
+    res.json(templates);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a template
+router.put('/templates/:templateId', async (req: any, res: any) => {
+  try {
+    const { name, channel, smsText, emailSubject, emailBody, isEnabled } = req.body;
+    const template = await NotificationTemplate.findOneAndUpdate(
+      { templateId: parseInt(req.params.templateId, 10) },
+      { 
+        $set: { 
+          name, 
+          channel, 
+          smsText, 
+          emailSubject, 
+          emailBody, 
+          isEnabled 
+        } 
+      },
+      { new: true }
+    );
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+    res.json(template);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

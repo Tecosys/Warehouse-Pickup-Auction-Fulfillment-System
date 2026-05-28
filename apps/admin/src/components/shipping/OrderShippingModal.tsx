@@ -25,6 +25,8 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedRateIdMap, setSelectedRateIdMap] = useState<Record<string, string>>({});
+  const [unitType, setUnitType] = useState<'Parcel' | 'Mailer' | 'Pallet' | 'Freight Piece'>('Parcel');
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -44,6 +46,11 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
       const parcelRes = await fetch(`http://localhost:5000/api/shipping/orders/${orderId}/parcels`);
       const parcelData = await parcelRes.json();
       setParcels(parcelData);
+
+      // Fetch settings
+      const settingsRes = await fetch('http://localhost:5000/api/settings');
+      const settingsData = await settingsRes.json();
+      setSettings(settingsData);
 
       // Pre-fill selected rates map
       const ratesMap: Record<string, string> = {};
@@ -77,7 +84,8 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
           lots: Array.from(selectedLots),
           dimensions: { length, width, height, weight },
           packingDetails,
-          sequenceNumber: parcels.length + 1
+          sequenceNumber: parcels.length + 1,
+          unitType
         })
       });
 
@@ -88,6 +96,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
         setHeight(0);
         setWeight(0);
         setPackingDetails('');
+        setUnitType('Parcel');
         await fetchDetails();
       } else {
         const error = await res.json();
@@ -195,22 +204,24 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   // baseTotal / 2 = markup
   // baseTotal + markup + 2.00 = subtotal
   // subtotal * 1.13 = final charge
-  const renderPricingFormula = (baseRate: number) => {
-    const hst = 0.13;
-    const baseCarrierTotal = baseRate * (1 + hst);
-    const markup = baseCarrierTotal / 2;
-    const subtotal = baseCarrierTotal + markup + 2.00;
-    const finalCharge = subtotal * (1 + hst);
+  const renderPricingFormula = (baseRate: number, type: 'Parcel' | 'Mailer' | 'Pallet' | 'Freight Piece' = 'Parcel') => {
+    const typeKey = type === 'Freight Piece' ? 'pallet' : type.toLowerCase();
+    
+    const pct = settings ? (parseFloat(settings[`shipping_spread_${typeKey}_pct`]) || 0) / 100 : (type === 'Mailer' ? 0.40 : (type === 'Pallet' || type === 'Freight Piece' ? 0.18 : 0.50));
+    const min = settings ? parseFloat(settings[`shipping_spread_${typeKey}_min`]) || 0 : (type === 'Mailer' ? 5.00 : (type === 'Pallet' || type === 'Freight Piece' ? 75.00 : 8.00));
+    const fee = settings ? parseFloat(settings[`shipping_fee_${typeKey}`]) || 0 : (type === 'Mailer' ? 2.00 : (type === 'Pallet' || type === 'Freight Piece' ? 50.00 : 5.00));
+
+    const spread = Math.max(baseRate * pct, min);
+    const totalCharge = baseRate + spread + fee;
 
     return (
       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)' }}>
-        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Formula breakdown:</div>
+        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Formula breakdown ({type}):</div>
         <div>Carrier Base: ${baseRate.toFixed(2)}</div>
-        <div>Carrier Base + 13% HST: ${baseCarrierTotal.toFixed(2)}</div>
-        <div>Markup (50% of Taxed Rate): ${markup.toFixed(2)}</div>
-        <div>Handling Fee: $2.00</div>
-        <div>Subtotal: ${subtotal.toFixed(2)}</div>
-        <div style={{ fontWeight: 700, color: 'var(--text-main)', marginTop: '0.25rem' }}>Final (with 13% HST): ${finalCharge.toFixed(2)}</div>
+        <div>Configured Markup: {(pct * 100).toFixed(0)}% (Min Spread: ${min.toFixed(2)})</div>
+        <div>Calculated Spread: ${spread.toFixed(2)}</div>
+        <div>Handling Fee: ${fee.toFixed(2)}</div>
+        <div style={{ fontWeight: 700, color: 'var(--text-main)', marginTop: '0.25rem' }}>Total Charge: ${totalCharge.toFixed(2)}</div>
       </div>
     );
   };
@@ -370,7 +381,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
                                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                     {rate.serviceName} | Base: ${rate.baseRate.toFixed(2)}
                                   </div>
-                                  {isSelected && renderPricingFormula(rate.baseRate)}
+                                  {isSelected && renderPricingFormula(rate.baseRate, parcel.unitType)}
                                 </div>
                               );
                             })}
@@ -406,6 +417,21 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
                           </label>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Package Type Selection */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ fontSize: '0.8125rem', color: 'var(--text-main)', display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Package Type</label>
+                      <select 
+                        value={unitType}
+                        onChange={(e) => setUnitType(e.target.value as any)}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', fontWeight: 600 }}
+                      >
+                        <option value="Parcel">Parcel</option>
+                        <option value="Mailer">Mailer</option>
+                        <option value="Pallet">Pallet</option>
+                        <option value="Freight Piece">Freight Piece</option>
+                      </select>
                     </div>
 
                     {/* Dimensions Input */}

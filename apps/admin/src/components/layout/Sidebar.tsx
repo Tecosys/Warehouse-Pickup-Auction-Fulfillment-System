@@ -15,15 +15,15 @@ import {
 
 const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose, user }: any) => {
   const allMenuItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['Admin'] },
+    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['Admin', 'Support'] },
     { icon: <Gavel size={20} />, label: 'Auction Runs', roles: ['Admin'] },
     { icon: <FileUp size={20} />, label: 'File Import', roles: ['Admin'] },
-    { icon: <ClipboardList size={20} />, label: 'Fulfillment Hub', roles: ['Admin', 'Worker', 'Clerk'] },
+    { icon: <ClipboardList size={20} />, label: 'Fulfillment Hub', roles: ['Admin', 'Worker', 'Support'] },
     { icon: <Settings2 size={20} />, label: 'Slot Management', roles: ['Admin', 'Clerk'] },
-    { icon: <Bell size={20} />, label: 'Batch Notifications', roles: ['Admin'] },
+    { icon: <Bell size={20} />, label: 'Batch Notifications', roles: ['Admin', 'Support'] },
     { icon: <ClipboardList size={20} />, label: 'Inventory Clerk', roles: ['Admin', 'Clerk'] },
-    { icon: <Truck size={20} />, label: 'Shipping', roles: ['Admin'] },
-    { icon: <AlertCircle size={20} />, label: 'Issues / Returns', roles: ['Admin', 'Clerk'] },
+    { icon: <Truck size={20} />, label: 'Shipping', roles: ['Admin', 'Support'] },
+    { icon: <AlertCircle size={20} />, label: 'Issues / Returns', roles: ['Admin', 'Clerk', 'Support'] },
     { icon: <Sliders size={20} />, label: 'Settings', roles: ['Admin'] },
   ];
 

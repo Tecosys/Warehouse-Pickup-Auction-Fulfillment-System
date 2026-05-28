@@ -6,7 +6,7 @@ import QRScannerModal from '../../shared/QRScannerModal';
 
 interface OrderReleaseTabProps {
   order: any;
-  onReviewWithheld: (lots: any[]) => void;
+  onReviewWithheld: (withheldLots: any[], allLots: any[]) => void;
   onBack: () => void;
   onComplete: () => void;
 }
@@ -60,12 +60,12 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const handleComplete = async () => {
     try {
       setCompleting(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${order._id}`, {
-        method: 'PATCH',
+      const res = await fetch(`http://localhost:5000/api/orders/${order._id}/release`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          customerStatus: 'Picked Up',
-          fulfillmentStatus: 'Completed'
+          releasedLotIds: Array.from(selectedLots),
+          withheldLots: []
         })
       });
       if (res.ok) {
@@ -79,8 +79,12 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   };
 
   const handleScanSuccess = (decodedText: string) => {
-    // Search for lot by lotNumber or manifestItemId (LPN)
-    const matchedLot = lots.find(l => l.lotNumber === decodedText || l.lpn === decodedText);
+    // Search for lot by lotNumber, LPN, or manifestItemId
+    const matchedLot = lots.find(
+      l => l.lotNumber === decodedText || 
+           l.lpn === decodedText || 
+           l.manifestItemId === decodedText
+    );
     if (matchedLot) {
       toggleLot(matchedLot._id);
       alert(`Lot ${matchedLot.lotNumber} toggled.`);
@@ -268,7 +272,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
         <div>
           {withheldCount > 0 ? (
             <button 
-              onClick={() => onReviewWithheld(lots.filter(l => !selectedLots.has(l._id)))}
+              onClick={() => onReviewWithheld(lots.filter(l => !selectedLots.has(l._id)), lots)}
               className="btn" 
               style={{ padding: '0.75rem 2rem', background: 'var(--status-amber)', color: 'white', border: 'none', borderRadius: '0.5rem' }}
             >
