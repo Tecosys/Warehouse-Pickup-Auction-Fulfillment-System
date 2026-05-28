@@ -325,7 +325,7 @@ export default function CustomerPortal({ params }: { params: any }) {
         </div>
 
         {/* Dynamic Navigation Tabs */}
-        <div className="flex border-b border-gray-200 mb-8 gap-6">
+        <div className="flex border-b border-gray-200 mb-8 gap-6 overflow-x-auto whitespace-nowrap no-scrollbar scroll-smooth">
           {[
             { id: 'order', label: 'Schedule & Track', count: null },
             { id: 'items', label: 'Won Items & Disputes', count: order.lots?.length || 0 },
@@ -337,7 +337,7 @@ export default function CustomerPortal({ params }: { params: any }) {
                 setActiveTab(tab.id as any);
                 setSelectedLotForDispute(null); // Clear dispute state when swapping tabs
               }}
-              className={`pb-4 text-sm font-extrabold transition-all relative ${
+              className={`pb-4 text-sm font-extrabold transition-all relative flex-shrink-0 ${
                 activeTab === tab.id ? 'text-[#0d9488]' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -799,7 +799,7 @@ export default function CustomerPortal({ params }: { params: any }) {
                             {c.evidence?.length > 0 && (
                               <div>
                                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Evidence Attached</h4>
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                   {c.evidence.map((path: string, i: number) => {
                                     const url = getMediaUrl(path);
                                     const isVid = isVideo(path);
@@ -841,6 +841,8 @@ export default function CustomerPortal({ params }: { params: any }) {
         .animate-slide {
           animation: slideUp 0.3s ease-out forwards;
         }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

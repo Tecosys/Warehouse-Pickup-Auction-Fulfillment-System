@@ -79,7 +79,7 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
       zIndex: 10000,
       backdropFilter: 'blur(8px)'
     }}>
-      <div className="card animate-slide" style={{ width: '500px', padding: 0, overflow: 'hidden', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '500px', padding: 0, overflow: 'hidden', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Walk-in Priority Override</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>

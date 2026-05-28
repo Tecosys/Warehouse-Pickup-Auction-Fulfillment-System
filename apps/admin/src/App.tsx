@@ -71,6 +71,7 @@ function App() {
   const [selectedAuction, setSelectedAuction] = useState<any>(null);
 
   useEffect(() => {
+    document.title = user ? `Bid Boss - ${user.role}` : 'Bid Boss';
     if (!user) return;
     fetch('http://localhost:5000/api/auctions')
       .then(r => r.json())
@@ -146,7 +147,7 @@ function App() {
       'Auction Runs': ['Admin'],
       'File Import': ['Admin'],
       'Fulfillment Hub': ['Admin', 'Worker', 'Support'],
-      'Slot Management': ['Admin', 'Clerk'],
+      'Slot Management': ['Admin', 'Clerk', 'Support'],
       'Batch Notifications': ['Admin', 'Support'],
       'Inventory Clerk': ['Admin', 'Clerk'],
       'Shipping': ['Admin', 'Support'],

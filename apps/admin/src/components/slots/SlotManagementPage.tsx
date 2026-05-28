@@ -6,7 +6,8 @@ import { PageLoader, ButtonSpinner } from '../shared/LoadingComponents';
 // ─── List View ─────────────────────────────────────────────────────────────────
 const ListView = ({ slots, onDelete, onViewBookings }: any) => (
   <div className="card animate-fade" style={{ padding: 0, overflow: 'hidden' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+    <div style={{ overflowX: 'auto', width: '100%' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
       <thead>
         <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'left' }}>
           <th style={{ padding: '1rem 1.5rem' }}>DATE</th>
@@ -60,6 +61,7 @@ const ListView = ({ slots, onDelete, onViewBookings }: any) => (
         })}
       </tbody>
     </table>
+    </div>
   </div>
 );
 
@@ -313,7 +315,7 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
           <h3 style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-main)' }}>Initialize Pickup Slots</h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
@@ -432,7 +434,7 @@ const CloneModal = ({ auctionId, onClose, onSuccess, showToast }: any) => {
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '540px', padding: '2.5rem', maxHeight: '90vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
           <h3 style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-main)' }}>Copy Last Run Settings</h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
@@ -504,7 +506,7 @@ const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '600px', padding: '2.5rem', maxHeight: '80vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '600px', padding: '2.5rem', maxHeight: '80vh', overflowY: 'auto', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
           <div>
             <h3 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>Bookings for {slot.date}</h3>
@@ -569,7 +571,7 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
-      <div className="card animate-slide" style={{ width: '480px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
           <h3 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>Reschedule: {order.customer?.name || `Bidder #${order.bidderNumber}`}</h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' }} className="hover-bg">
@@ -622,7 +624,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
     return d;
   });
 
-  const isAdmin = user?.role === 'Admin';
+  const canManageSlots = ['Admin', 'Clerk', 'Support'].includes(user?.role);
 
   const navigate = (direction: number) => {
     const next = new Date(currentReferenceDate);
@@ -743,7 +745,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
               <button key={v} onClick={() => setViewType(v)} style={{ padding: '6px 14px', border: 'none', background: viewType === v ? '#f1f5f9' : 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem', color: viewType === v ? 'var(--status-teal)' : 'var(--text-muted)' }}>{v}</button>
             ))}
           </div>
-          {isAdmin && (
+          {canManageSlots && (
             <>
               <button className="btn" style={{ background: 'white', borderColor: 'var(--border-color)', color: 'var(--text-main)' }} onClick={() => setShowCloneModal(true)}>
                 Copy Last Run Settings

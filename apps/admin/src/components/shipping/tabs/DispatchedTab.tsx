@@ -43,7 +43,8 @@ const DispatchedTab: React.FC<DispatchedTabProps> = ({ selectedAuction }) => {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Booking Code</th>
@@ -120,6 +121,7 @@ const DispatchedTab: React.FC<DispatchedTabProps> = ({ selectedAuction }) => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

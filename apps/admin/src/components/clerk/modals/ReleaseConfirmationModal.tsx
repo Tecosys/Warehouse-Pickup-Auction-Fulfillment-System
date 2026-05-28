@@ -53,7 +53,7 @@ const ReleaseConfirmationModal: React.FC<ReleaseConfirmationModalProps> = ({ isO
         </div>
       </div>
 
-      <div className="card animate-slide" style={{ width: '500px', padding: '2.5rem', textAlign: 'center', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <div className="card animate-slide" style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', textAlign: 'center', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <div style={{ 
           width: '80px', 
           height: '80px', 

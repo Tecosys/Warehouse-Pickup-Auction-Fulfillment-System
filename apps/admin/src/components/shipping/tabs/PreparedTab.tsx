@@ -80,7 +80,7 @@ const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
   return (
     <div className="animate-fade">
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem' }}>
-        <div style={{ position: 'relative', width: '400px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
           <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
@@ -93,7 +93,8 @@ const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Booking Code</th>
@@ -186,6 +187,7 @@ const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {isModalOpen && selectedOrderId && (

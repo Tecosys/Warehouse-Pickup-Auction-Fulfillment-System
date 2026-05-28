@@ -91,7 +91,7 @@ const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders
       {/* Filter Bar */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flex: 1 }}>
-          <div style={{ position: 'relative', width: '400px' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
@@ -112,7 +112,8 @@ const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders
 
       {/* Table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
               <th style={{ width: '60px', padding: '1rem 1.5rem' }}>
@@ -180,6 +181,7 @@ const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {isModalOpen && selectedOrderId && (

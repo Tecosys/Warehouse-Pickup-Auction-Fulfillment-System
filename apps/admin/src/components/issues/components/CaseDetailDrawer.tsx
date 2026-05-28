@@ -150,8 +150,9 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
     <div style={{
       position: 'fixed',
       top: 0,
-      right: isOpen ? 0 : '-650px',
-      width: '650px',
+      right: isOpen ? 0 : '-100%',
+      width: '100%',
+      maxWidth: '650px',
       height: '100vh',
       background: 'white',
       boxShadow: '-10px 0 30px rgba(0,0,0,0.15)',
@@ -251,7 +252,8 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Disputed Lots</h3>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)', width: '80px' }}>Lot #</th>
@@ -278,6 +280,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
@@ -291,7 +294,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
               No photo/video evidence uploaded by client.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.75rem' }}>
               {currentCase.evidence.map((path: string, i: number) => {
                 const url = getMediaUrl(path);
                 const isVid = isVideo(path);

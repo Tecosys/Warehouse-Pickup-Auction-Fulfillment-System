@@ -17,9 +17,6 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "BidBoss Marketplace | Canada's Liquidation & Overstock",
   description: "Canada's Marketplace for Quality Liquidation, Returns & Overstock. Bid Boss helps buyers access quality liquidation inventory through weekly online auctions.",
-  icons: {
-    icon: '/Logo.png',
-  },
 };
 
 export default function RootLayout({

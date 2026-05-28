@@ -149,7 +149,17 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
         <h1 className="text-3xl font-black text-gray-900 mb-2">Choose your pickup time</h1>
         <p className="text-gray-500 mb-10">Select an available date and time slot below.</p>
 
-        {/* Date Tabs */}
+        {slots.length === 0 ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 text-center text-amber-700 animate-fade">
+            <Info className="mx-auto mb-4" size={32} />
+            <h3 className="text-xl font-bold mb-2">No Pickup Slots Available</h3>
+            <p className="text-sm opacity-90 max-w-md mx-auto">
+              There are currently no pickup time slots scheduled for this auction. Please contact support or check back later.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Date Tabs */}
         <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar mb-10">
           {uniqueDates.map((dateStr) => {
             const dateObj = new Date(dateStr + 'T00:00:00');
@@ -264,6 +274,8 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
               </div>
             )}
           </div>
+        )}
+          </>
         )}
       </div>
 
