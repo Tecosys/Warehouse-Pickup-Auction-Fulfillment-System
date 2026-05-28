@@ -785,6 +785,80 @@ tr:hover td {
     font-size: 0.875rem !important;
     height: 100% !important;
   }
+
+  /* Fulfillment Hub mobile adjustments */
+  .responsive-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .responsive-stats-grid > div {
+    padding: 0.5rem !important;
+  }
+  .responsive-stats-grid .stat-val {
+    font-size: 1.25rem !important;
+  }
+  .responsive-stats-grid .stat-label {
+    font-size: 0.55rem !important;
+  }
+
+  .responsive-queue-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  .responsive-queue-card-header > div:last-child {
+    align-self: flex-start !important;
+  }
+
+  .responsive-fulfillment-card {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .responsive-fulfillment-card-header {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .responsive-fulfillment-card-header-row {
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 0.5rem !important;
+  }
+  
+  .responsive-fulfillment-card-header-row > h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .responsive-fulfillment-card-header-row > div {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .responsive-fulfillment-card-details {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .responsive-fulfillment-card-details > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.25rem !important;
+  }
+  
+  .responsive-fulfillment-card-details > div > span:first-child {
+    font-size: 0.75rem !important;
+  }
+  
+  .responsive-fulfillment-card-details > div > span:last-child {
+    align-self: flex-start !important;
+  }
 }
 
 /* Scrollbar hiding helpers */

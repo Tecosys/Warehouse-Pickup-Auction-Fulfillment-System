@@ -323,11 +323,13 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
       <div className="fulfillment-layout-grid responsive-detail-grid" style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem', padding: '2rem', alignItems: 'start' }}>
         {/* Left Column */}
         <div style={{ position: 'sticky', top: '2rem' }}>
-          <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-            <div style={{ marginBottom: '1.5rem' }}>
+          <div className="card responsive-fulfillment-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+            <div className="responsive-fulfillment-card-header" style={{ marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Fulfillment Detail</div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.25rem' }}>#{order.bidderNumber}</h2>
-              <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>{customerName}</div>
+              <div className="responsive-fulfillment-card-header-row" style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.25rem' }}>#{order.bidderNumber}</h2>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>{customerName}</div>
+              </div>
               {order.bookingCode && (
                 <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.25rem' }}>
                   {order.bookingCode}
@@ -335,7 +337,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
               )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div className="responsive-fulfillment-card-details" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Fulfillment Status</span>
                 <span style={{

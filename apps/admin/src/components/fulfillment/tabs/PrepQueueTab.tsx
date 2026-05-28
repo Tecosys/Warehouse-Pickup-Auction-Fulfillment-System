@@ -92,15 +92,15 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
       </div>
 
       {/* Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="responsive-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
           { label: 'In Queue', val: stats.inQueue, color: 'var(--text-muted)' },
           { label: 'In Progress', val: stats.inProgress, color: 'var(--status-amber)' },
           { label: 'Ready Today', val: stats.readyToday, color: 'var(--status-teal)' }
         ].map((s, i) => (
           <div key={i} className="card" style={{ padding: '0.75rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{s.label}</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color }}>{s.val}</div>
+            <div className="stat-label" style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{s.label}</div>
+            <div className="stat-val" style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color }}>{s.val}</div>
           </div>
         ))}
       </div>
@@ -174,7 +174,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
               }}
             >
               {/* Row 1: Bidder, Customer, Status */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div className="responsive-queue-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
                   <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>#{order.bidder}</span>
                   <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>{order.customer}</span>
