@@ -555,3 +555,33 @@ tr:hover td {
     font-size: 0.875rem !important;
   }
 }
+
+/* Scrollable tabs container for desktop and mobile */
+.scrollable-tabs {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollable-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollable-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.scrollable-tabs button {
+  flex-shrink: 0;
+}
+

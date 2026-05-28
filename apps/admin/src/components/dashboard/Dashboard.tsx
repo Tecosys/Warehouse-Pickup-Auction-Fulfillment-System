@@ -354,7 +354,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
         </div>
 
         {/* Sub-Tabs Selector */}
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
+        <div className="scrollable-tabs" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
           {[
             { id: 'Overview', label: 'Overview' },
             { id: 'PaidUnpaid', label: 'Paid/Unpaid' },
