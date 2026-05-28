@@ -8,8 +8,6 @@ import {
   ClipboardList, 
   Truck, 
   AlertCircle,
-  LogOut,
-  User,
   X
 } from 'lucide-react';
 
@@ -56,50 +54,6 @@ const Sidebar = ({ activeModule, onModuleChange, onLogout, isOpen, onClose, user
         ))}
       </nav>
 
-      <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '50%', 
-            background: 'var(--accent-color)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            color: 'var(--status-teal)',
-            border: '2px solid rgba(13, 148, 136, 0.1)'
-          }}>
-            <User size={20} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>{user?.name || 'Staff User'}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{user?.title || user?.role}</div>
-          </div>
-        </div>
-        <button 
-          onClick={onLogout}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.75rem', 
-            width: '100%', 
-            padding: '0.5rem', 
-            background: 'none', 
-            border: 'none', 
-            color: 'var(--status-red)', 
-            fontSize: '0.875rem', 
-            fontWeight: 600, 
-            cursor: 'pointer',
-            borderRadius: '0.5rem',
-            transition: 'background 0.2s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-        >
-          <LogOut size={18} />
-          <span>Sign Out</span>
-        </button>
-      </div>
     </aside>
   );
 };

@@ -10,7 +10,7 @@ import IssuesReturnsPage from './components/issues/IssuesReturnsPage';
 import ShippingPage from './components/shipping/ShippingPage';
 import FulfillmentHubPage from './components/fulfillment/FulfillmentHubPage';
 import SettingsPage from './components/settings/SettingsPage';
-import { ShieldCheck, Menu, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { ShieldCheck, Menu, CheckCircle2, AlertCircle, Info, User, LogOut } from 'lucide-react';
 import LoginPage from './components/auth/LoginPage';
 
 // Global Toast System
@@ -268,13 +268,46 @@ function App() {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '50%', 
+                  background: 'var(--accent-color, #f1f5f9)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  color: 'var(--status-teal)',
+                  border: '2px solid rgba(13, 148, 136, 0.1)'
+                }}>
+                  <User size={20} />
+                </div>
+                <div className="desktop-only" style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: '1.2' }}>{user?.name || 'Staff User'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{user?.title || user?.role}</div>
+                </div>
+              </div>
               <button 
-                className="btn" 
-                style={{ border: 'none', padding: '0.25rem' }}
                 onClick={handleLogout}
-                title="Log Out"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '0.5rem 0.75rem', 
+                  background: 'rgba(239, 68, 68, 0.1)', 
+                  border: 'none', 
+                  color: 'var(--status-red)', 
+                  fontSize: '0.875rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  borderRadius: '0.5rem',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
               >
-                <ShieldCheck size={20} color="var(--status-teal)" />
+                <LogOut size={16} />
+                <span className="desktop-only">Sign Out</span>
               </button>
             </div>
           </header>
