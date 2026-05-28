@@ -105,6 +105,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
 }
 
 .header {
@@ -126,6 +127,13 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.dashboard {
+  width: 100%;
+  min-width: 0;
 }
 
 .footer-bar {
@@ -566,8 +574,6 @@ tr:hover td {
   }
 
   .tabs-container {
-    display: flex !important;
-    flex-wrap: nowrap !important;
     overflow-x: auto !important;
     white-space: nowrap !important;
     padding-bottom: 0.25rem !important;
@@ -582,7 +588,6 @@ tr:hover td {
   .tabs-container button {
     padding: 0.75rem 0.25rem !important;
     font-size: 0.875rem !important;
-    flex-shrink: 0 !important;
   }
 
   .sticky-action-bar > div:first-child {

@@ -327,7 +327,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     const hasWarnings = unreleasedCount > 0 || unpaidCount > 0 || openShippingCount > 0 || openCasesCount > 0;
 
     return (
-      <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', minWidth: 0 }}>
         {/* Run status banner */}
         <div className="card" style={{
           padding: '1.5rem',
@@ -354,18 +354,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
         </div>
 
         {/* Sub-Tabs Selector */}
-        <div className="scrollable-tabs no-scrollbar" style={{ 
-          borderBottom: '1px solid var(--border-color)', 
-          paddingBottom: '0.5rem',
-          display: 'flex',
-          gap: '1rem',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-          width: '100%',
-          maxWidth: '100%',
-          minWidth: 0,
-          WebkitOverflowScrolling: 'touch'
-        }}>
+        <div className="scrollable-tabs" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
           {[
             { id: 'Overview', label: 'Overview' },
             { id: 'PaidUnpaid', label: 'Paid/Unpaid' },
