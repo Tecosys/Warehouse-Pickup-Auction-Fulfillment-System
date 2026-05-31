@@ -6,6 +6,7 @@ import Case from '../models/Case';
 import Lot from '../models/Lot';
 import Settings from '../models/Settings';
 import Credit from '../models/Credit';
+import Activity from '../models/Activity';
 import { ActivityService } from '../services/ActivityService';
 
 const router = express.Router();
@@ -242,6 +243,48 @@ router.post('/:id/closeout', async (req: any, res: any) => {
     res.json({ success: true, message: `Auction closeout successful. ${abandonedOrders.length} orders restocked.` });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to complete closeout', details: error.message });
+  }
+});
+
+/**
+ * Delete an auction run and all its associated data
+ */
+router.delete('/:id', async (req: any, res: any) => {
+  try {
+    const runId = req.params.id;
+    const auction = await AuctionRun.findById(runId);
+    if (!auction) {
+      return res.status(404).json({ error: 'Auction run not found' });
+    }
+
+    // 1. Find all orders belonging to this auction run
+    const orders = await Order.find({ auctionRun: runId });
+    const orderIds = orders.map(o => o._id);
+
+    // 2. Delete all lots belonging to this run
+    await Lot.deleteMany({ auctionRun: runId });
+
+    // 3. Delete all cases belonging to this run
+    await Case.deleteMany({ auctionRun: runId });
+
+    // 4. Delete all notifications belonging to orders in this run
+    await Notification.deleteMany({ order: { $in: orderIds } });
+
+    // 5. Delete all credits linked to orders in this run
+    await Credit.deleteMany({ sourceOrder: { $in: orderIds } });
+
+    // 6. Delete all activities linked to this run
+    await Activity.deleteMany({ auctionRun: runId });
+
+    // 7. Delete all orders belonging to this run
+    await Order.deleteMany({ auctionRun: runId });
+
+    // 8. Delete the auction run itself
+    await AuctionRun.findByIdAndDelete(runId);
+
+    res.json({ success: true, message: `Successfully deleted auction run and all associated data.` });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to delete auction run', details: error.message });
   }
 });
 
