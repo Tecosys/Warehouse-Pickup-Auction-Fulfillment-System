@@ -17,7 +17,7 @@ async function test() {
     // The user says "customer 1379 has my details". This might be the bidderNumber.
     const order = await Order.findOne({ bidderNumber: '1379' }).populate('customer');
     if (order) {
-      console.log(`Found order ${order._id} for customer ${order.customer.name} (${order.customer.email})`);
+      console.log(`Found order ${order._id} for customer ${(order.customer as any).name} (${(order.customer as any).email})`);
       // Send template 1 (Auction Win Welcome Notification)
       await NotificationService.send(order._id.toString(), 1);
       console.log('Notification sent successfully!');

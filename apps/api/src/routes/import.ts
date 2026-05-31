@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import multer from 'multer';
 import csv from 'csv-parser';
 import fs from 'fs';
@@ -125,15 +126,19 @@ router.post('/', upload.fields([
       title: auctionTitle,
       uploadedFiles: uploadedFilesList
     });
-    await auctionRun.save();
 
     // ── 1. Process AuctionFlex Bidders (Source of Truth for Identity) ─────────
-    const bidderNumbers = auctionflexData.map(b => getField(b, 'BidderNumber', 'Bidder Number')).filter(Boolean);
+    const bidderMap = new Map<string, any>(); 
+
+    const bidderNumbers = Array.from(new Set(
+      auctionflexData
+        .map(b => getField(b, 'BidderNumber', 'Bidder Number'))
+        .filter(Boolean)
+    ));
+
     const existingCustomers = await Customer.find({ bidderNumber: { $in: bidderNumbers } });
     const existingCustomerMap = new Map(existingCustomers.map(c => [c.bidderNumber, c]));
-
-    const bidderMap = new Map<string, any>(); 
-    const customerBulkOps: any[] = [];
+    const customerOps: any[] = [];
 
     for (const b of auctionflexData) {
       const bidderNum = getField(b, 'BidderNumber', 'Bidder Number');
@@ -164,55 +169,83 @@ router.post('/', upload.fields([
         country: getField(b, 'ShipToCountry')
       };
 
+      // Store ALL other fields in metadata
       const metadata: any = { ...b };
       
       let customer = existingCustomerMap.get(bidderNum);
-      const isNewCustomer = !customer;
-      
-      if (!customer) {
-        customer = new Customer({ bidderNumber: bidderNum });
-      }
-
-      customer.firstName = firstName;
-      customer.lastName = lastName;
-      customer.name = `${firstName} ${lastName}`.trim() || 'Unknown';
-      customer.email = email;
-      customer.phone = phone;
-      customer.phone2 = phone2;
-      customer.billTo = billTo;
-      customer.shipTo = shipTo;
-      customer.isShippingRequested = isShippingRequested;
-      customer.metadata = metadata;
-
-      bidderMap.set(bidderNum, customer);
-
-      // Using lean objects for update/insert payload to avoid mongoose overhead in bulkWrite
-      const custObj = customer.toObject();
-      delete (custObj as any)._id; // Ensure we don't try to overwrite immutable _id in updates
-
-      if (isNewCustomer) {
-        customerBulkOps.push({
-          insertOne: { document: customer }
-        });
-      } else {
-        customerBulkOps.push({
+      const name = `${firstName} ${lastName}`.trim() || 'Unknown';
+      if (customer) {
+        customer.firstName = firstName;
+        customer.lastName = lastName;
+        customer.name = name;
+        customer.email = email;
+        customer.phone = phone;
+        customer.phone2 = phone2;
+        customer.billTo = billTo;
+        customer.shipTo = shipTo;
+        customer.isShippingRequested = isShippingRequested;
+        customer.metadata = metadata;
+        
+        customerOps.push({
           updateOne: {
             filter: { _id: customer._id },
-            update: { $set: custObj }
+            update: {
+              $set: {
+                firstName,
+                lastName,
+                name,
+                email,
+                phone,
+                phone2,
+                billTo,
+                shipTo,
+                isShippingRequested,
+                metadata,
+                updatedAt: new Date()
+              }
+            }
+          }
+        });
+      } else {
+        const customerId = new mongoose.Types.ObjectId();
+        const now = new Date();
+        customer = new Customer({
+          _id: customerId,
+          bidderNumber: bidderNum,
+          firstName,
+          lastName,
+          name,
+          email,
+          phone,
+          phone2,
+          billTo,
+          shipTo,
+          isShippingRequested,
+          metadata
+        });
+
+        const doc = customer.toObject() as any;
+        doc.createdAt = now;
+        doc.updatedAt = now;
+
+        customerOps.push({
+          insertOne: {
+            document: doc
           }
         });
       }
+      bidderMap.set(bidderNum, customer);
     }
 
-    if (customerBulkOps.length > 0) {
-      await Customer.bulkWrite(customerBulkOps);
+    if (customerOps.length > 0) {
+      await Customer.bulkWrite(customerOps);
     }
 
     // ── 2. Build ManyFast Index (Lot Details) ────────────────────────────────
     const manyfastMap = new Map<string, any>();
 
     for (const m of manyfastData) {
-      const lotId = getField(m, 'Lot+Section', 'Lot'); 
+      const lotId = getField(m, 'Lot+Section', 'Lot'); // Primary key is Lot+Section
       if (!lotId) continue;
 
       manyfastMap.set(lotId, {
@@ -232,7 +265,9 @@ router.post('/', upload.fields([
 
     // ── 3. Process HiBid (Winning Results) ───────────────────────────────────
     const ordersMap = new Map<string, any>();
-    const newLots: any[] = [];
+    const orderLotsMap = new Map<string, any[]>();
+    const lotsToInsert: any[] = [];
+    let lotsCreated = 0;
 
     for (const h of hibidData) {
       const lotNum = getField(h, 'Lot');
@@ -244,10 +279,13 @@ router.post('/', upload.fields([
         const customer = bidderMap.get(winningBidder);
         if (!customer) continue;
 
+        // Initialize retrieval method based on AuctionFlex flag
         const initialRetrieval = customer.isShippingRequested ? 'Shipping' : 'Awaiting Choice';
         const initialStatus = customer.isShippingRequested ? 'Shipping Selected' : 'Awaiting Choice';
 
-        order = new Order({
+        const orderId = new mongoose.Types.ObjectId();
+        order = {
+          _id: orderId,
           auctionRun: auctionRun._id,
           bidderNumber: winningBidder,
           customer: customer._id,
@@ -271,10 +309,11 @@ router.post('/', upload.fields([
             bids: getField(h, 'Bids'),
             metadata: { ...h }
           }
-        });
+        };
         ordersMap.set(winningBidder, order);
       }
 
+      // Matching Lot Details from ManyFast
       const manifest = manyfastMap.get(lotNum);
       const sourceLocation = manifest?.location || 'TBD';
       const type = sourceLocation.startsWith('B') ? 'Sort' : 'Non-Sort';
@@ -283,7 +322,9 @@ router.post('/', upload.fields([
       const buyerPremiumPortion = Math.round(hammerPrice * buyerPremiumRate * 100) / 100;
       const taxPortion = Math.round((hammerPrice + buyerPremiumPortion) * taxRate * 100) / 100;
 
-      const lot = new Lot({
+      const lotId = new mongoose.Types.ObjectId();
+      const lot = {
+        _id: lotId,
         order: order._id,
         auctionRun: auctionRun._id,
         lotNumber: lotNum,
@@ -300,61 +341,54 @@ router.post('/', upload.fields([
         qty: manifest?.qty || 1,
         internalSku: manifest?.internalSku || '',
         metadata: manifest?.raw || {}
-      });
-      newLots.push(lot);
-    }
+      };
+      lotsToInsert.push(lot);
+      lotsCreated++;
 
-    if (ordersMap.size > 0) {
-      await Order.insertMany(Array.from(ordersMap.values()));
-    }
-    
-    if (newLots.length > 0) {
-      await Lot.insertMany(newLots);
+      let orderLots = orderLotsMap.get(winningBidder);
+      if (!orderLots) {
+        orderLots = [];
+        orderLotsMap.set(winningBidder, orderLots);
+      }
+      orderLots.push(lot);
     }
 
     // ── 4. Calculate Order Financial Totals ─────────────────────────────────
-    const orderBulkOps: any[] = [];
-    
-    const totals = await Lot.aggregate([
-      { $match: { auctionRun: auctionRun._id } },
-      { $group: {
-          _id: "$order",
-          totalHammer: { $sum: "$hammerPrice" },
-          totalLots: { $sum: 1 }
-      }}
-    ]);
+    for (const order of ordersMap.values()) {
+      const orderLots = orderLotsMap.get(order.bidderNumber) || [];
+      const totalLots = orderLots.length;
+      let totalHammer = 0;
+      for (const l of orderLots) {
+        totalHammer += l.hammerPrice || 0;
+      }
 
-    for (const t of totals) {
-      const totalHammer = t.totalHammer || 0;
+      // Using buyerPremiumRate and taxRate loaded from settings
       const buyerPremium = Math.round(totalHammer * buyerPremiumRate * 100) / 100;
       const taxAmount = Math.round((totalHammer + buyerPremium) * taxRate * 100) / 100;
       const unpaidBalance = Math.round((totalHammer + buyerPremium + taxAmount) * 100) / 100;
 
-      orderBulkOps.push({
-        updateOne: {
-          filter: { _id: t._id },
-          update: {
-            $set: {
-              totalLots: t.totalLots,
-              totalHammer,
-              buyerPremium,
-              taxAmount,
-              unpaidBalance,
-              paidAmount: 0,
-              paymentStatus: 'Unpaid'
-            }
-          }
-        }
-      });
+      order.totalLots = totalLots;
+      order.totalHammer = totalHammer;
+      order.buyerPremium = buyerPremium;
+      order.taxAmount = taxAmount;
+      order.unpaidBalance = unpaidBalance;
+      order.paidAmount = 0;
+      order.paymentStatus = 'Unpaid';
     }
 
-    if (orderBulkOps.length > 0) {
-      await Order.bulkWrite(orderBulkOps);
+    // Save all Orders and Lots in bulk
+    const ordersToInsert = Array.from(ordersMap.values());
+    let insertedOrders: any[] = [];
+    if (ordersToInsert.length > 0) {
+      insertedOrders = await Order.insertMany(ordersToInsert);
+    }
+    if (lotsToInsert.length > 0) {
+      await Lot.insertMany(lotsToInsert);
     }
 
-    // ── 5. Update Stats ──────────────────────────────────────────────────────
+    // ── 5. Update Stats & Save AuctionRun ─────────────────────────────────────
     auctionRun.stats = {
-      totalOrders: ordersMap.size,
+      totalOrders: ordersToInsert.length,
       readyCount: 0,
       customersBooked: 0,
       shippingInQueue: 0,
@@ -366,20 +400,20 @@ router.post('/', upload.fields([
     await ActivityService.log({
       type: 'Import',
       title: 'Auction Run Imported',
-      description: `Successfully imported ${ordersMap.size} orders for Auction #${auctionNumber}.`,
+      description: `Successfully imported ${ordersToInsert.length} orders for Auction #${auctionNumber}.`,
       auctionRun: auctionRun._id,
-      metadata: { orderCount: ordersMap.size, lotCount: newLots.length }
+      metadata: { orderCount: ordersToInsert.length, lotCount: lotsCreated }
     });
 
     res.json({
       success: true,
       stats: {
-        ordersCreated: ordersMap.size,
-        lotsCreated: newLots.length,
+        ordersCreated: ordersToInsert.length,
+        lotsCreated,
         customersMatched: bidderMap.size
       },
       run: auctionRun,
-      orders: Array.from(ordersMap.values())
+      orders: insertedOrders
     });
 
   } catch (error: any) {
