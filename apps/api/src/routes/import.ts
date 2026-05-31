@@ -128,7 +128,12 @@ router.post('/', upload.fields([
     await auctionRun.save();
 
     // ── 1. Process AuctionFlex Bidders (Source of Truth for Identity) ─────────
+    const bidderNumbers = auctionflexData.map(b => getField(b, 'BidderNumber', 'Bidder Number')).filter(Boolean);
+    const existingCustomers = await Customer.find({ bidderNumber: { $in: bidderNumbers } });
+    const existingCustomerMap = new Map(existingCustomers.map(c => [c.bidderNumber, c]));
+
     const bidderMap = new Map<string, any>(); 
+    const customerBulkOps: any[] = [];
 
     for (const b of auctionflexData) {
       const bidderNum = getField(b, 'BidderNumber', 'Bidder Number');
@@ -159,46 +164,55 @@ router.post('/', upload.fields([
         country: getField(b, 'ShipToCountry')
       };
 
-      // Store ALL other fields in metadata
       const metadata: any = { ...b };
       
-      let customer = await Customer.findOne({ bidderNumber: bidderNum });
-      if (customer) {
-        customer.firstName = firstName;
-        customer.lastName = lastName;
-        customer.name = `${firstName} ${lastName}`.trim() || 'Unknown';
-        customer.email = email;
-        customer.phone = phone;
-        customer.phone2 = phone2;
-        customer.billTo = billTo;
-        customer.shipTo = shipTo;
-        customer.isShippingRequested = isShippingRequested;
-        customer.metadata = metadata;
-        await customer.save();
-      } else {
-        customer = new Customer({
-          bidderNumber: bidderNum,
-          firstName,
-          lastName,
-          name: `${firstName} ${lastName}`.trim() || 'Unknown',
-          email,
-          phone,
-          phone2,
-          billTo,
-          shipTo,
-          isShippingRequested,
-          metadata
-        });
-        await customer.save();
+      let customer = existingCustomerMap.get(bidderNum);
+      const isNewCustomer = !customer;
+      
+      if (!customer) {
+        customer = new Customer({ bidderNumber: bidderNum });
       }
+
+      customer.firstName = firstName;
+      customer.lastName = lastName;
+      customer.name = `${firstName} ${lastName}`.trim() || 'Unknown';
+      customer.email = email;
+      customer.phone = phone;
+      customer.phone2 = phone2;
+      customer.billTo = billTo;
+      customer.shipTo = shipTo;
+      customer.isShippingRequested = isShippingRequested;
+      customer.metadata = metadata;
+
       bidderMap.set(bidderNum, customer);
+
+      // Using lean objects for update/insert payload to avoid mongoose overhead in bulkWrite
+      const custObj = customer.toObject();
+      delete (custObj as any)._id; // Ensure we don't try to overwrite immutable _id in updates
+
+      if (isNewCustomer) {
+        customerBulkOps.push({
+          insertOne: { document: customer }
+        });
+      } else {
+        customerBulkOps.push({
+          updateOne: {
+            filter: { _id: customer._id },
+            update: { $set: custObj }
+          }
+        });
+      }
+    }
+
+    if (customerBulkOps.length > 0) {
+      await Customer.bulkWrite(customerBulkOps);
     }
 
     // ── 2. Build ManyFast Index (Lot Details) ────────────────────────────────
     const manyfastMap = new Map<string, any>();
 
     for (const m of manyfastData) {
-      const lotId = getField(m, 'Lot+Section', 'Lot'); // Primary key is Lot+Section
+      const lotId = getField(m, 'Lot+Section', 'Lot'); 
       if (!lotId) continue;
 
       manyfastMap.set(lotId, {
@@ -218,7 +232,7 @@ router.post('/', upload.fields([
 
     // ── 3. Process HiBid (Winning Results) ───────────────────────────────────
     const ordersMap = new Map<string, any>();
-    let lotsCreated = 0;
+    const newLots: any[] = [];
 
     for (const h of hibidData) {
       const lotNum = getField(h, 'Lot');
@@ -230,7 +244,6 @@ router.post('/', upload.fields([
         const customer = bidderMap.get(winningBidder);
         if (!customer) continue;
 
-        // Initialize retrieval method based on AuctionFlex flag
         const initialRetrieval = customer.isShippingRequested ? 'Shipping' : 'Awaiting Choice';
         const initialStatus = customer.isShippingRequested ? 'Shipping Selected' : 'Awaiting Choice';
 
@@ -259,11 +272,9 @@ router.post('/', upload.fields([
             metadata: { ...h }
           }
         });
-        await order.save();
         ordersMap.set(winningBidder, order);
       }
 
-      // Matching Lot Details from ManyFast
       const manifest = manyfastMap.get(lotNum);
       const sourceLocation = manifest?.location || 'TBD';
       const type = sourceLocation.startsWith('B') ? 'Sort' : 'Non-Sort';
@@ -290,37 +301,58 @@ router.post('/', upload.fields([
         internalSku: manifest?.internalSku || '',
         metadata: manifest?.raw || {}
       });
-      await lot.save();
-      lotsCreated++;
+      newLots.push(lot);
+    }
+
+    if (ordersMap.size > 0) {
+      await Order.insertMany(Array.from(ordersMap.values()));
+    }
+    
+    if (newLots.length > 0) {
+      await Lot.insertMany(newLots);
     }
 
     // ── 4. Calculate Order Financial Totals ─────────────────────────────────
-    for (const order of ordersMap.values()) {
-      const orderLots = await Lot.find({ order: order._id });
-      const totalLots = orderLots.length;
-      let totalHammer = 0;
-      for (const l of orderLots) {
-        totalHammer += l.hammerPrice || 0;
-      }
+    const orderBulkOps: any[] = [];
+    
+    const totals = await Lot.aggregate([
+      { $match: { auctionRun: auctionRun._id } },
+      { $group: {
+          _id: "$order",
+          totalHammer: { $sum: "$hammerPrice" },
+          totalLots: { $sum: 1 }
+      }}
+    ]);
 
-      // Using buyerPremiumRate and taxRate loaded from settings
-
+    for (const t of totals) {
+      const totalHammer = t.totalHammer || 0;
       const buyerPremium = Math.round(totalHammer * buyerPremiumRate * 100) / 100;
       const taxAmount = Math.round((totalHammer + buyerPremium) * taxRate * 100) / 100;
       const unpaidBalance = Math.round((totalHammer + buyerPremium + taxAmount) * 100) / 100;
 
-      order.totalLots = totalLots;
-      order.totalHammer = totalHammer;
-      order.buyerPremium = buyerPremium;
-      order.taxAmount = taxAmount;
-      order.unpaidBalance = unpaidBalance;
-      order.paidAmount = 0;
-      order.paymentStatus = 'Unpaid';
-      
-      await order.save();
+      orderBulkOps.push({
+        updateOne: {
+          filter: { _id: t._id },
+          update: {
+            $set: {
+              totalLots: t.totalLots,
+              totalHammer,
+              buyerPremium,
+              taxAmount,
+              unpaidBalance,
+              paidAmount: 0,
+              paymentStatus: 'Unpaid'
+            }
+          }
+        }
+      });
     }
 
-    // ── 4. Update Stats ──────────────────────────────────────────────────────
+    if (orderBulkOps.length > 0) {
+      await Order.bulkWrite(orderBulkOps);
+    }
+
+    // ── 5. Update Stats ──────────────────────────────────────────────────────
     auctionRun.stats = {
       totalOrders: ordersMap.size,
       readyCount: 0,
@@ -336,14 +368,14 @@ router.post('/', upload.fields([
       title: 'Auction Run Imported',
       description: `Successfully imported ${ordersMap.size} orders for Auction #${auctionNumber}.`,
       auctionRun: auctionRun._id,
-      metadata: { orderCount: ordersMap.size, lotCount: lotsCreated }
+      metadata: { orderCount: ordersMap.size, lotCount: newLots.length }
     });
 
     res.json({
       success: true,
       stats: {
         ordersCreated: ordersMap.size,
-        lotsCreated,
+        lotsCreated: newLots.length,
         customersMatched: bidderMap.size
       },
       run: auctionRun,
