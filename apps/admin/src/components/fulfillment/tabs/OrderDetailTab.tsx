@@ -43,7 +43,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`);
         const data = await res.json();
         setOrder(data);
         // Build lots array with local location state
@@ -83,7 +83,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
     if (!selectedLotForAction) return;
     const lotId = selectedLotForAction._id;
     try {
-      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/${lotId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Not Found in Prep', notes })
@@ -102,7 +102,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
     const lotId = selectedLotForAction._id;
     try {
       const fullNotes = `[${reason}] ${notes}`;
-      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/${lotId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Hold/Issue', notes: fullNotes })
@@ -118,7 +118,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
   const handleResetLotStatus = async (lotId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/lots/${lotId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/${lotId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Pending' })
@@ -145,7 +145,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
     if (!location.trim()) return;
     setLots(prev => prev.map(l => l._id === id ? { ...l, _status: 'Ready', _location: location } : l));
     // Persist to DB
-    await fetch(`http://localhost:5000/api/lots/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'Ready', finalPickupLocation: location })
@@ -160,7 +160,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
     // Persist all selected
     await Promise.all(
       Array.from(selectedLots).map(id =>
-        fetch(`http://localhost:5000/api/lots/${id}`, {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'Ready', finalPickupLocation: bulkLocation })
@@ -173,7 +173,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
   const handleStartPrep = async () => {
     setSaving(true);
-    await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fulfillmentStatus: 'In Progress' })
@@ -185,7 +185,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   const handleCompletePrep = async () => {
     setSaving(true);
     const finalPrepStatus = flaggedCount > 0 ? 'Ready with Flag' : 'Ready';
-    await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -207,7 +207,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
 
   const handleCancelOrder = async () => {
     setSaving(true);
-    await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ customerStatus: 'Cancelled' })

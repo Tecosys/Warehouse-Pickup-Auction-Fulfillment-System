@@ -65,22 +65,22 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
     setLoading(true);
     
     // 1. Fetch Orders for this Auction Run
-    const fetchOrders = fetch(`http://localhost:5000/api/orders?auctionRunId=${run._id}`)
+    const fetchOrders = fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${run._id}`)
       .then(r => r.json())
       .catch(err => { console.error(err); return []; });
 
     // 2. Fetch Slots for this Auction Run
-    const fetchSlots = fetch(`http://localhost:5000/api/slots/all/${run._id}`)
+    const fetchSlots = fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/all/${run._id}`)
       .then(r => r.json())
       .catch(err => { console.error(err); return []; });
 
     // 3. Fetch Cases/Issues for this Auction Run
-    const fetchCases = fetch(`http://localhost:5000/api/cases?auctionId=${run._id}`)
+    const fetchCases = fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases?auctionId=${run._id}`)
       .then(r => r.json())
       .catch(err => { console.error(err); return []; });
 
     // 4. Fetch Notifications log
-    const fetchNotifications = fetch(`http://localhost:5000/api/notifications/logs/all`)
+    const fetchNotifications = fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/logs/all`)
       .then(r => r.json())
       .catch(err => { console.error(err); return []; });
 
@@ -105,7 +105,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
 
   // Handler for detailed order lookup
   const handleOpenOrderDetails = (orderId: string) => {
-    fetch(`http://localhost:5000/api/orders/${orderId}`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`)
       .then(r => r.json())
       .then(data => {
         setActiveOrder(data);
@@ -117,7 +117,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
   // Handler for slot bookings details lookup
   const handleViewSlotBookings = (slot: any) => {
     setSelectedSlotForBookings(slot);
-    fetch(`http://localhost:5000/api/slots/${slot._id}/bookings`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/${slot._id}/bookings`)
       .then(r => r.json())
       .then(data => {
         setSlotBookings(data);
@@ -127,7 +127,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
 
   // Handler to pack/prepare shipping orders
   const handlePrepareShipping = (orderId: string) => {
-    fetch(`http://localhost:5000/api/shipping/${orderId}/prepare`, {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/${orderId}/prepare`, {
       method: 'PATCH'
     })
       .then(r => r.json())
@@ -140,7 +140,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
   // Handler to dispatch tracking to shipping orders
   const handleDispatchShipping = () => {
     if (!dispatchingOrderId || !trackingNumber.trim()) return;
-    fetch(`http://localhost:5000/api/shipping/${dispatchingOrderId}/dispatch`, {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/${dispatchingOrderId}/dispatch`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ trackingNumber })
@@ -156,7 +156,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
 
   // Handler to resolve ticket cases
   const handleResolveCase = (caseId: string) => {
-    fetch(`http://localhost:5000/api/cases/${caseId}`, {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'Resolved' })

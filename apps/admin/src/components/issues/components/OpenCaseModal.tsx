@@ -39,7 +39,7 @@ export const OpenCaseModal: React.FC<OpenCaseModalProps> = ({ isOpen, onClose, o
     try {
       setSearching(true);
       setError(null);
-      const res = await fetch(`http://localhost:5000/api/orders?search=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?search=${encodeURIComponent(searchQuery)}`);
       if (!res.ok) throw new Error('Failed to fetch orders');
       const data = await res.json();
       setSearchResults(data);
@@ -57,7 +57,7 @@ export const OpenCaseModal: React.FC<OpenCaseModalProps> = ({ isOpen, onClose, o
     try {
       setLoadingOrderDetails(true);
       setError(null);
-      const res = await fetch(`http://localhost:5000/api/orders/${order._id}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order._id}`);
       if (!res.ok) throw new Error('Failed to load order details');
       const data = await res.json();
       setSelectedOrder(data);
@@ -127,7 +127,7 @@ export const OpenCaseModal: React.FC<OpenCaseModalProps> = ({ isOpen, onClose, o
         refundMethod: ''
       };
 
-      const res = await fetch('http://localhost:5000/api/cases', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

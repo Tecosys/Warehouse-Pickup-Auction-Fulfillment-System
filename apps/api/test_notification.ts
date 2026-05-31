@@ -24,7 +24,7 @@ async function test() {
     } else {
       console.log('Order with bidder number 1379 not found. Trying to find by email...');
       const Customer = require('./src/models/Customer').default;
-      const customer = await Customer.findOne({ email: 'munjalsharmaa@gmail.com' });
+      const customer = await Customer.findOne({ email: 'waltonbdagr1@gmail.com' });
       if (customer) {
         console.log(`Found customer ${customer.name}, looking for orders...`);
         const custOrder = await Order.findOne({ customer: customer._id }).populate('customer');

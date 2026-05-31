@@ -295,7 +295,7 @@ const InitModal = ({ auctionId, preselectedDate, onClose, onSuccess, showToast }
     if (selectedDates.size === 0) return showToast('Select at least one date', 'error');
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/slots/initialize', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/initialize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auctionRunId: auctionId, dates: Array.from(selectedDates).sort(), config })
@@ -386,7 +386,7 @@ const CloneModal = ({ auctionId, onClose, onSuccess, showToast }: any) => {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set([]));
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/auctions')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions`)
       .then(r => r.json())
       .then(data => {
         setAuctions(data);
@@ -410,7 +410,7 @@ const CloneModal = ({ auctionId, onClose, onSuccess, showToast }: any) => {
     if (selectedDates.size === 0) return showToast('Select at least one date', 'error');
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/slots/clone', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -499,7 +499,7 @@ const SlotBookingsModal = ({ slot, onClose, onReschedule }: any) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/slots/${slot._id}/bookings`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/${slot._id}/bookings`)
       .then(r => r.json()).then(setOrders).catch(console.error)
       .finally(() => setLoading(false));
   }, [slot._id]);
@@ -549,7 +549,7 @@ const RescheduleModal = ({ order, slots, onClose, onSuccess, showToast }: any) =
     if (!newSlotId) return;
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/slots/reschedule', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: order._id, newSlotId })
@@ -653,14 +653,14 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
       setLoading(true);
       let auction = selectedAuction;
       if (!auction) {
-        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+        const auctionRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/active`);
         if (!auctionRes.ok) throw new Error('No active auction');
         auction = await auctionRes.json();
       }
       setActiveAuction(auction);
 
       if (auction && auction._id) {
-        const slotsRes = await fetch(`http://localhost:5000/api/slots/all/${auction._id}`);
+        const slotsRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/all/${auction._id}`);
         const slotsData = await slotsRes.json();
         setSlots(Array.isArray(slotsData) ? slotsData : []);
       } else {
@@ -677,7 +677,7 @@ const SlotManagementPage: React.FC<SlotManagementPageProps> = ({ user, showToast
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!confirm('Delete this slot? This cannot be undone.')) return;
-    const res = await fetch(`http://localhost:5000/api/slots/${slotId}`, { method: 'DELETE' });
+    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/slots/${slotId}`, { method: 'DELETE' });
     const data = await res.json();
     if (res.ok) {
       showToast('Slot deleted');

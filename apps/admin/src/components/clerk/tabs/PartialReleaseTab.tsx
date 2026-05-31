@@ -34,7 +34,7 @@ const PartialReleaseTab: React.FC<PartialReleaseTabProps> = ({ order, withheldLo
         notes: notes[lot._id] || ''
       }));
 
-      const res = await fetch(`http://localhost:5000/api/orders/${order._id}/release`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order._id}/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

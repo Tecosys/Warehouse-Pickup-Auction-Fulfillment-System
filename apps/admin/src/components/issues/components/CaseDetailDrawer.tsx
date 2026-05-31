@@ -42,7 +42,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
 
   const fetchCaseDetails = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseData._id}`);
       if (res.ok) {
         const data = await res.json();
         setCaseDetails(data);
@@ -58,7 +58,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
   const handleUpdateStatus = async (newStatus: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseData._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -84,7 +84,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
 
     try {
       setNotesLoading(true);
-      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseData._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: newNote, status: caseStatus })
@@ -105,7 +105,7 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
   const handleSaveResolution = async () => {
     try {
       setSavingResolution(true);
-      const res = await fetch(`http://localhost:5000/api/cases/${caseData._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseData._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

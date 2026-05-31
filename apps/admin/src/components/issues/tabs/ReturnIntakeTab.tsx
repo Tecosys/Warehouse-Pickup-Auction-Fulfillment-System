@@ -22,7 +22,7 @@ const ReturnIntakeTab = () => {
     if (searchQuery.length < 2) return;
     try {
       setSearching(true);
-      const res = await fetch(`http://localhost:5000/api/lots/search?q=${searchQuery}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lots/search?q=${searchQuery}`);
       const data = await res.json();
       setLots(data);
     } catch (error) {
@@ -37,7 +37,7 @@ const ReturnIntakeTab = () => {
     setManagerOverride(false); // Reset override checkbox
     // Check for existing cases for this order/bidder
     try {
-      const res = await fetch(`http://localhost:5000/api/cases?search=${lot.bidderNumber}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases?search=${lot.bidderNumber}`);
       const data = await res.json();
       setExistingCases(data.filter((c: any) => c.status !== 'Resolved'));
       setStep(2);
@@ -50,7 +50,7 @@ const ReturnIntakeTab = () => {
   const handleProcessReturn = async () => {
     try {
       setIsProcessing(true);
-      const res = await fetch('http://localhost:5000/api/cases/return-intake', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/return-intake`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

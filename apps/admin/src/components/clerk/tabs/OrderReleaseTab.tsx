@@ -28,7 +28,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const fetchLots = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${order._id}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order._id}`);
       const data = await res.json();
       setLots(data.lots || []);
       // Initially select all non-issue lots
@@ -60,7 +60,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onReviewWithhe
   const handleComplete = async () => {
     try {
       setCompleting(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${order._id}/release`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order._id}/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

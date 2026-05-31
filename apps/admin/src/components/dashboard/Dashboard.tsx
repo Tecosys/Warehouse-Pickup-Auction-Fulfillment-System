@@ -95,11 +95,11 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     try {
       setLoading(true);
       const statsUrl = selectedAuction
-        ? `http://localhost:5000/api/auctions/dashboard-stats?auctionRunId=${selectedAuction._id}`
-        : 'http://localhost:5000/api/auctions/dashboard-stats';
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/dashboard-stats?auctionRunId=${selectedAuction._id}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/dashboard-stats`;
       const [statsRes, activitiesRes] = await Promise.all([
         fetch(statsUrl),
-        fetch('http://localhost:5000/api/activities/recent?limit=10')
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/activities/recent?limit=10`)
       ]);
       const [statsData, activitiesData] = await Promise.all([
         statsRes.json(),
@@ -119,7 +119,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     if (!selectedAuction?._id) return;
     try {
       setCloseoutLoading(true);
-      const res = await fetch(`http://localhost:5000/api/auctions/${selectedAuction._id}/closeout-summary`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/${selectedAuction._id}/closeout-summary`);
       if (res.ok) {
         const data = await res.json();
         setCloseoutSummary(data);
@@ -135,7 +135,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     if (!selectedAuction?._id || !confirmCloseoutCheckbox) return;
     try {
       setCloseoutProcessing(true);
-      const res = await fetch(`http://localhost:5000/api/auctions/${selectedAuction._id}/closeout`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/${selectedAuction._id}/closeout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ staffUser: user?.name || 'Admin' })
@@ -189,19 +189,19 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     try {
       setSubTabLoading(true);
       if (tab === 'PaidUnpaid' || tab === 'Shipping' || tab === 'Abandoned' || tab === 'AccountingPack') {
-        const res = await fetch(`http://localhost:5000/api/orders?auctionRunId=${selectedAuction._id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${selectedAuction._id}`);
         const data = await res.json();
         setCloseoutOrders(data || []);
       } else if (tab === 'Credits') {
-        const res = await fetch(`http://localhost:5000/api/credits`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/credits`);
         const data = await res.json();
         setCloseoutCredits(data || []);
       } else if (tab === 'Cases') {
-        const res = await fetch(`http://localhost:5000/api/cases?auctionRunId=${selectedAuction._id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases?auctionRunId=${selectedAuction._id}`);
         const data = await res.json();
         setCloseoutCases(data || []);
       } else if (tab === 'ManualAdjustments' || tab === 'AuditLog') {
-        const res = await fetch(`http://localhost:5000/api/activities/recent?limit=100`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/activities/recent?limit=100`);
         const data = await res.json();
         setCloseoutActivities(data || []);
       }
@@ -216,7 +216,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     const reason = prompt('Please enter a brief note for this manual payment override:');
     if (reason === null) return; // cancelled
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentStatus: status, notes: reason })
@@ -237,7 +237,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
     if (!manualCreditBidder || !manualCreditAmount) return;
     try {
       setManualCreditProcessing(true);
-      const res = await fetch('http://localhost:5000/api/credits', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/credits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

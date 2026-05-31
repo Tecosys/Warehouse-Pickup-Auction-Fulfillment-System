@@ -89,7 +89,7 @@ const AuctionRunsPage: React.FC<AuctionRunsPageProps> = ({ onNavigate }) => {
   const [channelFilter, setChannelFilter] = useState('all');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/auctions')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions`)
       .then(r => r.json())
       .then(data => {
         // Normalize to UI format

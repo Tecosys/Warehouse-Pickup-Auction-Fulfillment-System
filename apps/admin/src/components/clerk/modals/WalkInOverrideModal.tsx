@@ -20,7 +20,7 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
       if (searchQuery.length > 1) {
         setLoading(true);
         try {
-          const res = await fetch(`http://localhost:5000/api/orders?search=${searchQuery}`);
+          const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?search=${searchQuery}`);
           const data = await res.json();
           setSearchResults(data);
         } catch (error) {
@@ -42,7 +42,7 @@ const WalkInOverrideModal: React.FC<WalkInOverrideModalProps> = ({ isOpen, onClo
     if (!selectedOrder) return;
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${selectedOrder._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${selectedOrder._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

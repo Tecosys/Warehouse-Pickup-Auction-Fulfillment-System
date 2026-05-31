@@ -34,13 +34,13 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, 
 
   useEffect(() => {
     // Fetch auctions for filter
-    fetch('http://localhost:5000/api/auctions')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions`)
       .then(res => res.json())
       .then(data => setAuctions(data))
       .catch(console.error);
 
     // Fetch aging stats
-    fetch('http://localhost:5000/api/cases/stats/aging')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/stats/aging`)
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(console.error);

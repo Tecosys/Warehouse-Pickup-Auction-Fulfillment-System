@@ -38,17 +38,17 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
     try {
       setLoading(true);
       // Fetch order details
-      const orderRes = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+      const orderRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`);
       const orderData = await orderRes.json();
       setOrder(orderData);
 
       // Fetch parcels details
-      const parcelRes = await fetch(`http://localhost:5000/api/shipping/orders/${orderId}/parcels`);
+      const parcelRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/orders/${orderId}/parcels`);
       const parcelData = await parcelRes.json();
       setParcels(parcelData);
 
       // Fetch settings
-      const settingsRes = await fetch('http://localhost:5000/api/settings');
+      const settingsRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/settings`);
       const settingsData = await settingsRes.json();
       setSettings(settingsData);
 
@@ -77,7 +77,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
 
     try {
       setIsSavingParcel(true);
-      const res = await fetch(`http://localhost:5000/api/shipping/orders/${orderId}/parcels`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/orders/${orderId}/parcels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +112,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   const handleDeleteParcel = async (parcelId: string) => {
     if (!confirm('Are you sure you want to delete this parcel?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/shipping/parcels/${parcelId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/parcels/${parcelId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -126,7 +126,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   const handleSelectRate = async (parcelId: string, rateId: string) => {
     try {
       const override = manualOverride ? parseFloat(manualOverride) : undefined;
-      const res = await fetch(`http://localhost:5000/api/shipping/parcels/${parcelId}/select-rate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/parcels/${parcelId}/select-rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,7 +151,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   const handleToggleAF360 = async (checked: boolean) => {
     try {
       setIsConfirmingAF360(true);
-      const res = await fetch(`http://localhost:5000/api/shipping/orders/${orderId}/af360`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/orders/${orderId}/af360`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ addedToAF360: checked })
@@ -170,7 +170,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
   const handleUpdateStatus = async (newStatus: string) => {
     try {
       setIsUpdatingStatus(true);
-      const res = await fetch(`http://localhost:5000/api/shipping/orders/${orderId}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -350,7 +350,7 @@ const OrderShippingModal: React.FC<OrderShippingModalProps> = ({ orderId, isOpen
                               Carrier Rates (Stallion & Freightcom)
                             </span>
                             <button onClick={async () => {
-                              await fetch(`http://localhost:5000/api/shipping/parcels/${parcel._id}/rates`);
+                              await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/parcels/${parcel._id}/rates`);
                               await fetchDetails();
                             }} className="btn" style={{ padding: '2px 8px', fontSize: '0.75rem' }}>
                               Recalculate Quotes

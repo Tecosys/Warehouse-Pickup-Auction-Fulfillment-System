@@ -95,7 +95,7 @@ const PostImportSuccess = ({ stats, run, orders, onReset, onNavigate }: any) => 
   const sendBatch = async () => {
     setSending(true);
     try {
-      const response = await fetch('http://localhost:5000/api/notifications/batch', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auctionRunId: run._id, type: 1 })
@@ -305,7 +305,7 @@ const FileImportPage = ({ onNavigate }: any) => {
       setImportProgress(30);
       setStatusMsg('Parsing source files...');
 
-      const response = await fetch('http://localhost:5000/api/import', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/import`, {
         method: 'POST',
         body: formData,
       });

@@ -58,7 +58,7 @@ const SendModal = ({ notification, onClose, selectedAuction }: any) => {
       let auction = selectedAuction;
       if (!auction) {
         // Fetch the active auction run ID dynamically
-        const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+        const auctionRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/active`);
         if (!auctionRes.ok) throw new Error('No active auction found');
         auction = await auctionRes.json();
       }
@@ -74,7 +74,7 @@ const SendModal = ({ notification, onClose, selectedAuction }: any) => {
         payload.noChoiceOnly = true;
       }
 
-      const response = await fetch('http://localhost:5000/api/notifications/batch', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -260,7 +260,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ selectedAuction }
       if (filterType !== 'All') queryParams.append('type', filterType);
       if (selectedAuction?._id) queryParams.append('auctionRunId', selectedAuction._id);
       
-      const response = await fetch(`http://localhost:5000/api/notifications/logs/all?${queryParams}`); 
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/logs/all?${queryParams}`); 
       if (response.ok) {
         const data = await response.json();
         setLogs(data);

@@ -31,8 +31,8 @@ const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders
     try {
       setLoading(true);
       const url = selectedAuction?._id 
-        ? `http://localhost:5000/api/shipping/queue?auctionRunId=${selectedAuction._id}`
-        : 'http://localhost:5000/api/shipping/queue';
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/queue?auctionRunId=${selectedAuction._id}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/queue`;
       const res = await fetch(url);
       const data = await res.json();
       setOrders(data);
@@ -63,7 +63,7 @@ const InQueueTab: React.FC<InQueueTabProps> = ({ selectedAuction, selectedOrders
   const markAsPrepared = async () => {
     try {
       for (const id of Array.from(selectedOrders)) {
-        await fetch(`http://localhost:5000/api/shipping/${id}/prepare`, {
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/${id}/prepare`, {
           method: 'PATCH'
         });
       }

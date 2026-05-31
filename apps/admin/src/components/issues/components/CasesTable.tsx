@@ -27,7 +27,7 @@ const CasesTable: React.FC<CasesTableProps> = ({ filterStatus, onOpenCase, filte
           auctionId: filters.auctionId
         });
         
-        const response = await fetch(`http://localhost:5000/api/cases?${queryParams}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases?${queryParams}`);
         const data = await response.json();
         setCases(Array.isArray(data) ? data : []);
       } catch (error) {

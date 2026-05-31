@@ -24,8 +24,8 @@ const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
     try {
       setLoading(true);
       const url = selectedAuction?._id 
-        ? `http://localhost:5000/api/shipping/prepared?auctionRunId=${selectedAuction._id}`
-        : 'http://localhost:5000/api/shipping/prepared';
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/prepared?auctionRunId=${selectedAuction._id}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/prepared`;
       const res = await fetch(url);
       const data = await res.json();
       setOrders(data);
@@ -51,7 +51,7 @@ const PreparedTab: React.FC<PreparedTabProps> = ({ selectedAuction }) => {
 
     try {
       setIsSending(id);
-      const res = await fetch(`http://localhost:5000/api/shipping/${id}/dispatch`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/${id}/dispatch`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trackingNumber })

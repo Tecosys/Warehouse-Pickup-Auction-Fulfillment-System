@@ -19,8 +19,8 @@ const DispatchedTab: React.FC<DispatchedTabProps> = ({ selectedAuction }) => {
     try {
       setLoading(true);
       const url = selectedAuction?._id 
-        ? `http://localhost:5000/api/shipping/dispatched?auctionRunId=${selectedAuction._id}`
-        : 'http://localhost:5000/api/shipping/dispatched';
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/dispatched?auctionRunId=${selectedAuction._id}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/shipping/dispatched`;
       const res = await fetch(url);
       const data = await res.json();
       setOrders(data);

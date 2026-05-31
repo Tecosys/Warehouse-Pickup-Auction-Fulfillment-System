@@ -71,7 +71,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ showToast }) => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/settings');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/settings`);
       if (res.ok) {
         const data = await res.json();
         // Load General Defaults
@@ -123,7 +123,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ showToast }) => {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/notifications/templates');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/templates`);
       if (res.ok) {
         const data = await res.json();
         setTemplates(data);
@@ -150,7 +150,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ showToast }) => {
     e.preventDefault();
     try {
       setSaving(true);
-      const res = await fetch('http://localhost:5000/api/settings', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,7 +206,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ showToast }) => {
 
     try {
       setTemplateSaving(true);
-      const res = await fetch(`http://localhost:5000/api/notifications/templates/${selectedTemplate.templateId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/templates/${selectedTemplate.templateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -22,14 +22,14 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
         let auction = selectedAuction;
         if (!auction) {
           // 1. Fetch active auction
-          const auctionRes = await fetch('http://localhost:5000/api/auctions/active');
+          const auctionRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/active`);
           auction = await auctionRes.json();
         }
         setActiveAuction(auction);
 
         if (auction && auction._id) {
           // 2. Fetch orders for this auction
-          const ordersRes = await fetch(`http://localhost:5000/api/orders?auctionRunId=${auction._id}`);
+          const ordersRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${auction._id}`);
           const ordersData = await ordersRes.json();
           
           // Map backend orders to UI format (simulated mapping for now)

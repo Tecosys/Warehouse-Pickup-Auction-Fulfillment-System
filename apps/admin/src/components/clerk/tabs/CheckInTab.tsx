@@ -18,12 +18,12 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
     try {
       setLoading(true);
       // Fetch checked-in orders
-      const ciRes = await fetch('http://localhost:5000/api/orders?customerStatus=Checked In');
+      const ciRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?customerStatus=Checked In`);
       const ciData = await ciRes.json();
       setCheckedIn(ciData);
 
       // Fetch booked orders (awaiting arrival)
-      const awRes = await fetch('http://localhost:5000/api/orders?customerStatus=Booked');
+      const awRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?customerStatus=Booked`);
       const awData = await awRes.json();
       setAwaiting(awData);
     } catch (error) {
@@ -43,7 +43,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
       if (search.length > 1) {
         setLoading(true);
         try {
-          const res = await fetch(`http://localhost:5000/api/orders?search=${search}`);
+          const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?search=${search}`);
           const data = await res.json();
           setSearchResults(data);
         } catch (error) {
@@ -62,7 +62,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease }) => {
   const handleCheckIn = async (orderId: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerStatus: 'Checked In' })
