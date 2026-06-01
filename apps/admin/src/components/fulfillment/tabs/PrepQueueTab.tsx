@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Package, ChevronRight, Clock, LayoutGrid } from 'lucide-react';
+import { Package, ChevronRight, Clock, LayoutGrid, X } from 'lucide-react';
 import { PageLoader } from '../../shared/LoadingComponents';
+import BatchPickListModal from '../components/BatchPickListModal';
 
 interface PrepQueueTabProps {
   onOpenOrder: (id: string) => void;
@@ -14,54 +15,86 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ inQueue: 0, inProgress: 0, readyToday: 0 });
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+
+  const toggleOrderSelect = (id: string) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      let auction = selectedAuction;
+      if (!auction) {
+        // 1. Fetch active auction
+        const auctionRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/active`);
+        auction = await auctionRes.json();
+      }
+      setActiveAuction(auction);
+
+      if (auction && auction._id) {
+        // 2. Fetch orders for this auction
+        const ordersRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${auction._id}`);
+        const ordersData = await ordersRes.json();
+        
+        // Map backend orders to UI format (simulated mapping for now)
+        const mappedOrders = ordersData.map((o: any) => ({
+          id: o._id,
+          bidder: o.bidderNumber,
+          customer: o.customer?.name || 'Unknown Customer',
+          status: o.fulfillmentStatus,
+          customerStatus: o.customerStatus,
+          isWalkIn: o.customerStatus === 'Checked In' && !o.appointmentTime,
+          appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOT SET',
+          appointmentRaw: o.appointmentTime,
+          lots: o.totalLots || 0,
+          auction: `Auction ${auction.auctionNumber}`
+        }));
+        
+        setOrders(mappedOrders);
+        
+        // Calculate stats
+        setStats({
+          inQueue: mappedOrders.filter((o: any) => o.status === 'Not Started').length,
+          inProgress: mappedOrders.filter((o: any) => o.status === 'In Progress').length,
+          readyToday: mappedOrders.filter((o: any) => o.status === 'Ready').length
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartBatchPrep = async () => {
+    try {
+      setLoading(true);
+      await Promise.all(
+        Array.from(selectedOrders).map(orderId =>
+          fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fulfillmentStatus: 'In Progress' })
+          })
+        )
+      );
+      setSelectedOrders(new Set());
+      await fetchData();
+    } catch (err) {
+      console.error('Error starting batch prep:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        let auction = selectedAuction;
-        if (!auction) {
-          // 1. Fetch active auction
-          const auctionRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/active`);
-          auction = await auctionRes.json();
-        }
-        setActiveAuction(auction);
-
-        if (auction && auction._id) {
-          // 2. Fetch orders for this auction
-          const ordersRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${auction._id}`);
-          const ordersData = await ordersRes.json();
-          
-          // Map backend orders to UI format (simulated mapping for now)
-          const mappedOrders = ordersData.map((o: any) => ({
-            id: o._id,
-            bidder: o.bidderNumber,
-            customer: o.customer?.name || 'Unknown Customer',
-            status: o.fulfillmentStatus,
-            customerStatus: o.customerStatus,
-            isWalkIn: o.customerStatus === 'Checked In' && !o.appointmentTime,
-            appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOT SET',
-            appointmentRaw: o.appointmentTime,
-            lots: o.totalLots || 0,
-            auction: `Auction ${auction.auctionNumber}`
-          }));
-          
-          setOrders(mappedOrders);
-          
-          // Calculate stats
-          setStats({
-            inQueue: mappedOrders.filter((o: any) => o.status === 'Not Started').length,
-            inProgress: mappedOrders.filter((o: any) => o.status === 'In Progress').length,
-            readyToday: mappedOrders.filter((o: any) => o.status === 'Ready').length
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [selectedAuction?._id]);
 
@@ -175,7 +208,23 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
             >
               {/* Row 1: Bidder, Customer, Status */}
               <div className="responsive-queue-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {['Not Started', 'In Progress'].includes(order.status) && (
+                    <input 
+                      type="checkbox"
+                      checked={selectedOrders.has(order.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleOrderSelect(order.id);
+                      }}
+                      style={{ 
+                        width: '18px', 
+                        height: '18px', 
+                        accentColor: 'var(--status-teal)',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  )}
                   <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>#{order.bidder}</span>
                   <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>{order.customer}</span>
                 </div>
@@ -240,6 +289,45 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
           </div>
         )}
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedOrders.size > 0 && (
+        <div 
+          className="responsive-bulk-bar"
+          style={{
+            position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+            width: 'calc(100% - 4rem)', maxWidth: '1336px',
+            background: '#1e293b', color: 'white',
+            padding: '1.25rem 2rem', borderRadius: '1rem',
+            display: 'flex', alignItems: 'center', gap: '1.5rem',
+            zIndex: 50, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)'
+        }}>
+          <span style={{ fontSize: '1rem', fontWeight: 700 }}>{selectedOrders.size} order(s) selected</span>
+          <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
+            <button 
+              className="btn" 
+              style={{ background: 'var(--status-amber)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', fontWeight: 700 }}
+              onClick={handleStartBatchPrep}
+            >
+              Start Batch Prep
+            </button>
+            <button 
+              className="btn" 
+              style={{ background: 'var(--status-teal)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', fontWeight: 700 }}
+              onClick={() => setIsBatchModalOpen(true)}
+            >
+              Print Combined Pick List
+            </button>
+            <X size={24} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.5)', alignSelf: 'center' }} onClick={() => setSelectedOrders(new Set())} />
+          </div>
+        </div>
+      )}
+
+      <BatchPickListModal 
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        selectedOrderIds={Array.from(selectedOrders)}
+      />
     </div>
   );
 };

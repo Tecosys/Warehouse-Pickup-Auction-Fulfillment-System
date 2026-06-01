@@ -388,7 +388,12 @@ const FileImportPage = ({ onNavigate }: any) => {
                       type="text" 
                       placeholder="e.g. 31" 
                       value={auctionInfo.number}
-                      onChange={(e) => setAuctionInfo({...auctionInfo, number: e.target.value})}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d+$/.test(val)) {
+                          setAuctionInfo({...auctionInfo, number: val});
+                        }
+                      }}
                       className="card"
                       style={{ width: '100%', padding: '0.75rem 1rem' }}
                     />

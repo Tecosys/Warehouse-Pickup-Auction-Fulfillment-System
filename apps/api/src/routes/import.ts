@@ -69,6 +69,9 @@ router.post('/', upload.fields([
 ]), async (req: any, res: any) => {
   try {
     const { auctionNumber, auctionTitle } = req.body;
+    if (!auctionNumber || !/^\d+$/.test(auctionNumber)) {
+      return res.status(400).json({ error: 'Auction number must be numeric only' });
+    }
     const files = req.files as Record<string, Express.Multer.File[]>;
 
     const hibidFile = files.hibid?.[0];

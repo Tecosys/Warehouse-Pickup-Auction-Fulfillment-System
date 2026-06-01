@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import BookingFlow from '@/components/portal/BookingFlow';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function CustomerPortal({ params }: { params: any }) {
   const resolvedParams: any = React.use(params);
   const token = resolvedParams.token;
@@ -53,7 +55,7 @@ export default function CustomerPortal({ params }: { params: any }) {
     try {
       setLoading(true);
       // Assuming token is orderId for now
-      const res = await fetch(`http://localhost:5000/api/orders/${token}`);
+      const res = await fetch(`${API_URL}/api/orders/${token}`);
       const data = await res.json();
       setOrder(data);
     } catch (error) {
@@ -67,7 +69,7 @@ export default function CustomerPortal({ params }: { params: any }) {
     if (!order?._id) return;
     try {
       setTicketsLoading(true);
-      const res = await fetch(`http://localhost:5000/api/cases/orders/${order._id}`);
+      const res = await fetch(`${API_URL}/api/cases/orders/${order._id}`);
       if (res.ok) {
         const data = await res.json();
         setCases(data);
@@ -94,7 +96,7 @@ export default function CustomerPortal({ params }: { params: any }) {
     
     try {
       setShippingLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${token}/confirm-shipping`, {
+      const res = await fetch(`${API_URL}/api/orders/${token}/confirm-shipping`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -116,7 +118,7 @@ export default function CustomerPortal({ params }: { params: any }) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('http://localhost:5000/api/cases/upload-evidence', {
+      const res = await fetch(`${API_URL}/api/cases/upload-evidence`, {
         method: 'POST',
         body: formData
       });
@@ -157,7 +159,7 @@ export default function CustomerPortal({ params }: { params: any }) {
         evidence: evidencePaths
       };
 
-      const res = await fetch('http://localhost:5000/api/cases', {
+      const res = await fetch(`${API_URL}/api/cases`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -216,8 +218,8 @@ export default function CustomerPortal({ params }: { params: any }) {
   const getMediaUrl = (pathStr: string) => {
     if (!pathStr) return '';
     if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) return pathStr;
-    if (pathStr.startsWith('/uploads')) return `http://localhost:5000${pathStr}`;
-    return `http://localhost:5000/uploads/cases/${pathStr}`;
+    if (pathStr.startsWith('/uploads')) return `${API_URL}${pathStr}`;
+    return `${API_URL}/uploads/cases/${pathStr}`;
   };
 
   const isVideo = (pathStr: string) => {

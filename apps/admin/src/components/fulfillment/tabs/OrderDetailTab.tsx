@@ -29,6 +29,7 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   const [lotTypeFilter, setLotTypeFilter] = useState<'All' | 'Non-Sort' | 'Sort'>('All');
   const [activeLotMenuId, setActiveLotMenuId] = useState<string | null>(null);
   const [selectedLotForAction, setSelectedLotForAction] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<'location' | 'lot'>('location');
 
   // Dropdown outside click handler
   useEffect(() => {
@@ -74,9 +75,22 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
   });
 
   const sortedLots = [...filteredLots].sort((a, b) => {
-    const locA = a.sourceLocation || '';
-    const locB = b.sourceLocation || '';
-    return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+    if (sortBy === 'location') {
+      const locA = a.sourceLocation || '';
+      const locB = b.sourceLocation || '';
+      if (locA === locB) {
+        const aNum = parseInt(a.lotNumber, 10);
+        const bNum = parseInt(b.lotNumber, 10);
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+        return a.lotNumber.localeCompare(b.lotNumber, undefined, { numeric: true });
+      }
+      return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+    } else {
+      const aNum = parseInt(a.lotNumber, 10);
+      const bNum = parseInt(b.lotNumber, 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return a.lotNumber.localeCompare(b.lotNumber, undefined, { numeric: true });
+    }
   });
 
   const handleNotFoundConfirm = async (notes: string) => {
@@ -448,8 +462,28 @@ const OrderDetailTab: React.FC<OrderDetailTabProps> = ({ orderId, onBack }) => {
                   </button>
                 ))}
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                {lots.length} Lots Total
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="card"
+                  style={{
+                    padding: '0.35rem 1rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    outline: 'none',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    background: 'white'
+                  }}
+                >
+                  <option value="location">Sort by: Rack Location</option>
+                  <option value="lot">Sort by: Lot Number</option>
+                </select>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                  {lots.length} Lots Total
+                </div>
               </div>
             </div>
 

@@ -9,6 +9,8 @@ interface BookingFlowProps {
   onConfirm: () => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowProps) {
   const [slots, setSlots] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -25,13 +27,13 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
       try {
         setLoading(true);
         // 1. Fetch Order to get AuctionRunId
-        const orderRes = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+        const orderRes = await fetch(`${API_URL}/api/orders/${orderId}`);
         const order = await orderRes.json();
         setOrderData(order);
 
         if (order.auctionRun?._id) {
           // 2. Fetch Available Slots
-          const slotsRes = await fetch(`http://localhost:5000/api/slots/available/${order.auctionRun._id}`);
+          const slotsRes = await fetch(`${API_URL}/api/slots/available/${order.auctionRun._id}`);
           const slotsData = await slotsRes.json();
           setSlots(slotsData);
           
@@ -55,7 +57,7 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
 
     try {
       setBookingLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/book`, {
+      const res = await fetch(`${API_URL}/api/orders/${orderId}/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

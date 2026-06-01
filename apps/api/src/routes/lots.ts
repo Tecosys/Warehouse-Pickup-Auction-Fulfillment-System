@@ -5,6 +5,24 @@ import Case from '../models/Case';
 
 const router = express.Router();
 
+// GET /api/lots — Retrieve lots by order IDs
+router.get('/', async (req, res) => {
+  try {
+    const { orderIds } = req.query;
+    const query: any = {};
+    if (orderIds) {
+      const ids = String(orderIds).split(',');
+      query.order = { $in: ids };
+    }
+    const lots = await Lot.find(query)
+      .populate({ path: 'order', populate: { path: 'customer' } })
+      .populate('auctionRun');
+    res.json(lots);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/lots/search — Search lots by lot number or bidder number
 router.get('/search', async (req, res) => {
   try {
