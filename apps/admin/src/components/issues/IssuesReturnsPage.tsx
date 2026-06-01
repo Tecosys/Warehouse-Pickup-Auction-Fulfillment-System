@@ -15,7 +15,7 @@ interface IssuesReturnsPageProps {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, user }) => {
+const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, user, showToast }) => {
   const [activeTab, setActiveTab] = useState<CaseTab>(() => {
     return user?.role === 'Clerk' ? 'Return Intake' : 'All Cases';
   });
@@ -89,7 +89,10 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, 
         {tabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              setIsDrawerOpen(false);
+            }}
             style={{
               padding: '1rem 0.5rem',
               border: 'none',
@@ -210,6 +213,7 @@ const IssuesReturnsPage: React.FC<IssuesReturnsPageProps> = ({ selectedAuction, 
         onClose={() => setIsDrawerOpen(false)} 
         caseData={selectedCase} 
         user={user}
+        showToast={showToast}
         onUpdate={() => {
           // Trigger refresh if needed
           setFilters({...filters});

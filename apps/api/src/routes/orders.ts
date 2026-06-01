@@ -336,9 +336,7 @@ router.post('/:id/release', async (req: any, res: any) => {
         });
 
         // Map reason to case type
-        let caseType: 'Missing at Release' | 'Refused' | 'Issue' = 'Issue';
-        if (item.reason === 'Not Found' || item.reason === 'Missing at Release') caseType = 'Missing at Release';
-        else if (item.reason === 'Customer Refused') caseType = 'Refused';
+        let caseType: 'Missing in Prep' | 'Missing at Release' | 'Refused' | 'Issue' | 'Return' | 'Dispute' | 'Release Exception' = 'Release Exception';
 
         // Auto create/update case for this order
         const existingCase = await Case.findOne({ order: orderId, status: 'Open' });

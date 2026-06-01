@@ -8,9 +8,10 @@ interface CaseDetailDrawerProps {
   caseData: any;
   user?: any;
   onUpdate: () => void;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData, onUpdate }) => {
+const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, caseData, onUpdate, showToast }) => {
   const [caseDetails, setCaseDetails] = useState<any>(null);
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(false);
@@ -117,11 +118,11 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
       });
       
       if (res.ok) {
-        alert('Resolution details saved successfully!');
+        showToast('Resolution details saved successfully!', 'success');
         await fetchCaseDetails();
         onUpdate();
       } else {
-        alert('Failed to save resolution details.');
+        showToast('Failed to save resolution details.', 'error');
       }
     } catch (error) {
       console.error('Error saving resolution:', error);

@@ -7,7 +7,7 @@ export interface ICase extends Document {
   customer: mongoose.Types.ObjectId;
   customerName: string;
   bidderNumber: string;
-  type: 'Missing in Prep' | 'Missing at Release' | 'Refused' | 'Issue' | 'Return' | 'Dispute';
+  type: 'Missing in Prep' | 'Missing at Release' | 'Refused' | 'Issue' | 'Return' | 'Dispute' | 'Release Exception';
   status: 'Open' | 'In Review' | 'Resolved';
   lines: Array<{
     lotNumber: string;
@@ -34,7 +34,7 @@ const CaseSchema: Schema = new Schema({
   bidderNumber: { type: String, required: true },
   type: { 
     type: String, 
-    enum: ['Missing in Prep', 'Missing at Release', 'Refused', 'Issue', 'Return', 'Dispute'],
+    enum: ['Missing in Prep', 'Missing at Release', 'Refused', 'Issue', 'Return', 'Dispute', 'Release Exception'],
     required: true 
   },
   status: { 

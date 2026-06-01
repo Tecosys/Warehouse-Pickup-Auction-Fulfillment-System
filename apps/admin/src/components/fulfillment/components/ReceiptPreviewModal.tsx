@@ -28,8 +28,8 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
 
   return createPortal(
     <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div className="card animate-fade" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', background: '#f8fafc' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="card animate-fade" style={{ maxWidth: '400px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: '1.5rem', background: '#f8fafc', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexShrink: 0 }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title} Preview</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={24} /></button>
         </div>
@@ -41,7 +41,9 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
           fontFamily: "'Courier New', Courier, monospace", 
           color: 'black',
           marginBottom: '1.5rem',
-          border: '1px solid #ddd'
+          border: '1px solid #ddd',
+          overflowY: 'auto',
+          flex: 1
         }}>
           <div style={{ textAlign: 'center', marginBottom: '1.5rem', borderBottom: '2px solid black', paddingBottom: '0.5rem' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>BIDBOSS</div>
@@ -108,6 +110,8 @@ const ReceiptPreviewModal: React.FC<ReceiptPreviewModalProps> = ({ isOpen, onClo
               margin: 0;
               padding: 10px;
               border: none;
+              overflow: visible !important;
+              height: auto !important;
             }
           }
         `}</style>

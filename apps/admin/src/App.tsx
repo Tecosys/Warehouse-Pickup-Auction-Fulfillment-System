@@ -178,7 +178,7 @@ function App() {
       case 'Batch Notifications':
         return <NotificationsPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Inventory Clerk':
-        return <InventoryClerkPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
+        return <InventoryClerkPage selectedAuction={selectedAuction} user={user} showToast={showToast} onNavigate={navigateToModule} />;
       case 'Issues / Returns':
         return <IssuesReturnsPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Shipping':

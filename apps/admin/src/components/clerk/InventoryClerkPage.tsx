@@ -2,23 +2,22 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import CheckInTab from './tabs/CheckInTab';
 import OrderReleaseTab from './tabs/OrderReleaseTab';
-import PartialReleaseTab from './tabs/PartialReleaseTab';
 import WalkInOverrideModal from './modals/WalkInOverrideModal';
 import ReleaseConfirmationModal from './modals/ReleaseConfirmationModal';
-
-export type TabType = 'Check-in & Search' | 'Order Release' | 'Partial Release';
+export type TabType = 'Check-in & Search' | 'Order Release';
 
 interface InventoryClerkPageProps {
   selectedAuction?: any;
   user: any;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onNavigate: (module: string) => void;
 }
 
-const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
+const InventoryClerkPage: React.FC<InventoryClerkPageProps> = ({ selectedAuction, user, showToast, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<TabType>('Check-in & Search');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [releasedLots, setReleasedLots] = useState<any[]>([]);
   const [withheldLots, setWithheldLots] = useState<any[]>([]);
-  const [orderLots, setOrderLots] = useState<any[]>([]);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmType, setConfirmType] = useState<'full' | 'partial'>('full');
@@ -28,10 +27,11 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
     setActiveTab('Order Release');
   };
 
-  const handleReviewWithheld = (withheld: any[], allLots: any[]) => {
+  const handleReleaseComplete = (released: any[], withheld: any[]) => {
+    setReleasedLots(released);
     setWithheldLots(withheld);
-    setOrderLots(allLots);
-    setActiveTab('Partial Release');
+    setConfirmType(withheld.length > 0 ? 'partial' : 'full');
+    setIsConfirmModalOpen(true);
   };
 
   return (
@@ -52,51 +52,53 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
       </div>
 
       <div className="tabs-container" style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-        {(['Check-in & Search', 'Order Release', 'Partial Release'] as TabType[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '1rem 0.5rem',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: 600,
-              color: activeTab === tab ? 'var(--status-teal)' : 'var(--text-muted)',
-              borderBottom: activeTab === tab ? '3px solid var(--status-teal)' : '3px solid transparent',
-              transition: 'all 0.2s',
-              marginBottom: '-1px'
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+        {(['Check-in & Search', 'Order Release'] as TabType[]).map((tab) => {
+          // Disable "Order Release" tab if no order selected
+          const disabled = tab === 'Order Release' && !selectedOrder;
+          return (
+            <button
+              key={tab}
+              onClick={() => !disabled && setActiveTab(tab)}
+              disabled={disabled}
+              style={{
+                padding: '1rem 0.5rem',
+                border: 'none',
+                background: 'none',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: activeTab === tab ? 'var(--status-teal)' : disabled ? '#cbd5e1' : 'var(--text-muted)',
+                borderBottom: activeTab === tab ? '3px solid var(--status-teal)' : '3px solid transparent',
+                transition: 'all 0.2s',
+                marginBottom: '-1px'
+              }}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       <div className="tab-content animate-slide">
-        {activeTab === 'Check-in & Search' && <CheckInTab onOpenRelease={handleOpenRelease} />}
+        {activeTab === 'Check-in & Search' && (
+          <CheckInTab 
+            onOpenRelease={handleOpenRelease} 
+            selectedAuction={selectedAuction} 
+            user={user}
+            showToast={showToast}
+          />
+        )}
         {activeTab === 'Order Release' && (
           <OrderReleaseTab 
             order={selectedOrder} 
-            onReviewWithheld={handleReviewWithheld} 
-            onBack={() => setActiveTab('Check-in & Search')}
-            onComplete={() => {
-              setConfirmType('full');
-              setIsConfirmModalOpen(true);
+            onBack={() => {
+              setActiveTab('Check-in & Search');
+              setSelectedOrder(null);
             }}
-          />
-        )}
-        {activeTab === 'Partial Release' && (
-          <PartialReleaseTab 
-            order={selectedOrder} 
-            withheldLots={withheldLots}
-            orderLots={orderLots}
-            onBack={() => setActiveTab('Order Release')}
-            onComplete={() => {
-              setConfirmType('partial');
-              setIsConfirmModalOpen(true);
-            }}
+            onComplete={handleReleaseComplete}
+            user={user}
+            showToast={showToast}
+            onNavigate={onNavigate}
           />
         )}
       </div>
@@ -114,10 +116,15 @@ const InventoryClerkPage: React.FC<InventoryClerkPageProps> = () => {
         isOpen={isConfirmModalOpen}
         type={confirmType}
         order={selectedOrder}
+        user={user}
+        releasedLots={releasedLots}
+        withheldLots={withheldLots}
         onClose={() => {
           setIsConfirmModalOpen(false);
           setActiveTab('Check-in & Search');
           setSelectedOrder(null);
+          setReleasedLots([]);
+          setWithheldLots([]);
         }}
       />
 
