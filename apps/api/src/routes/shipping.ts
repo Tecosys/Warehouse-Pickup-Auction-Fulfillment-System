@@ -99,6 +99,12 @@ router.post('/orders/:orderId/parcels', async (req, res) => {
 
     await parcel.save();
 
+    // Update order fulfillment status to In Progress
+    if (order.fulfillmentStatus === 'Not Started') {
+      order.fulfillmentStatus = 'In Progress';
+      await order.save();
+    }
+
     // Trigger mock rate retrieval immediately
     const mockRates = await ShippingService.getAllRates(parcel.dimensions, parcel.unitType);
     parcel.rates = mockRates;
@@ -214,6 +220,10 @@ router.patch('/orders/:orderId/status', async (req, res) => {
     const prevStatus = order.shippingStatus;
     order.shippingStatus = shippingStatus as any;
 
+    if (['Ready for Rating', 'Awaiting AF360 Charge', 'Awaiting Payment', 'Payment Confirmed', 'Label Ready', 'Dispatched'].includes(shippingStatus)) {
+      order.fulfillmentStatus = 'Ready';
+    }
+
     if (shippingStatus === 'Dispatched') {
       order.trackingNumber = trackingNumber || order.trackingNumber;
       order.shippedAt = new Date();
@@ -250,6 +260,7 @@ router.patch('/:id/prepare', async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.shippingStatus = 'Ready for Rating';
+    order.fulfillmentStatus = 'Ready';
     await order.save();
 
     res.json(order);
@@ -265,6 +276,8 @@ router.patch('/:id/dispatch', async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.shippingStatus = 'Dispatched';
+    order.customerStatus = 'Picked Up';
+    order.fulfillmentStatus = 'Ready';
     order.trackingNumber = trackingNumber;
     order.shippedAt = new Date();
     await order.save();

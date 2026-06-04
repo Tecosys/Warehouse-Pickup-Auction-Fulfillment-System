@@ -43,8 +43,16 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
         const ordersRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?auctionRunId=${auction._id}`);
         const ordersData = await ordersRes.json();
         
-        // Map backend orders to UI format (simulated mapping for now)
-        const mappedOrders = ordersData.map((o: any) => ({
+        // Filter out completed, cancelled, and dispatched orders from active prep queue
+        const activeOrdersData = ordersData.filter((o: any) => 
+          o.customerStatus !== 'Picked Up' && 
+          o.customerStatus !== 'Cancelled' && 
+          o.shippingStatus !== 'Dispatched' &&
+          o.lifecycleStatus !== 'Dispatched'
+        );
+
+        // Map backend orders to UI format
+        const mappedOrders = activeOrdersData.map((o: any) => ({
           id: o._id,
           bidder: o.bidderNumber,
           customer: o.customer?.name || 'Unknown Customer',
