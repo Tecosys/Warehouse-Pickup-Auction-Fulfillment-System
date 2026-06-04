@@ -448,8 +448,9 @@ export default function CustomerPortal({ params }: { params: any }) {
 
                   {!isBooked ? (
                     <button 
-                      onClick={() => setActiveView('booking')}
-                      className="w-full bg-[#0d9488] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#0f766e] transition-colors"
+                      onClick={() => !isShippingConfirmed && setActiveView('booking')}
+                      disabled={isShippingConfirmed}
+                      className="w-full bg-[#0d9488] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#0f766e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Book Pickup Slot
                       <ArrowRight size={18} />
@@ -458,7 +459,7 @@ export default function CustomerPortal({ params }: { params: any }) {
                     <div className="space-y-4">
                       <div className="bg-teal-50 text-[#0f766e] p-4 rounded-xl text-center">
                         <div className="text-sm font-bold uppercase tracking-wider mb-1">Confirmed Appointment</div>
-                        <div className="text-lg font-black">{new Date(order.appointmentTime).toLocaleString()}</div>
+                        <div className="text-lg font-black">{new Date(order.appointmentTime).toLocaleString([], { timeZone: 'UTC' })}</div>
                       </div>
                       {order.authorizedPerson && order.authorizedPerson.name && (
                         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left">
@@ -469,7 +470,13 @@ export default function CustomerPortal({ params }: { params: any }) {
                         </div>
                       )}
                       <div className="flex justify-between items-center px-2">
-                        <button onClick={() => setActiveView('booking')} className="text-[#0d9488] text-sm font-bold hover:underline">Reschedule Appointment</button>
+                        <button 
+                          onClick={() => !isShippingConfirmed && setActiveView('booking')} 
+                          disabled={isShippingConfirmed}
+                          className="text-[#0d9488] text-sm font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Reschedule Appointment
+                        </button>
                       </div>
                     </div>
                   )}

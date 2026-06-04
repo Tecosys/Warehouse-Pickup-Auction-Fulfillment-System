@@ -329,8 +329,8 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
                                   <Truck size={14} /> Shipping
                                 </span>
                               ) : order.appointmentTime ? (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <Calendar size={14} /> {new Date(order.appointmentTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-main)' }}>
+                                  <Calendar size={14} /> {new Date(order.appointmentTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' })}
                                 </span>
                               ) : (
                                 <span>Undecided / Walk-in</span>

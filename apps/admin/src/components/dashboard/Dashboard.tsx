@@ -1035,7 +1035,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
                   <div key={appt._id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '0.625rem', marginBottom: '0.5rem', border: '1px solid var(--border-color)' }}>
                     <div style={{ textAlign: 'center', minWidth: '44px' }}>
                       <div style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {new Date(appt.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(appt.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
                       </div>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

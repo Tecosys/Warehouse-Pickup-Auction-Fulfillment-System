@@ -51,7 +51,7 @@ const PrepQueueTab: React.FC<PrepQueueTabProps> = ({ onOpenOrder, selectedAuctio
           status: o.fulfillmentStatus,
           customerStatus: o.customerStatus,
           isWalkIn: o.customerStatus === 'Checked In' && !o.appointmentTime,
-          appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOT SET',
+          appointment: o.appointmentTime ? new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : 'NOT SET',
           appointmentRaw: o.appointmentTime,
           lots: o.totalLots || 0,
           auction: `Auction ${auction.auctionNumber}`

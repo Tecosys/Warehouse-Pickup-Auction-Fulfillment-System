@@ -176,7 +176,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease, selectedAuction,
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '1.125rem' }}>#{result.bidderNumber} — {result.customer?.name}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {result.appointmentTime ? `Appt: ${new Date(result.appointmentTime).toLocaleString()}` : 'No Appointment'} | Status: {result.customerStatus}
+                    {result.appointmentTime ? `Appt: ${new Date(result.appointmentTime).toLocaleString([], { timeZone: 'UTC' })}` : 'No Appointment'} | Status: {result.customerStatus}
                   </div>
                 </div>
                 <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
@@ -245,7 +245,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease, selectedAuction,
                             <span style={{ fontSize: '0.625rem', fontWeight: 900, color: 'var(--status-red)', background: '#fee2e2', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', marginLeft: '0.5rem' }}>LATE</span>
                           )}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Appt: {b.appointmentTime ? new Date(b.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Appt: {b.appointmentTime ? new Date(b.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : 'N/A'}</div>
                       </div>
                       <button 
                         onClick={() => handleCheckIn(b._id)}
@@ -322,7 +322,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease, selectedAuction,
                         {o.retrievalMethod === 'Shipping' || o.customerStatus === 'Shipping Selected' ? (
                           <span style={{ color: 'var(--status-blue)', fontWeight: 600 }}>Shipping</span>
                         ) : o.appointmentTime ? (
-                          <span>{new Date(o.appointmentTime).toLocaleDateString()} at {new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>{new Date(o.appointmentTime).toLocaleDateString([], { timeZone: 'UTC' })} at {new Date(o.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}</span>
                         ) : (
                           <span style={{ color: 'var(--status-amber)', fontWeight: 600 }}>No Appointment</span>
                         )}
