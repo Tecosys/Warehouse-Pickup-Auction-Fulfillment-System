@@ -138,8 +138,12 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
   const getMediaUrl = (pathStr: string) => {
     if (!pathStr) return '';
     if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) return pathStr;
-    if (pathStr.startsWith('/uploads')) return `http://localhost:5000${pathStr}`;
-    return `http://localhost:5000/uploads/cases/${pathStr}`;
+    
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const rootUrl = apiUrl.replace(/\/api\/?$/, '');
+    
+    if (pathStr.startsWith('/uploads')) return `${rootUrl}${pathStr}`;
+    return `${rootUrl}/uploads/cases/${pathStr}`;
   };
 
   const isVideo = (pathStr: string) => {
