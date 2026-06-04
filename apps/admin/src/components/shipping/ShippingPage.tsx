@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, Truck, CheckCircle2, ChevronDown } from 'lucide-react';
 import InQueueTab from './tabs/InQueueTab';
 import PreparedTab from './tabs/PreparedTab';
@@ -16,6 +16,26 @@ const ShippingPage: React.FC<ShippingPageProps> = ({ selectedAuction }) => {
   const [activeTab, setActiveTab] = useState<ShippingTab>('In Queue');
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [prepareTrigger, setPrepareTrigger] = useState(0);
+  const [stats, setStats] = useState({ pendingQueue: 0, readyToLabel: 0, dispatched: 0 });
+
+  const fetchStats = async () => {
+    try {
+      let url = '/api/shipping/stats';
+      if (selectedAuction?._id) {
+        url += `?auctionRunId=${selectedAuction._id}`;
+      }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch shipping stats');
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching shipping stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [selectedAuction?._id, prepareTrigger, activeTab]);
 
   const handleTabChange = (tab: ShippingTab) => {
     setActiveTab(tab);
@@ -64,9 +84,9 @@ const ShippingPage: React.FC<ShippingPageProps> = ({ selectedAuction }) => {
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
         {[
-          { label: 'Pending Queue', value: '142', icon: <Package size={24} />, color: 'var(--status-amber)' },
-          { label: 'Ready to Label', value: '58', icon: <Package size={24} />, color: 'var(--status-blue)' },
-          { label: 'Today\'s Dispatched', value: '324', icon: <Truck size={24} />, color: 'var(--status-green)' }
+          { label: 'Pending Queue', value: stats.pendingQueue.toString(), icon: <Package size={24} />, color: 'var(--status-amber)' },
+          { label: 'Ready to Label', value: stats.readyToLabel.toString(), icon: <Package size={24} />, color: 'var(--status-blue)' },
+          { label: 'Today\'s Dispatched', value: stats.dispatched.toString(), icon: <Truck size={24} />, color: 'var(--status-green)' }
         ].map((stat, i) => (
           <div key={i} className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem 2rem' }}>
             <div style={{ 

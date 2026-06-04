@@ -8,6 +8,41 @@ import { ActivityService } from '../services/ActivityService';
 
 const router = express.Router();
 
+// Get shipping stats
+router.get('/stats', async (req, res) => {
+  try {
+    const { auctionRunId } = req.query;
+    
+    const baseQuery: any = { retrievalMethod: 'Shipping' };
+    if (auctionRunId) {
+      baseQuery.auctionRun = auctionRunId;
+    }
+
+    const pendingQueueCount = await Order.countDocuments({
+      ...baseQuery,
+      shippingStatus: { $in: ['Shipping Selected', 'In Shipping Queue', 'Packing In Progress'] }
+    });
+
+    const readyToLabelCount = await Order.countDocuments({
+      ...baseQuery,
+      shippingStatus: { $in: ['Ready for Rating', 'Awaiting AF360 Charge', 'Awaiting Payment', 'Payment Confirmed', 'Label Ready'] }
+    });
+
+    const dispatchedCount = await Order.countDocuments({
+      ...baseQuery,
+      shippingStatus: 'Dispatched'
+    });
+
+    res.json({
+      pendingQueue: pendingQueueCount,
+      readyToLabel: readyToLabelCount,
+      dispatched: dispatchedCount
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get shipping queue (In Queue status)
 router.get('/queue', async (req, res) => {
   try {
