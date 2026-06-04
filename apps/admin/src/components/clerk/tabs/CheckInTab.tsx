@@ -176,7 +176,7 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease, selectedAuction,
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '1.125rem' }}>#{result.bidderNumber} — {result.customer?.name}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {result.appointmentTime ? `Appt: ${new Date(result.appointmentTime).toLocaleString([], { timeZone: 'UTC' })}` : 'No Appointment'} | Status: {result.customerStatus}
+                    {result.appointmentTime ? `Appt: ${new Date(result.appointmentTime).toLocaleString([], { timeZone: 'UTC' })}` : 'No Appointment'} | Status: {result.pickupStatus === 'Partially Released' ? 'Partially Released' : result.customerStatus}
                   </div>
                 </div>
                 <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
@@ -329,8 +329,8 @@ const CheckInTab: React.FC<CheckInTabProps> = ({ onOpenRelease, selectedAuction,
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                          <span className={`badge ${o.customerStatus === 'Checked In' ? 'badge-teal' : o.customerStatus === 'Picked Up' ? 'badge-teal' : 'badge-gray'}`} style={{ fontSize: '0.65rem' }}>
-                            {o.customerStatus}
+                          <span className={`badge ${o.customerStatus === 'Checked In' ? 'badge-teal' : (o.customerStatus === 'Picked Up' || o.pickupStatus === 'Partially Released') ? 'badge-teal' : 'badge-gray'}`} style={{ fontSize: '0.65rem' }}>
+                            {o.pickupStatus === 'Partially Released' ? 'Partially Released' : o.customerStatus}
                           </span>
                           <span className={`badge ${getFulfillmentBadgeClass(o.fulfillmentStatus)}`} style={{ fontSize: '0.65rem' }}>
                             {o.fulfillmentStatus === 'Ready' ? 'Prepared' : 'Not Prepared'}

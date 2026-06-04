@@ -97,7 +97,9 @@ export default function CustomerPortal({ params }: { params: any }) {
     try {
       setShippingLoading(true);
       const res = await fetch(`${API_URL}/api/orders/${token}/confirm-shipping`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
       if (res.ok) {
         fetchOrder();
@@ -400,7 +402,7 @@ export default function CustomerPortal({ params }: { params: any }) {
                       isBooked || isShippingConfirmed ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700'
                     }`}>
                       <div className={`w-2 h-2 rounded-full ${isBooked || isShippingConfirmed ? 'bg-teal-500' : 'bg-amber-500'}`} />
-                      {order.shippingStatus ? `Shipping: ${order.shippingStatus}` : `Pickup: ${order.customerStatus}`}
+                      {isShippingConfirmed ? `Shipping: ${order.shippingStatus}` : `Pickup: ${order.pickupStatus === 'Partially Released' ? 'Partially Released' : order.customerStatus}`}
                     </div>
                   </div>
                 </div>

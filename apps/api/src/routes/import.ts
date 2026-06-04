@@ -295,6 +295,8 @@ router.post('/', upload.fields([
           bookingCode: `BB-${auctionNumber}-${winningBidder}`,
           retrievalMethod: initialRetrieval,
           customerStatus: initialStatus,
+          isShippingConfirmed: customer.isShippingRequested ? true : false,
+          shippingStatus: 'Shipping Selected',
           lifecycleStatus: customer.isShippingRequested ? 'Shipping' : 'Imported',
           pickupStatus: 'Not Booked',
           prepStatus: 'Not Started',

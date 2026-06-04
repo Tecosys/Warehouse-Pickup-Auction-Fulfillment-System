@@ -319,8 +319,8 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
                               </span>
                             </td>
                             <td style={{ padding: '1rem' }}>
-                              <span style={{ fontWeight: 600, color: order.customerStatus === 'Picked Up' ? 'var(--status-teal)' : order.customerStatus === 'Cancelled' ? 'var(--status-red)' : 'var(--text-main)' }}>
-                                {order.customerStatus}
+                              <span style={{ fontWeight: 600, color: (order.customerStatus === 'Picked Up' || order.pickupStatus === 'Partially Released') ? 'var(--status-teal)' : order.customerStatus === 'Cancelled' ? 'var(--status-red)' : 'var(--text-main)' }}>
+                                {order.pickupStatus === 'Partially Released' ? 'Partially Released' : order.customerStatus}
                               </span>
                             </td>
                             <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
@@ -716,7 +716,7 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
                 <h4 style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Fulfillment State</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
                   <div>Fulfillment: <strong style={{ color: 'var(--status-teal)' }}>{activeOrder.fulfillmentStatus}</strong></div>
-                  <div>Lifecycle status: <strong>{activeOrder.customerStatus}</strong></div>
+                  <div>Lifecycle status: <strong>{activeOrder.pickupStatus === 'Partially Released' ? 'Partially Released' : activeOrder.customerStatus}</strong></div>
                   <div>Retrieval route: <strong>{activeOrder.retrievalMethod}</strong></div>
                   {activeOrder.workerName && <div>Prepared by: <strong>{activeOrder.workerName}</strong></div>}
                 </div>

@@ -192,7 +192,7 @@ router.post('/:id/book', async (req: any, res: any) => {
         customerStatus: 'Booked',
         pickupStatus: 'Booked',
         lifecycleStatus: 'Awaiting Customer Action',
-        appointmentTime: new Date(`${slot.date}T${slot.startTime}:00`),
+        appointmentTime: new Date(`${slot.date}T${slot.startTime}:00Z`),
         selectedSlot: slotId,
         authorizedPerson: authorizedPerson || undefined
       },
@@ -236,7 +236,7 @@ router.post('/:id/book', async (req: any, res: any) => {
 // Confirm Shipping Choice (Irreversible)
 router.post('/:id/confirm-shipping', async (req: any, res: any) => {
   try {
-    const { staffUser } = req.body;
+    const { staffUser } = req.body || {};
     const oldOrder = await Order.findById(req.params.id);
     if (!oldOrder) return res.status(404).json({ error: 'Order not found' });
 
@@ -245,7 +245,8 @@ router.post('/:id/confirm-shipping', async (req: any, res: any) => {
       { 
         retrievalMethod: 'Shipping',
         customerStatus: 'Shipping Selected',
-        isShippingConfirmed: true
+        isShippingConfirmed: true,
+        shippingStatus: 'Shipping Selected'
       },
       { new: true }
     );

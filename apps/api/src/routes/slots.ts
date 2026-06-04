@@ -105,7 +105,7 @@ router.post('/reschedule', async (req: any, res: any) => {
       orderId,
       {
         selectedSlot: newSlotId,
-        appointmentTime: new Date(`${newSlot.date}T${newSlot.startTime}:00`),
+        appointmentTime: new Date(`${newSlot.date}T${newSlot.startTime}:00Z`),
         customerStatus: 'Booked',
         pickupStatus: 'Booked',
         lifecycleStatus: 'Awaiting Customer Action'
@@ -149,7 +149,7 @@ router.post('/admin-book', async (req: any, res: any) => {
       orderId,
       {
         selectedSlot: slotId,
-        appointmentTime: new Date(`${slot.date}T${slot.startTime}:00`),
+        appointmentTime: new Date(`${slot.date}T${slot.startTime}:00Z`),
         customerStatus: 'Booked',
         pickupStatus: 'Booked',
         lifecycleStatus: 'Awaiting Customer Action'
