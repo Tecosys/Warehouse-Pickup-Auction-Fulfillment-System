@@ -417,7 +417,7 @@ router.post('/:id/release-lot', async (req, res) => {
       auctionRun: currentCase.auctionRun,
       statusBefore: 'Not Found',
       statusAfter: 'Released',
-      user: req.headers['x-user-name'] || 'Staff'
+      user: (req.headers['x-user-name'] as string) || 'Staff'
     });
 
     res.json(currentCase);

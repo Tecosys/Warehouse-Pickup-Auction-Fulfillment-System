@@ -185,6 +185,17 @@ router.post('/:id/book', async (req: any, res: any) => {
       throw new Error('Slot is full or no longer available');
     }
 
+    // 2.1 Check if the slot has already passed (skip for admins)
+    const nowTorontoStr = new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' });
+    const nowToronto = new Date(nowTorontoStr);
+    const [year, month, day] = (slot.date || '').split('-').map(Number);
+    const [hour, minute] = (slot.startTime || '').split(':').map(Number);
+    const slotDate = new Date(year || 0, (month || 1) - 1, day || 1, hour || 0, minute || 0);
+
+    if (slotDate < nowToronto && !isAdminOverride) {
+      throw new Error('This pickup slot has already passed. Please select a future slot.');
+    }
+
     // 2. Update the order
     const order = await Order.findByIdAndUpdate(
       orderId,

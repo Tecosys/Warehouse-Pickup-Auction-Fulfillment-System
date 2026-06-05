@@ -22,38 +22,75 @@ export default function BookingFlow({ orderId, onBack, onConfirm }: BookingFlowP
   const [hasAuthorizedPerson, setHasAuthorizedPerson] = useState(false);
   const [authPerson, setAuthPerson] = useState({ name: '', phone: '', email: '' });
 
+  const fetchBookingData = async () => {
+    try {
+      // 1. Fetch Order to get AuctionRunId
+      const orderRes = await fetch(`${API_URL}/api/orders/${orderId}`);
+      const order = await orderRes.json();
+      setOrderData(order);
+
+      if (order.auctionRun?._id) {
+        // 2. Fetch Available Slots
+        const slotsRes = await fetch(`${API_URL}/api/slots/available/${order.auctionRun._id}`);
+        const slotsData = await slotsRes.json();
+        
+        // Filter out slots that are in the past
+        const nowTorontoStr = new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' });
+        const nowToronto = new Date(nowTorontoStr);
+        const activeSlots = slotsData.filter((s: any) => {
+          try {
+            const [year, month, day] = s.date.split('-').map(Number);
+            const [hour, minute] = s.startTime.split(':').map(Number);
+            const slotDate = new Date(year, month - 1, day, hour, minute);
+            return slotDate > nowToronto;
+          } catch (e) {
+            return true;
+          }
+        });
+
+        setSlots(activeSlots);
+        
+        // Set initial date if slots exist
+        if (activeSlots.length > 0) {
+          setSelectedDate(prev => prev || activeSlots[0].date);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching booking data:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
       try {
         setLoading(true);
-        // 1. Fetch Order to get AuctionRunId
-        const orderRes = await fetch(`${API_URL}/api/orders/${orderId}`);
-        const order = await orderRes.json();
-        setOrderData(order);
-
-        if (order.auctionRun?._id) {
-          // 2. Fetch Available Slots
-          const slotsRes = await fetch(`${API_URL}/api/slots/available/${order.auctionRun._id}`);
-          const slotsData = await slotsRes.json();
-          setSlots(slotsData);
-          
-          // Set initial date if slots exist
-          if (slotsData.length > 0) {
-            setSelectedDate(slotsData[0].date);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching booking data:', error);
+        await fetchBookingData();
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+    load();
   }, [orderId]);
 
   const handleConfirm = async () => {
     if (!selectedSlotId) return;
+
+    // Check if slot has already passed
+    const selectedSlot = slots.find(s => s._id === selectedSlotId);
+    if (selectedSlot) {
+      const nowTorontoStr = new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' });
+      const nowToronto = new Date(nowTorontoStr);
+      const [year, month, day] = selectedSlot.date.split('-').map(Number);
+      const [hour, minute] = selectedSlot.startTime.split(':').map(Number);
+      const slotDate = new Date(year, month - 1, day, hour, minute);
+
+      if (slotDate < nowToronto) {
+        alert('This pickup slot has already passed. Please select a future time slot.');
+        await fetchBookingData();
+        setSelectedSlotId(null);
+        return;
+      }
+    }
 
     try {
       setBookingLoading(true);

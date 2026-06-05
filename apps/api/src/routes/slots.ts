@@ -17,12 +17,26 @@ router.get('/all/:auctionRunId', async (req: any, res: any) => {
   }
 });
 
-// ─── Get available slots for an auction run (Customer view — excludes full) ───
+// ─── Get available slots for an auction run (Customer view — excludes full & past) ───
 router.get('/available/:auctionRunId', async (req: any, res: any) => {
   try {
     const slots = await Slot.find({ auctionRun: req.params.auctionRunId })
       .sort({ date: 1, startTime: 1 });
-    const available = slots.filter(s => s.currentBookings < s.maxCapacity);
+    
+    const nowTorontoStr = new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' });
+    const nowToronto = new Date(nowTorontoStr);
+
+    const available = slots.filter(s => {
+      if (s.currentBookings >= s.maxCapacity) return false;
+      try {
+        const [year, month, day] = (s.date || '').split('-').map(Number);
+        const [hour, minute] = (s.startTime || '').split(':').map(Number);
+        const slotDate = new Date(year || 0, (month || 1) - 1, day || 1, hour || 0, minute || 0);
+        return slotDate > nowToronto;
+      } catch (e) {
+        return true;
+      }
+    });
     res.json(available);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
