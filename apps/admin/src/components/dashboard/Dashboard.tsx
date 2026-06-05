@@ -224,6 +224,8 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
       if (res.ok) {
         alert('Payment status updated and logged to audit trail.');
         fetchSubTabData(closeoutSubTab);
+        fetchCloseoutSummary();
+        fetchData();
       } else {
         alert('Failed to update payment status.');
       }
@@ -254,6 +256,7 @@ const Dashboard = ({ selectedAuction, user }: { selectedAuction?: any; user?: an
         setManualCreditReason('');
         fetchSubTabData('Credits');
         fetchCloseoutSummary();
+        fetchData();
       } else {
         const err = await res.json();
         alert(err.error || 'Failed to issue credit.');
