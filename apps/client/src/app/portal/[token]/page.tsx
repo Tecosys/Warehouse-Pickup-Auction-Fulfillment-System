@@ -219,12 +219,16 @@ export default function CustomerPortal({ params }: { params: any }) {
 
   const getMediaUrl = (pathStr: string) => {
     if (!pathStr) return '';
+    if (pathStr.startsWith('data:')) return pathStr;
     if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) return pathStr;
     if (pathStr.startsWith('/uploads')) return `${API_URL}${pathStr}`;
     return `${API_URL}/uploads/cases/${pathStr}`;
   };
 
   const isVideo = (pathStr: string) => {
+    if (pathStr.startsWith('data:')) {
+      return pathStr.startsWith('data:video/');
+    }
     const ext = pathStr.split('.').pop()?.toLowerCase();
     return ext ? ['mp4', 'mov', 'webm', 'avi'].includes(ext) : false;
   };

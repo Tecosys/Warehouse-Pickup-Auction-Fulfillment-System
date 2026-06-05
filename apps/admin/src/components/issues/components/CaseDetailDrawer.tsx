@@ -131,12 +131,40 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
     }
   };
 
+  const [releasingLot, setReleasingLot] = useState<string | null>(null);
+
+  const handleReleaseLot = async (lotNumber: string) => {
+    try {
+      setReleasingLot(lotNumber);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cases/${caseData._id}/release-lot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lotNumber })
+      });
+      
+      if (res.ok) {
+        showToast(`Lot ${lotNumber} has been marked as found and released!`, 'success');
+        await fetchCaseDetails();
+        onUpdate();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to release lot.', 'error');
+      }
+    } catch (error) {
+      console.error('Error releasing lot:', error);
+      showToast('Network error releasing lot.', 'error');
+    } finally {
+      setReleasingLot(null);
+    }
+  };
+
   if (!isOpen || !caseData) return null;
 
   const currentCase = caseDetails || caseData;
 
   const getMediaUrl = (pathStr: string) => {
     if (!pathStr) return '';
+    if (pathStr.startsWith('data:')) return pathStr;
     if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) return pathStr;
     
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -147,6 +175,9 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
   };
 
   const isVideo = (pathStr: string) => {
+    if (pathStr.startsWith('data:')) {
+      return pathStr.startsWith('data:video/');
+    }
     const ext = pathStr.split('.').pop()?.toLowerCase();
     return ext ? ['mp4', 'mov', 'webm', 'avi', 'm4v'].includes(ext) : false;
   };
@@ -264,23 +295,53 @@ const CaseDetailDrawer: React.FC<CaseDetailDrawerProps> = ({ isOpen, onClose, ca
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)', width: '80px' }}>Lot #</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Reason</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)' }}>Notes / Details</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-muted)', width: '120px' }}>Status / Action</th>
                 </tr>
               </thead>
               <tbody>
-                {currentCase.lines?.filter((l: any) => l.lotNumber !== 'GENERAL').map((line: any, idx: number) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Lot {line.lotNumber}</td>
-                    <td style={{ padding: '0.75rem 1rem' }}>
-                      <span style={{ padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', fontSize: '0.75rem', fontWeight: 700 }}>
-                        {line.reason}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{line.notes || 'No details'}</td>
-                  </tr>
-                ))}
+                {currentCase.lines?.filter((l: any) => l.lotNumber !== 'GENERAL').map((line: any, idx: number) => {
+                  const isWithheld = line.reason === 'Missing at Release' || line.reason === 'Missing in Prep' || line.reason === 'Customer Refused' || line.reason === 'Issue' || line.status === 'Open';
+                  const isResolved = line.status === 'Resolved';
+                  return (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Lot {line.lotNumber}</td>
+                      <td style={{ padding: '0.75rem 1rem' }}>
+                        <span style={{ padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', fontSize: '0.75rem', fontWeight: 700 }}>
+                          {line.reason}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{line.notes || 'No details'}</td>
+                      <td style={{ padding: '0.75rem 1rem' }}>
+                        {isResolved ? (
+                          <span style={{ color: 'var(--status-green)', fontWeight: 'bold', fontSize: '0.75rem' }}>Found & Released</span>
+                        ) : isWithheld ? (
+                          <button
+                            type="button"
+                            onClick={() => handleReleaseLot(line.lotNumber)}
+                            disabled={releasingLot === line.lotNumber}
+                            style={{
+                              padding: '4px 8px',
+                              background: 'var(--status-teal)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {releasingLot === line.lotNumber ? 'Releasing...' : 'Found & Release'}
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Pending Review</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {(!currentCase.lines || currentCase.lines.filter((l: any) => l.lotNumber !== 'GENERAL').length === 0) && (
                   <tr>
-                    <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No specific lot records listed.</td>
+                    <td colSpan={4} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No specific lot records listed.</td>
                   </tr>
                 )}
               </tbody>

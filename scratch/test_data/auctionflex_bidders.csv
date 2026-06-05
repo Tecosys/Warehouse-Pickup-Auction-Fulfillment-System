@@ -1,3 +1,4 @@
 Bidder Number,FirstName,LastName,Email,Phone1,IsShippingRequested,BillToAddress1,BillToCity,BillToState,BillToZip,BillToCountry,ShipToAddress1,ShipToCity,ShipToState,ShipToZip,ShipToCountry
 1001,Munjal,Sharma,munjalsharmaa@gmail.com,555-010-0001,No,123 Main St,Toronto,ON,M5V 2T6,Canada,123 Main St,Toronto,ON,M5V 2T6,Canada
 1002,Munjal,Sharma-Ship,munjalsharma2708@gmail.com,555-010-0002,No,456 Shipping Ave,Montreal,QC,H2W 1Y6,Canada,456 Shipping Ave,Montreal,QC,H2W 1Y6,Canada
+1003,Munjal,Sharma-Cases,22043582010@maitreyi.du.ac.in,555-010-0003,No,789 Case Blvd,Vancouver,BC,V6B 1A1,Canada,789 Case Blvd,Vancouver,BC,V6B 1A1,Canada

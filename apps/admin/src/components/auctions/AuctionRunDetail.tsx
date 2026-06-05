@@ -35,7 +35,25 @@ const getNotificationName = (type: number) => {
 
 const AuctionRunDetail = ({ run, onBack }: any) => {
   const [activeTab, setActiveTab] = useState('Orders');
-  const tabs = ['Orders', 'Bookings', 'Notifications', 'Shipping', 'Issues'];
+  const tabs = ['Orders', 'Bookings', 'Notifications', 'Shipping', 'Issues', 'Closeout'];
+
+  const [closeoutSummary, setCloseoutSummary] = useState<any>(null);
+  const [closeoutLoading, setCloseoutLoading] = useState(false);
+
+  const fetchCloseoutSummary = async () => {
+    try {
+      setCloseoutLoading(true);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions/${run._id}/closeout-summary`);
+      if (res.ok) {
+        const data = await res.json();
+        setCloseoutSummary(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch closeout summary:', err);
+    } finally {
+      setCloseoutLoading(false);
+    }
+  };
 
   // State loaded from server
   const [orders, setOrders] = useState<any[]>([]);
@@ -102,6 +120,12 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
   useEffect(() => {
     refetchAllData();
   }, [run._id]);
+
+  useEffect(() => {
+    if (activeTab === 'Closeout') {
+      fetchCloseoutSummary();
+    }
+  }, [run._id, activeTab]);
 
   // Handler for detailed order lookup
   const handleOpenOrderDetails = (orderId: string) => {
@@ -679,6 +703,45 @@ const AuctionRunDetail = ({ run, onBack }: any) => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {/* CLOSEOUT TAB */}
+            {activeTab === 'Closeout' && (
+              <div style={{ padding: '1rem 0' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Operational Closeout & Reconciliation Metrics</h3>
+                {closeoutLoading ? (
+                  <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Loading closeout metrics...</div>
+                ) : !closeoutSummary ? (
+                  <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No closeout summary available.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                      {[
+                        { label: 'Unreleased Orders', val: closeoutSummary.unreleasedCount, color: 'var(--status-amber)', desc: 'Orders packed but not yet picked up or shipped.' },
+                        { label: 'Unpaid Orders', val: closeoutSummary.unpaidCount, color: 'var(--status-red)', desc: 'Orders awaiting payment confirmation.' },
+                        { label: 'Open Cases / Tickets', val: closeoutSummary.openCasesCount, color: 'var(--status-blue)', desc: 'Disputes, returns or exceptions pending review.' },
+                        { label: 'Active Customer Credits', val: closeoutSummary.activeCreditsCount, color: 'var(--status-teal)', desc: 'Total credits issued to customers on this run.' },
+                        { label: 'Returns Received', val: closeoutSummary.returnsCount, color: 'var(--status-gray)', desc: 'Items checked back into inventory as returns.' }
+                      ].map((card, i) => (
+                        <div key={i} className="card" style={{ padding: '1.5rem', borderTop: `4px solid ${card.color}` }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{card.label}</div>
+                          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.5rem' }}>{card.val}</div>
+                          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{card.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="card" style={{ padding: '1.5rem', background: '#f8fafc' }}>
+                      <h4 style={{ fontWeight: 700, marginBottom: '0.75rem' }}>Reconciliation Guidance</h4>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.5', margin: 0 }}>
+                        Before marking this auction run as officially Closed, please ensure all open cases are Resolved, 
+                        unpaid orders are either collected or cancelled, and shipping packages have been dispatched. 
+                        Once closed, unreleased items are subject to Bid Boss Restocking Policy configuration (currently configured at <strong>{closeoutSummary.restockingPercent}%</strong> or flat <strong>${closeoutSummary.restockingFlat?.toFixed(2)}</strong>).
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>

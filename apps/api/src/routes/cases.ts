@@ -14,23 +14,12 @@ import { ActivityService } from '../services/ActivityService';
 
 const router = express.Router();
 
-// Multer config for file uploads (photos/videos)
-const uploadDir = path.join(__dirname, '../../uploads/cases');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+// Multer config for file uploads (photos/videos stored statelessly as Base64)
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
-
-const upload = multer({ storage });
 
 // Get all cases with filters
 router.get('/', async (req, res) => {
@@ -79,8 +68,9 @@ router.post('/upload-evidence', upload.single('file'), (req: any, res: any) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
-    const filePath = `/uploads/cases/${req.file.filename}`;
-    res.json({ filePath });
+    const base64Data = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
+    res.json({ filePath: dataUri });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -353,6 +343,84 @@ router.get('/:id', async (req, res) => {
       .populate('order', 'bidderNumber fulfillmentStatus bookingCode');
     if (!caseData) return res.status(404).json({ error: 'Case not found' });
     res.json(caseData);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Release a previously withheld lot from a case (Found & Released)
+router.post('/:id/release-lot', async (req, res) => {
+  try {
+    const { lotNumber } = req.body;
+    const caseId = req.params.id;
+
+    const currentCase = await Case.findById(caseId);
+    if (!currentCase) return res.status(404).json({ error: 'Case not found' });
+
+    // 1. Find and update the Lot
+    const lot = await Lot.findOne({ order: currentCase.order, lotNumber });
+    if (!lot) return res.status(404).json({ error: 'Lot not found for this order' });
+
+    lot.status = 'Ready';
+    lot.releaseStatus = 'Released';
+    await lot.save();
+
+    // 2. Update the case line
+    let updatedLine = false;
+    currentCase.lines = currentCase.lines.map(line => {
+      if (line.lotNumber === lotNumber) {
+        updatedLine = true;
+        return {
+          lotNumber: line.lotNumber,
+          reason: line.reason,
+          status: 'Resolved',
+          notes: `${line.notes || ''}\n[Staff update]: Item found and released.`
+        };
+      }
+      return line;
+    });
+
+    // 3. Add a log entry in case lines
+    currentCase.lines.push({
+      lotNumber: 'GENERAL',
+      reason: 'Staff Action',
+      status: currentCase.status,
+      notes: `Lot ${lotNumber} found and released by staff.`
+    });
+
+    // Check if there are other unresolved lots in the case
+    const hasUnresolvedLines = currentCase.lines.some(l => l.lotNumber !== 'GENERAL' && l.status !== 'Resolved');
+    if (!hasUnresolvedLines) {
+      currentCase.status = 'Resolved';
+    }
+
+    await currentCase.save();
+
+    // 4. Update the order pickupStatus if ALL lots are now released
+    const allLots = await Lot.find({ order: currentCase.order });
+    const allReleased = allLots.every(l => l.releaseStatus === 'Released');
+    if (allReleased) {
+      await Order.findByIdAndUpdate(currentCase.order, {
+        pickupStatus: 'Released',
+        lifecycleStatus: 'Released'
+      });
+    }
+
+    // 5. Log Activity
+    await ActivityService.log({
+      type: 'Release',
+      title: 'Lot Found & Released',
+      description: `Withheld Lot ${lotNumber} marked as Found & Released via Case ${currentCase.caseNumber}.`,
+      order: currentCase.order,
+      customer: currentCase.customer,
+      lot: lot._id,
+      auctionRun: currentCase.auctionRun,
+      statusBefore: 'Not Found',
+      statusAfter: 'Released',
+      user: req.headers['x-user-name'] || 'Staff'
+    });
+
+    res.json(currentCase);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -39,8 +39,8 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order._id}`);
       const data = await res.json();
       setLots(data.lots || []);
-      // Initially select all non-issue lots
-      setSelectedLots(new Set(data.lots?.filter((l: any) => !l.metadata?.flagged).map((l: any) => l._id)));
+      // Initially select all non-issue lots and already released lots
+      setSelectedLots(new Set(data.lots?.filter((l: any) => l.releaseStatus === 'Released' || !l.metadata?.flagged).map((l: any) => l._id)));
     } catch (error) {
       console.error('Error fetching lots:', error);
     } finally {
@@ -49,6 +49,10 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
   };
 
   const toggleLot = (id: string) => {
+    const lot = lots.find(l => l._id === id);
+    if (lot?.releaseStatus === 'Released' || lot?.releaseStatus === 'Refused' || lot?.status === 'Return Received') {
+      return;
+    }
     const newSelected = new Set(selectedLots);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -58,8 +62,25 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
     setSelectedLots(newSelected);
   };
 
-  const selectAll = () => setSelectedLots(new Set(lots.map(l => l._id)));
-  const deselectAll = () => setSelectedLots(new Set());
+  const selectAll = () => {
+    const newSelected = new Set(selectedLots);
+    lots.forEach(l => {
+      if (l.releaseStatus !== 'Released' && l.releaseStatus !== 'Refused' && l.status !== 'Return Received') {
+        newSelected.add(l._id);
+      }
+    });
+    setSelectedLots(newSelected);
+  };
+
+  const deselectAll = () => {
+    const newSelected = new Set<string>();
+    lots.forEach(l => {
+      if (l.releaseStatus === 'Released') {
+        newSelected.add(l._id);
+      }
+    });
+    setSelectedLots(newSelected);
+  };
 
   const handlePrint = () => {
     setIsPreviewOpen(true);
@@ -135,8 +156,10 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
   if (!order) return <div style={{ padding: '4rem', textAlign: 'center' }}>No order selected. Please go back to search.</div>;
   if (loading) return <PageLoader message="Loading order lots..." />;
 
-  const withheldCount = lots.length - selectedLots.size;
-  const withheldLotsList = lots.filter(l => !selectedLots.has(l._id));
+  const eligibleLots = lots.filter(l => l.releaseStatus !== 'Released' && l.releaseStatus !== 'Refused' && l.status !== 'Return Received');
+  const selectedEligibleCount = lots.filter(l => selectedLots.has(l._id) && l.releaseStatus !== 'Released' && l.releaseStatus !== 'Refused' && l.status !== 'Return Received').length;
+  const withheldCount = eligibleLots.length - selectedEligibleCount;
+  const withheldLotsList = eligibleLots.filter(l => !selectedLots.has(l._id));
   const allReasonsSelected = withheldLotsList.every(lot => reasons[lot._id]);
 
   const isPrepared = order.fulfillmentStatus === 'Ready';
@@ -281,7 +304,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
           <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--status-teal)', boxShadow: '0 4px 6px -1px rgba(13, 148, 136, 0.1)', opacity: isReleaseBlocked ? 0.7 : 1, pointerEvents: isReleaseBlocked ? 'none' : 'auto' }}>
             <div className="responsive-flex-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdfa' }}>
               <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>
-                {lots.length} Lots — <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span> — <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'inherit' }}>{withheldCount} Withheld</span>
+                {eligibleLots.length} Pending Lots ({(lots.length - eligibleLots.length)} Already Released/Refused) — <span style={{ color: 'var(--status-teal)' }}>{selectedEligibleCount} Selected</span> — <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'inherit' }}>{withheldCount} Withheld</span>
               </h2>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <button onClick={selectAll} className="btn" style={{ border: 'none', background: 'none', color: 'var(--status-teal)', fontSize: '0.875rem', fontWeight: 600 }}>Select All</button>
@@ -297,8 +320,8 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
                     <th style={{ width: '50px', padding: '1rem 1.5rem' }}>
                       <input 
                         type="checkbox" 
-                        checked={selectedLots.size === lots.length && lots.length > 0}
-                        onChange={selectedLots.size === lots.length ? deselectAll : selectAll}
+                        checked={selectedEligibleCount === eligibleLots.length && eligibleLots.length > 0}
+                        onChange={selectedEligibleCount === eligibleLots.length ? deselectAll : selectAll}
                         style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
                       />
                     </th>
@@ -311,35 +334,62 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
                 <tbody>
                   {lots.map((lot) => {
                     const isSelected = selectedLots.has(lot._id);
+                    const isAlreadyReleased = lot.releaseStatus === 'Released';
+                    const isRefused = lot.releaseStatus === 'Refused';
+                    const isReturned = lot.status === 'Return Received';
+                    const isDisabled = isAlreadyReleased || isRefused || isReturned;
+
                     return (
                       <tr 
                         key={lot._id} 
-                        onClick={() => toggleLot(lot._id)}
+                        onClick={() => !isDisabled && toggleLot(lot._id)}
                         style={{ 
                           borderBottom: '1px solid var(--border-color)', 
-                          cursor: 'pointer',
-                          background: isSelected ? 'white' : 'rgba(245, 158, 11, 0.05)'
+                          cursor: isDisabled ? 'default' : 'pointer',
+                          background: isAlreadyReleased 
+                            ? 'rgba(13, 148, 136, 0.03)' 
+                            : isRefused || isReturned 
+                              ? 'rgba(239, 68, 68, 0.03)' 
+                              : isSelected 
+                                ? 'white' 
+                                : 'rgba(245, 158, 11, 0.05)',
+                          opacity: isDisabled ? 0.75 : 1
                         }}
                       >
                         <td style={{ padding: '1rem 1.5rem' }}>
                           <input 
                             type="checkbox" 
                             checked={isSelected}
+                            disabled={isDisabled}
                             onChange={() => {}} // Handled by row click
-                            style={{ width: '18px', height: '18px', accentColor: 'var(--status-teal)' }}
+                            style={{ 
+                              width: '18px', 
+                              height: '18px', 
+                              accentColor: 'var(--status-teal)',
+                              cursor: isDisabled ? 'default' : 'pointer'
+                            }}
                           />
                         </td>
                         <td style={{ padding: '1rem 1.5rem', fontWeight: 700 }}>{lot.lotNumber}</td>
                         <td style={{ padding: '1rem 1.5rem' }}>
                           <div style={{ fontWeight: 500 }}>{lot.description}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {lot.lpn || 'N/A'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ID: {lot.lpn || 'N/A'}
+                            {isAlreadyReleased && <span style={{ marginLeft: '0.5rem', color: 'var(--status-teal)', fontWeight: 'bold' }}>(Already Released)</span>}
+                            {isRefused && <span style={{ marginLeft: '0.5rem', color: 'var(--status-red)', fontWeight: 'bold' }}>(Customer Refused)</span>}
+                            {isReturned && <span style={{ marginLeft: '0.5rem', color: 'var(--status-blue)', fontWeight: 'bold' }}>(Returned)</span>}
+                          </div>
                         </td>
                         <td style={{ padding: '1rem 1.5rem' }}>
                           <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{lot.finalPickupLocation || 'N/A'}</span>
                         </td>
                         <td style={{ padding: '1rem 1.5rem' }}>
-                          <span className={`badge ${lot.status === 'Ready' ? 'badge-teal' : lot.status === 'Pending' ? 'badge-gray' : 'badge-red'}`}>
-                            {lot.status}
+                          <span className={`badge ${
+                            lot.status === 'Ready' || isAlreadyReleased ? 'badge-teal' : 
+                            lot.status === 'Pending' ? 'badge-gray' : 
+                            lot.status === 'Return Received' ? 'badge-blue' : 'badge-red'
+                          }`}>
+                            {isAlreadyReleased ? 'Released' : lot.status}
                           </span>
                         </td>
                       </tr>
@@ -436,7 +486,7 @@ const OrderReleaseTab: React.FC<OrderReleaseTabProps> = ({ order, onBack, onComp
       <div className="sticky-action-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <div style={{ fontSize: '1rem', fontWeight: 600 }}>
-            <span style={{ color: 'var(--status-teal)' }}>{selectedLots.size} Selected</span>
+            <span style={{ color: 'var(--status-teal)' }}>{selectedEligibleCount} Selected</span>
             <span style={{ margin: '0 0.75rem', color: 'var(--border-color)' }}>|</span>
             <span style={{ color: withheldCount > 0 ? 'var(--status-amber)' : 'var(--text-muted)' }}>{withheldCount} Withheld</span>
           </div>
