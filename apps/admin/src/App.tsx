@@ -70,18 +70,18 @@ function App() {
   const [auctions, setAuctions] = useState<any[]>([]);
   const [selectedAuction, setSelectedAuction] = useState<any>(null);
 
-  useEffect(() => {
-    document.title = user ? `Bid Boss - ${user.role}` : 'Bid Boss';
+  const refreshAuctions = (selectId?: string) => {
     if (!user) return;
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auctions`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
           setAuctions(data);
-          const savedId = sessionStorage.getItem('bidboss_selected_auction_id');
-          const found = data.find((a: any) => a._id === savedId);
+          const targetId = selectId || sessionStorage.getItem('bidboss_selected_auction_id');
+          const found = data.find((a: any) => a._id === targetId);
           if (found) {
             setSelectedAuction(found);
+            sessionStorage.setItem('bidboss_selected_auction_id', found._id);
           } else if (data.length > 0) {
             setSelectedAuction(data[0]);
             sessionStorage.setItem('bidboss_selected_auction_id', data[0]._id);
@@ -89,6 +89,13 @@ function App() {
         }
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    document.title = user ? `Bid Boss - ${user.role}` : 'Bid Boss';
+    if (user) {
+      refreshAuctions();
+    }
   }, [user]);
 
   const handleAuctionChange = (auctionId: string) => {
@@ -172,7 +179,14 @@ function App() {
       case 'Auction Runs':
         return <AuctionRunsPage onNavigate={navigateToModule} user={user} showToast={showToast} />;
       case 'File Import':
-        return <FileImportPage onNavigate={navigateToModule} user={user} showToast={showToast} />;
+        return (
+          <FileImportPage 
+            onNavigate={navigateToModule} 
+            user={user} 
+            showToast={showToast} 
+            onAuctionImported={refreshAuctions} 
+          />
+        );
       case 'Slot Management':
         return <SlotManagementPage selectedAuction={selectedAuction} user={user} showToast={showToast} />;
       case 'Batch Notifications':

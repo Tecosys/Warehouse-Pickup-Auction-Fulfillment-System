@@ -276,7 +276,7 @@ const MappingReference = () => (
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-const FileImportPage = ({ onNavigate }: any) => {
+const FileImportPage = ({ onNavigate, onAuctionImported }: any) => {
   const [activeTab, setActiveTab] = useState('New Import');
   const [step, setStep] = useState(0); // 0: Setup, 1: Progress, 2: Success
   const [files, setFiles] = useState<any>({ hibid: null, auctionflex: null, manyfast: null });
@@ -319,6 +319,9 @@ const FileImportPage = ({ onNavigate }: any) => {
       setImportProgress(100);
       setImportResult(result);
       setStep(2);
+      if (onAuctionImported && result.run?._id) {
+        onAuctionImported(result.run._id);
+      }
     } catch (error: any) {
       console.error(error);
       setErrorMsg(error.message || 'Import failed. Please check the backend is running.');
